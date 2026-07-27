@@ -13,6 +13,7 @@
       --accent-dim: #16a34a;
       --danger: #ef4444;
       --warning: #f59e0b;
+      --info: #3b82f6;
       --text: #f1f5f9;
       --text-muted: #94a3b8;
       --border: #334155;
@@ -41,7 +42,7 @@
 
     header {
       text-align: center;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
 
     header h1 {
@@ -55,13 +56,44 @@
       font-size: 0.9rem;
     }
 
+    .stats-card {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+
+    .stat-item .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+
+    .stat-item .stat-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--info);
+      font-variant-numeric: tabular-nums;
+      word-break: break-word;
+    }
+
     .goal-card {
       background: linear-gradient(135deg, #1e3a2f 0%, #1a2332 100%);
       border: 1px solid #22c55e44;
       border-radius: var(--radius);
       padding: 24px;
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .goal-label {
@@ -91,11 +123,6 @@
     .result-card.done {
       border-color: var(--accent);
       background: linear-gradient(135deg, #1e3a2f 0%, var(--surface) 100%);
-    }
-
-    .result-card.over {
-      border-color: var(--warning);
-      background: linear-gradient(135deg, #3a2f1e 0%, var(--surface) 100%);
     }
 
     .result-label {
@@ -130,7 +157,7 @@
     }
 
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .form-group label {
@@ -139,7 +166,7 @@
       align-items: center;
       font-size: 0.9rem;
       font-weight: 500;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .form-group label span.hint {
@@ -148,8 +175,33 @@
       font-weight: 400;
     }
 
+    .locked-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      padding: 6px 10px;
+      background: var(--surface-2);
+      border-radius: 8px;
+      width: fit-content;
+    }
+
+    .locked-badge strong {
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+
     .input-wrap {
       position: relative;
+      flex: 1;
       display: flex;
       align-items: center;
     }
@@ -186,7 +238,35 @@
     }
 
     input.has-suffix {
-      padding-right: 40px;
+      padding-right: 52px;
+    }
+
+    .add-btn {
+      flex-shrink: 0;
+      padding: 0 18px;
+      background: var(--accent);
+      color: #052e16;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .add-btn:hover {
+      background: var(--accent-dim);
+      color: #fff;
+    }
+
+    .add-btn:active {
+      transform: scale(0.97);
+    }
+
+    .add-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
 
     .summary {
@@ -245,8 +325,30 @@
     }
 
     .reset-btn:hover {
-      border-color: var(--text-muted);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface-2);
+      border: 1px solid var(--accent);
       color: var(--text);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
     }
 
     footer {
@@ -264,6 +366,22 @@
       <p id="today-date"></p>
     </header>
 
+    <p class="section-title">Tổng doanh thu đã nhận</p>
+    <div class="stats-card">
+      <div class="stat-item">
+        <div class="stat-label">Hôm nay</div>
+        <div class="stat-value" id="stat-day">0đ</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Tuần này</div>
+        <div class="stat-value" id="stat-week">0đ</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Tháng này</div>
+        <div class="stat-value" id="stat-month">0đ</div>
+      </div>
+    </div>
+
     <div class="goal-card">
       <div class="goal-label">Mục tiêu hôm nay</div>
       <div class="goal-amount">1.200.000đ</div>
@@ -272,28 +390,32 @@
     <div class="result-card" id="result-card">
       <div class="result-label" id="result-label">Còn phải chạy thêm</div>
       <div class="result-amount positive" id="remaining">1.200.000đ</div>
-      <div class="result-sub" id="result-sub">Nhập số liệu bên dưới để tính toán</div>
+      <div class="result-sub" id="result-sub">Nhấn Thêm sau mỗi lượt chạy</div>
     </div>
 
-    <p class="section-title">Nhập số liệu</p>
+    <p class="section-title">Nhập từng lượt &amp; cộng dồn</p>
 
     <div class="form-group">
-      <label for="app-income">
-        Số tiền chạy trên app
-      </label>
-      <div class="input-wrap">
-        <input type="number" id="app-income" class="has-suffix" min="0" step="1000" placeholder="0" value="0">
-        <span class="suffix">đ</span>
+      <label for="app-income">Số tiền chạy trên app</label>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-app">0đ</strong></div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input type="number" id="app-income" class="has-suffix" min="0" step="1000" placeholder="Nhập tiền lượt này">
+          <span class="suffix">đ</span>
+        </div>
+        <button class="add-btn" data-field="app">+ Thêm</button>
       </div>
     </div>
 
     <div class="form-group">
-      <label for="outside-income">
-        Số tiền chạy ngoài
-      </label>
-      <div class="input-wrap">
-        <input type="number" id="outside-income" class="has-suffix" min="0" step="1000" placeholder="0" value="0">
-        <span class="suffix">đ</span>
+      <label for="outside-income">Số tiền chạy ngoài</label>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-outside">0đ</strong></div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input type="number" id="outside-income" class="has-suffix" min="0" step="1000" placeholder="Nhập tiền lượt này">
+          <span class="suffix">đ</span>
+        </div>
+        <button class="add-btn" data-field="outside">+ Thêm</button>
       </div>
     </div>
 
@@ -302,23 +424,29 @@
         Số điểm trừ trên Zoom
         <span class="hint">1 điểm = −80.000đ</span>
       </label>
-      <div class="input-wrap">
-        <input type="number" id="zoom-points" class="has-suffix" min="0" step="0.5" placeholder="0" value="0">
-        <span class="suffix">điểm</span>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-zoom">0 điểm</strong></div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input type="number" id="zoom-points" class="has-suffix" min="0" step="0.5" placeholder="Nhập điểm lượt này">
+          <span class="suffix">điểm</span>
+        </div>
+        <button class="add-btn" data-field="zoomPoints">+ Thêm</button>
       </div>
     </div>
 
     <div class="form-group">
-      <label for="highway-fee">
-        Số tiền cao tốc phải trả
-      </label>
-      <div class="input-wrap">
-        <input type="number" id="highway-fee" class="has-suffix" min="0" step="1000" placeholder="0" value="0">
-        <span class="suffix">đ</span>
+      <label for="highway-fee">Số tiền cao tốc phải trả</label>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-highway">0đ</strong></div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input type="number" id="highway-fee" class="has-suffix" min="0" step="1000" placeholder="Nhập tiền lượt này">
+          <span class="suffix">đ</span>
+        </div>
+        <button class="add-btn" data-field="highway">+ Thêm</button>
       </div>
     </div>
 
-    <p class="section-title" style="margin-top: 24px;">Chi tiết tính toán</p>
+    <p class="section-title" style="margin-top: 24px;">Chi tiết tính toán hôm nay</p>
 
     <div class="summary">
       <div class="summary-row">
@@ -338,37 +466,81 @@
         <span class="value minus" id="sum-highway">−0đ</span>
       </div>
       <div class="summary-row total">
-        <span class="label">Thực nhận hiện tại</span>
+        <span class="label">Thực nhận hôm nay</span>
         <span class="value" id="sum-net">0đ</span>
       </div>
     </div>
 
-    <button class="reset-btn" id="reset-btn">Đặt lại tất cả</button>
+    <button class="reset-btn" id="reset-btn">Đặt lại dữ liệu hôm nay</button>
 
-    <footer>Mục tiêu: 1.200.000đ / ngày</footer>
+    <footer>Mục tiêu: 1.200.000đ / ngày · Dữ liệu lưu trên thiết bị</footer>
   </div>
+
+  <div class="toast" id="toast"></div>
 
   <script>
     const GOAL = 1200000;
     const ZOOM_RATE = 80000;
+    const STORAGE_KEY = 'muctieu-chay-xe';
+
+    const FIELD_MAP = {
+      app: { input: 'app-income', locked: 'locked-app', label: 'tiền app' },
+      outside: { input: 'outside-income', locked: 'locked-outside', label: 'tiền ngoài' },
+      zoomPoints: { input: 'zoom-points', locked: 'locked-zoom', label: 'điểm Zoom' },
+      highway: { input: 'highway-fee', locked: 'locked-highway', label: 'tiền cao tốc' },
+    };
 
     const els = {
       todayDate: document.getElementById('today-date'),
+      statDay: document.getElementById('stat-day'),
+      statWeek: document.getElementById('stat-week'),
+      statMonth: document.getElementById('stat-month'),
       resultCard: document.getElementById('result-card'),
       resultLabel: document.getElementById('result-label'),
       remaining: document.getElementById('remaining'),
       resultSub: document.getElementById('result-sub'),
-      appIncome: document.getElementById('app-income'),
-      outsideIncome: document.getElementById('outside-income'),
-      zoomPoints: document.getElementById('zoom-points'),
-      highwayFee: document.getElementById('highway-fee'),
       sumApp: document.getElementById('sum-app'),
       sumOutside: document.getElementById('sum-outside'),
       sumZoom: document.getElementById('sum-zoom'),
       sumHighway: document.getElementById('sum-highway'),
       sumNet: document.getElementById('sum-net'),
       resetBtn: document.getElementById('reset-btn'),
+      toast: document.getElementById('toast'),
     };
+
+    function getTodayKey() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+
+    function emptyDay() {
+      return { app: 0, outside: 0, zoomPoints: 0, highway: 0 };
+    }
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) { /* ignore */ }
+      return { days: {} };
+    }
+
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function getTodayData(data) {
+      const key = getTodayKey();
+      if (!data.days[key]) data.days[key] = emptyDay();
+      return data.days[key];
+    }
+
+    function calcNet(day) {
+      return day.app + day.outside - day.zoomPoints * ZOOM_RATE - day.highway;
+    }
 
     function formatMoney(amount) {
       const abs = Math.abs(Math.round(amount));
@@ -377,28 +549,76 @@
       return formatted + 'đ';
     }
 
-    function parseInput(el) {
+    function formatPoints(pts) {
+      return pts % 1 === 0 ? pts.toLocaleString('vi-VN') : pts.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    }
+
+    function parseInput(id) {
+      const el = document.getElementById(id);
       const val = parseFloat(el.value);
-      return isNaN(val) || val < 0 ? 0 : val;
+      return isNaN(val) || val <= 0 ? 0 : val;
+    }
+
+    function getWeekStart(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      d.setDate(d.getDate() + diff);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+
+    function sumPeriod(data, filterFn) {
+      let total = 0;
+      for (const [dateKey, day] of Object.entries(data.days)) {
+        const parts = dateKey.split('-');
+        const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+        if (filterFn(d, dateKey)) total += calcNet(day);
+      }
+      return total;
+    }
+
+    function updateStats(data) {
+      const today = new Date();
+      const todayKey = getTodayKey();
+      const weekStart = getWeekStart(today);
+      const month = today.getMonth();
+      const year = today.getFullYear();
+
+      const dayTotal = calcNet(getTodayData(data));
+      const weekTotal = sumPeriod(data, (d) => d >= weekStart && d <= today);
+      const monthTotal = sumPeriod(data, (d) => d.getMonth() === month && d.getFullYear() === year);
+
+      els.statDay.textContent = formatMoney(dayTotal);
+      els.statWeek.textContent = formatMoney(weekTotal);
+      els.statMonth.textContent = formatMoney(monthTotal);
+    }
+
+    function updateLockedDisplay(today) {
+      document.getElementById('locked-app').textContent = formatMoney(today.app);
+      document.getElementById('locked-outside').textContent = formatMoney(today.outside);
+      document.getElementById('locked-zoom').textContent = formatPoints(today.zoomPoints) + ' điểm';
+      document.getElementById('locked-highway').textContent = formatMoney(today.highway);
     }
 
     function calculate() {
-      const app = parseInput(els.appIncome);
-      const outside = parseInput(els.outsideIncome);
-      const zoomPts = parseInput(els.zoomPoints);
-      const highway = parseInput(els.highwayFee);
+      const data = loadData();
+      const today = getTodayData(data);
 
-      const zoomDeduction = zoomPts * ZOOM_RATE;
-      const net = app + outside - zoomDeduction - highway;
+      const zoomDeduction = today.zoomPoints * ZOOM_RATE;
+      const net = calcNet(today);
       const remaining = GOAL - net;
 
-      els.sumApp.textContent = '+' + formatMoney(app);
-      els.sumOutside.textContent = '+' + formatMoney(outside);
+      updateLockedDisplay(today);
+      updateStats(data);
+
+      els.sumApp.textContent = '+' + formatMoney(today.app);
+      els.sumOutside.textContent = '+' + formatMoney(today.outside);
       els.sumZoom.textContent = '−' + formatMoney(zoomDeduction);
-      els.sumHighway.textContent = '−' + formatMoney(highway);
+      els.sumHighway.textContent = '−' + formatMoney(today.highway);
       els.sumNet.textContent = formatMoney(net);
 
-      els.resultCard.classList.remove('done', 'over');
+      els.resultCard.classList.remove('done');
       els.remaining.classList.remove('positive', 'zero', 'over');
 
       if (remaining <= 0) {
@@ -419,12 +639,48 @@
       }
     }
 
-    function resetAll() {
-      els.appIncome.value = 0;
-      els.outsideIncome.value = 0;
-      els.zoomPoints.value = 0;
-      els.highwayFee.value = 0;
+    function showToast(msg) {
+      els.toast.textContent = msg;
+      els.toast.classList.add('show');
+      clearTimeout(els.toast._timer);
+      els.toast._timer = setTimeout(() => els.toast.classList.remove('show'), 2000);
+    }
+
+    function addEntry(field) {
+      const config = FIELD_MAP[field];
+      const value = parseInput(config.input);
+      if (value <= 0) {
+        showToast('Vui lòng nhập số lớn hơn 0');
+        return;
+      }
+
+      const data = loadData();
+      const today = getTodayData(data);
+      today[field] += value;
+      saveData(data);
+
+      document.getElementById(config.input).value = '';
       calculate();
+
+      const displayVal = field === 'zoomPoints'
+        ? formatPoints(value) + ' điểm'
+        : formatMoney(value);
+      showToast('Đã cộng ' + displayVal + ' vào ' + config.label);
+    }
+
+    function resetToday() {
+      if (!confirm('Đặt lại toàn bộ dữ liệu hôm nay? Hành động này không thể hoàn tác.')) return;
+
+      const data = loadData();
+      data.days[getTodayKey()] = emptyDay();
+      saveData(data);
+
+      ['app-income', 'outside-income', 'zoom-points', 'highway-fee'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+
+      calculate();
+      showToast('Đã đặt lại dữ liệu hôm nay');
     }
 
     function setTodayDate() {
@@ -433,11 +689,20 @@
       els.todayDate.textContent = now.toLocaleDateString('vi-VN', options);
     }
 
-    [els.appIncome, els.outsideIncome, els.zoomPoints, els.highwayFee].forEach(el => {
-      el.addEventListener('input', calculate);
+    document.querySelectorAll('.add-btn').forEach(btn => {
+      btn.addEventListener('click', () => addEntry(btn.dataset.field));
     });
 
-    els.resetBtn.addEventListener('click', resetAll);
+    ['app-income', 'outside-income', 'zoom-points', 'highway-fee'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const field = Object.entries(FIELD_MAP).find(([, v]) => v.input === id);
+          if (field) addEntry(field[0]);
+        }
+      });
+    });
+
+    els.resetBtn.addEventListener('click', resetToday);
 
     setTodayDate();
     calculate();
