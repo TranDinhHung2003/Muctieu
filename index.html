@@ -465,6 +465,197 @@
       margin-left: -12px;
     }
 
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+    }
+
+    .login-card h1 {
+      text-align: center;
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+    }
+
+    .login-card p {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+
+    .login-card label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+
+    .login-card input[type="text"],
+    .login-card input[type="password"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 16px;
+      outline: none;
+    }
+
+    .login-card input:focus {
+      border-color: var(--accent);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #052e16;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .login-btn:hover {
+      background: var(--accent-dim);
+      color: #fff;
+    }
+
+    .login-error {
+      color: var(--danger);
+      font-size: 0.85rem;
+      text-align: center;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+
+    .admin-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      font-size: 0.82rem;
+    }
+
+    .admin-user {
+      color: var(--text-muted);
+    }
+
+    .admin-user strong {
+      color: var(--accent);
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .admin-btn {
+      padding: 6px 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .admin-btn:hover {
+      color: var(--text);
+      border-color: var(--text-muted);
+    }
+
+    .admin-btn.danger:hover {
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+
+    .sync-status {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .modal h2 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .modal-actions .primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #052e16;
+      font-weight: 700;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
     footer {
       text-align: center;
       margin-top: 32px;
@@ -474,7 +665,33 @@
   </style>
 </head>
 <body>
+  <div id="login-screen" class="login-screen hidden">
+    <div class="login-card">
+      <h1>🔐 Đăng nhập Admin</h1>
+      <p>Đăng nhập để quản lý và lưu dữ liệu an toàn trên server</p>
+      <form id="login-form">
+        <label for="login-username">Tên đăng nhập</label>
+        <input type="text" id="login-username" autocomplete="username" required>
+        <label for="login-password">Mật khẩu</label>
+        <input type="password" id="login-password" autocomplete="current-password" required>
+        <button type="submit" class="login-btn">Đăng nhập</button>
+      </form>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
+
+  <div id="app-screen" class="hidden">
   <div class="container">
+    <div class="admin-bar">
+      <div class="admin-user">👤 <strong id="admin-name">admin</strong></div>
+      <div class="admin-actions">
+        <button class="admin-btn" id="backup-btn" type="button">💾 Sao lưu</button>
+        <button class="admin-btn" id="password-btn" type="button">🔑 Đổi MK</button>
+        <button class="admin-btn danger" id="logout-btn" type="button">Thoát</button>
+      </div>
+    </div>
+    <div class="sync-status" id="sync-status">✓ Dữ liệu đã lưu trên server</div>
+
     <header>
       <h1>🚗 Mục tiêu chạy xe</h1>
       <p id="today-date"></p>
@@ -609,7 +826,25 @@
 
     <button class="reset-btn" id="reset-btn">Đặt lại dữ liệu hôm nay</button>
 
-    <footer>Mục tiêu: 1.200.000đ / ngày · Dữ liệu lưu trên thiết bị</footer>
+    <footer>Mục tiêu: 1.200.000đ / ngày · Dữ liệu lưu trên server</footer>
+  </div>
+  </div>
+
+  <div class="modal-overlay" id="password-modal">
+    <div class="modal">
+      <h2>Đổi mật khẩu</h2>
+      <label for="current-password">Mật khẩu hiện tại</label>
+      <input type="password" id="current-password" class="login-card" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text);margin-bottom:12px">
+      <label for="new-password">Mật khẩu mới</label>
+      <input type="password" id="new-password" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text);margin-bottom:12px">
+      <label for="confirm-password">Xác nhận mật khẩu mới</label>
+      <input type="password" id="confirm-password" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text)">
+      <div class="login-error" id="password-error"></div>
+      <div class="modal-actions">
+        <button type="button" id="password-cancel">Hủy</button>
+        <button type="button" class="primary" id="password-save">Lưu</button>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -618,6 +853,9 @@
     const GOAL = 1200000;
     const ZOOM_RATE = 80000;
     const STORAGE_KEY = 'muctieu-chay-xe';
+
+    let appData = { days: {} };
+    let isLoggedIn = false;
 
     const FIELD_MAP = {
       app: { input: 'app-income', locked: 'locked-app', label: 'tiền app' },
@@ -628,6 +866,17 @@
     };
 
     const els = {
+      loginScreen: document.getElementById('login-screen'),
+      appScreen: document.getElementById('app-screen'),
+      loginForm: document.getElementById('login-form'),
+      loginError: document.getElementById('login-error'),
+      adminName: document.getElementById('admin-name'),
+      syncStatus: document.getElementById('sync-status'),
+      logoutBtn: document.getElementById('logout-btn'),
+      backupBtn: document.getElementById('backup-btn'),
+      passwordBtn: document.getElementById('password-btn'),
+      passwordModal: document.getElementById('password-modal'),
+      passwordError: document.getElementById('password-error'),
       todayDate: document.getElementById('today-date'),
       statDay: document.getElementById('stat-day'),
       statWeek: document.getElementById('stat-week'),
@@ -646,6 +895,187 @@
       resetBtn: document.getElementById('reset-btn'),
       toast: document.getElementById('toast'),
     };
+
+    async function api(url, options = {}) {
+      const res = await fetch('/api' + url, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        credentials: 'same-origin',
+        body: options.body ? JSON.stringify(options.body) : undefined,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Lỗi kết nối server');
+      return data;
+    }
+
+    function showLogin() {
+      isLoggedIn = false;
+      els.loginScreen.classList.remove('hidden');
+      els.appScreen.classList.add('hidden');
+    }
+
+    function showApp(username) {
+      isLoggedIn = true;
+      els.adminName.textContent = username;
+      els.loginScreen.classList.add('hidden');
+      els.appScreen.classList.remove('hidden');
+    }
+
+    function setSyncStatus(msg, ok = true) {
+      els.syncStatus.textContent = msg;
+      els.syncStatus.style.color = ok ? 'var(--accent)' : 'var(--warning)';
+    }
+
+    function loadLocalData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) { /* ignore */ }
+      return { days: {} };
+    }
+
+    function hasLocalData(data) {
+      return Object.values(data.days || {}).some(day => !isDayEmpty(day));
+    }
+
+    function mergeData(serverData, localData) {
+      const merged = { days: { ...serverData.days } };
+      for (const [key, day] of Object.entries(localData.days || {})) {
+        if (!isDayEmpty(day)) {
+          if (!merged.days[key] || isDayEmpty(merged.days[key])) {
+            merged.days[key] = normalizeDay(day);
+          }
+        }
+      }
+      return merged;
+    }
+
+    async function loadFromServer() {
+      const result = await api('/data');
+      appData = result.data || { days: {} };
+
+      const local = loadLocalData();
+      if (hasLocalData(local)) {
+        const serverEmpty = !hasLocalData(appData);
+        if (serverEmpty || confirm('Phát hiện dữ liệu cũ trên trình duyệt. Bạn có muốn nhập vào server không?')) {
+          appData = mergeData(appData, local);
+          await saveToServer();
+          localStorage.removeItem(STORAGE_KEY);
+          showToast('Đã nhập dữ liệu cũ lên server');
+        }
+      }
+
+      if (result.updatedAt) {
+        const time = new Date(result.updatedAt).toLocaleString('vi-VN');
+        setSyncStatus('✓ Đã đồng bộ · Cập nhật: ' + time);
+      }
+    }
+
+    async function saveToServer() {
+      setSyncStatus('⏳ Đang lưu...', false);
+      try {
+        const result = await api('/data', { method: 'PUT', body: { data: appData } });
+        const time = new Date(result.updatedAt).toLocaleString('vi-VN');
+        setSyncStatus('✓ Dữ liệu đã lưu trên server · ' + time);
+      } catch (e) {
+        setSyncStatus('⚠ Lỗi lưu: ' + e.message, false);
+        throw e;
+      }
+    }
+
+    function loadData() {
+      return appData;
+    }
+
+    async function saveData(data) {
+      appData = data;
+      await saveToServer();
+    }
+
+    async function initApp() {
+      try {
+        const me = await api('/me');
+        if (!me.loggedIn) {
+          showLogin();
+          return;
+        }
+        showApp(me.username);
+        await loadFromServer();
+        setTodayDate();
+        calculate();
+      } catch {
+        showLogin();
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      els.loginError.textContent = '';
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      try {
+        await api('/login', { method: 'POST', body: { username, password } });
+        showApp(username);
+        await loadFromServer();
+        setTodayDate();
+        calculate();
+        showToast('Đăng nhập thành công');
+      } catch (err) {
+        els.loginError.textContent = err.message;
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await api('/logout', { method: 'POST' });
+      } catch { /* ignore */ }
+      showLogin();
+      document.getElementById('login-password').value = '';
+    }
+
+    async function handleBackup() {
+      try {
+        const result = await api('/backup');
+        const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'muctieu-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Đã tải file sao lưu');
+      } catch (err) {
+        showToast(err.message);
+      }
+    }
+
+    function openPasswordModal() {
+      els.passwordError.textContent = '';
+      document.getElementById('current-password').value = '';
+      document.getElementById('new-password').value = '';
+      document.getElementById('confirm-password').value = '';
+      els.passwordModal.classList.add('show');
+    }
+
+    async function savePassword() {
+      const currentPassword = document.getElementById('current-password').value;
+      const newPassword = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      els.passwordError.textContent = '';
+
+      if (newPassword !== confirmPassword) {
+        els.passwordError.textContent = 'Mật khẩu xác nhận không khớp';
+        return;
+      }
+
+      try {
+        await api('/change-password', { method: 'POST', body: { currentPassword, newPassword } });
+        els.passwordModal.classList.remove('show');
+        showToast('Đã đổi mật khẩu thành công');
+      } catch (err) {
+        els.passwordError.textContent = err.message;
+      }
+    }
 
     function getTodayKey() {
       const d = new Date();
@@ -667,18 +1097,6 @@
         highway: day.highway || 0,
         tip: day.tip || 0,
       };
-    }
-
-    function loadData() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch (e) { /* ignore */ }
-      return { days: {} };
-    }
-
-    function saveData(data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
     function getTodayData(data) {
@@ -867,7 +1285,7 @@
       els.toast._timer = setTimeout(() => els.toast.classList.remove('show'), 2000);
     }
 
-    function addEntry(field) {
+    async function addEntry(field) {
       const config = FIELD_MAP[field];
       const value = parseInput(config.input);
       if (value <= 0) {
@@ -878,7 +1296,13 @@
       const data = loadData();
       const today = getTodayData(data);
       today[field] += value;
-      saveData(data);
+
+      try {
+        await saveData(data);
+      } catch (err) {
+        showToast('Lỗi lưu: ' + err.message);
+        return;
+      }
 
       document.getElementById(config.input).value = '';
       calculate();
@@ -889,12 +1313,18 @@
       showToast('Đã cộng ' + displayVal + ' vào ' + config.label);
     }
 
-    function resetToday() {
+    async function resetToday() {
       if (!confirm('Đặt lại toàn bộ dữ liệu hôm nay? Hành động này không thể hoàn tác.')) return;
 
       const data = loadData();
       data.days[getTodayKey()] = emptyDay();
-      saveData(data);
+
+      try {
+        await saveData(data);
+      } catch (err) {
+        showToast('Lỗi lưu: ' + err.message);
+        return;
+      }
 
       ['app-income', 'outside-income', 'zoom-points', 'highway-fee', 'tip-income'].forEach(id => {
         document.getElementById(id).value = '';
@@ -924,9 +1354,14 @@
     });
 
     els.resetBtn.addEventListener('click', resetToday);
+    els.loginForm.addEventListener('submit', handleLogin);
+    els.logoutBtn.addEventListener('click', handleLogout);
+    els.backupBtn.addEventListener('click', handleBackup);
+    els.passwordBtn.addEventListener('click', openPasswordModal);
+    document.getElementById('password-cancel').addEventListener('click', () => els.passwordModal.classList.remove('show'));
+    document.getElementById('password-save').addEventListener('click', savePassword);
 
-    setTodayDate();
-    calculate();
+    initApp();
   </script>
 </body>
 </html>
