@@ -351,6 +351,120 @@
       opacity: 1;
     }
 
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .history-item.today {
+      border-color: var(--info);
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      cursor: pointer;
+      gap: 10px;
+    }
+
+    .history-header:hover {
+      background: var(--surface-2);
+    }
+
+    .history-date {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .history-date span {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .history-right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .history-net {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.95rem;
+    }
+
+    .history-badge {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .history-badge.done {
+      background: #22c55e22;
+      color: var(--accent);
+    }
+
+    .history-badge.pending {
+      background: #f59e0b22;
+      color: var(--warning);
+    }
+
+    .history-detail {
+      display: none;
+      padding: 0 16px 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .history-item.open .history-detail {
+      display: block;
+      padding-top: 12px;
+    }
+
+    .history-detail-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      padding: 4px 0;
+      color: var(--text-muted);
+    }
+
+    .history-detail-row .val {
+      color: var(--text);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .history-empty {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+    }
+
+    .tip-highlight {
+      border-left: 3px solid var(--warning);
+      padding-left: 12px;
+      margin-left: -12px;
+    }
+
     footer {
       text-align: center;
       margin-top: 32px;
@@ -446,6 +560,21 @@
       </div>
     </div>
 
+    <div class="form-group tip-highlight">
+      <label for="tip-income">
+        Khách hàng TIP (thái độ phục vụ)
+        <span class="hint">tiền thưởng thêm</span>
+      </label>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-tip">0đ</strong></div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input type="number" id="tip-income" class="has-suffix" min="0" step="1000" placeholder="Nhập tiền TIP lượt này">
+          <span class="suffix">đ</span>
+        </div>
+        <button class="add-btn" data-field="tip">+ Thêm</button>
+      </div>
+    </div>
+
     <p class="section-title" style="margin-top: 24px;">Chi tiết tính toán hôm nay</p>
 
     <div class="summary">
@@ -465,11 +594,18 @@
         <span class="label">Tiền cao tốc</span>
         <span class="value minus" id="sum-highway">−0đ</span>
       </div>
+      <div class="summary-row">
+        <span class="label">TIP khách hàng</span>
+        <span class="value plus" id="sum-tip">+0đ</span>
+      </div>
       <div class="summary-row total">
         <span class="label">Thực nhận hôm nay</span>
         <span class="value" id="sum-net">0đ</span>
       </div>
     </div>
+
+    <p class="section-title" style="margin-top: 28px;">Xem lại doanh số các ngày</p>
+    <div class="history-list" id="history-list"></div>
 
     <button class="reset-btn" id="reset-btn">Đặt lại dữ liệu hôm nay</button>
 
@@ -488,6 +624,7 @@
       outside: { input: 'outside-income', locked: 'locked-outside', label: 'tiền ngoài' },
       zoomPoints: { input: 'zoom-points', locked: 'locked-zoom', label: 'điểm Zoom' },
       highway: { input: 'highway-fee', locked: 'locked-highway', label: 'tiền cao tốc' },
+      tip: { input: 'tip-income', locked: 'locked-tip', label: 'TIP khách hàng' },
     };
 
     const els = {
@@ -503,7 +640,9 @@
       sumOutside: document.getElementById('sum-outside'),
       sumZoom: document.getElementById('sum-zoom'),
       sumHighway: document.getElementById('sum-highway'),
+      sumTip: document.getElementById('sum-tip'),
       sumNet: document.getElementById('sum-net'),
+      historyList: document.getElementById('history-list'),
       resetBtn: document.getElementById('reset-btn'),
       toast: document.getElementById('toast'),
     };
@@ -517,7 +656,17 @@
     }
 
     function emptyDay() {
-      return { app: 0, outside: 0, zoomPoints: 0, highway: 0 };
+      return { app: 0, outside: 0, zoomPoints: 0, highway: 0, tip: 0 };
+    }
+
+    function normalizeDay(day) {
+      return {
+        app: day.app || 0,
+        outside: day.outside || 0,
+        zoomPoints: day.zoomPoints || 0,
+        highway: day.highway || 0,
+        tip: day.tip || 0,
+      };
     }
 
     function loadData() {
@@ -535,11 +684,79 @@
     function getTodayData(data) {
       const key = getTodayKey();
       if (!data.days[key]) data.days[key] = emptyDay();
+      data.days[key] = normalizeDay(data.days[key]);
       return data.days[key];
     }
 
     function calcNet(day) {
-      return day.app + day.outside - day.zoomPoints * ZOOM_RATE - day.highway;
+      const d = normalizeDay(day);
+      return d.app + d.outside + d.tip - d.zoomPoints * ZOOM_RATE - d.highway;
+    }
+
+    function formatDateLabel(dateKey) {
+      const parts = dateKey.split('-');
+      const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+      const weekday = d.toLocaleDateString('vi-VN', { weekday: 'short' });
+      const date = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      return { weekday, date, full: weekday + ', ' + date };
+    }
+
+    function isDayEmpty(day) {
+      const d = normalizeDay(day);
+      return d.app === 0 && d.outside === 0 && d.zoomPoints === 0 && d.highway === 0 && d.tip === 0;
+    }
+
+    function renderHistory(data) {
+      const todayKey = getTodayKey();
+      const entries = Object.entries(data.days)
+        .filter(([, day]) => !isDayEmpty(day))
+        .sort((a, b) => b[0].localeCompare(a[0]));
+
+      if (entries.length === 0) {
+        els.historyList.innerHTML = '<div class="history-empty">Chưa có dữ liệu ngày nào.<br>Nhấn Thêm để bắt đầu ghi nhận.</div>';
+        return;
+      }
+
+      els.historyList.innerHTML = entries.map(([dateKey, rawDay]) => {
+        const day = normalizeDay(rawDay);
+        const net = calcNet(day);
+        const achieved = net >= GOAL;
+        const { weekday, date } = formatDateLabel(dateKey);
+        const isToday = dateKey === todayKey;
+        const diff = net - GOAL;
+        const statusText = achieved
+          ? (diff > 0 ? 'Vượt ' + formatMoney(diff) : 'Đạt mục tiêu')
+          : 'Thiếu ' + formatMoney(GOAL - net);
+
+        return `
+          <div class="history-item${isToday ? ' today' : ''}" data-date="${dateKey}">
+            <div class="history-header">
+              <div class="history-date">
+                ${isToday ? 'Hôm nay' : weekday}
+                <span>${isToday ? date : date}</span>
+              </div>
+              <div class="history-right">
+                <div class="history-net">${formatMoney(net)}</div>
+                <span class="history-badge ${achieved ? 'done' : 'pending'}">${statusText}</span>
+              </div>
+            </div>
+            <div class="history-detail">
+              <div class="history-detail-row"><span>Tiền app</span><span class="val">+${formatMoney(day.app)}</span></div>
+              <div class="history-detail-row"><span>Tiền ngoài</span><span class="val">+${formatMoney(day.outside)}</span></div>
+              <div class="history-detail-row"><span>TIP khách hàng</span><span class="val">+${formatMoney(day.tip)}</span></div>
+              <div class="history-detail-row"><span>Trừ Zoom (${formatPoints(day.zoomPoints)} điểm)</span><span class="val">−${formatMoney(day.zoomPoints * ZOOM_RATE)}</span></div>
+              <div class="history-detail-row"><span>Cao tốc</span><span class="val">−${formatMoney(day.highway)}</span></div>
+              <div class="history-detail-row" style="margin-top:6px;font-weight:600"><span>Mục tiêu 1.200.000đ</span><span class="val" style="color:${achieved ? 'var(--accent)' : 'var(--warning)'}">${achieved ? '✓ Đạt' : '✗ Chưa đạt'}</span></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      els.historyList.querySelectorAll('.history-header').forEach(header => {
+        header.addEventListener('click', () => {
+          header.parentElement.classList.toggle('open');
+        });
+      });
     }
 
     function formatMoney(amount) {
@@ -599,6 +816,7 @@
       document.getElementById('locked-outside').textContent = formatMoney(today.outside);
       document.getElementById('locked-zoom').textContent = formatPoints(today.zoomPoints) + ' điểm';
       document.getElementById('locked-highway').textContent = formatMoney(today.highway);
+      document.getElementById('locked-tip').textContent = formatMoney(today.tip);
     }
 
     function calculate() {
@@ -616,7 +834,10 @@
       els.sumOutside.textContent = '+' + formatMoney(today.outside);
       els.sumZoom.textContent = '−' + formatMoney(zoomDeduction);
       els.sumHighway.textContent = '−' + formatMoney(today.highway);
+      els.sumTip.textContent = '+' + formatMoney(today.tip);
       els.sumNet.textContent = formatMoney(net);
+
+      renderHistory(data);
 
       els.resultCard.classList.remove('done');
       els.remaining.classList.remove('positive', 'zero', 'over');
@@ -675,7 +896,7 @@
       data.days[getTodayKey()] = emptyDay();
       saveData(data);
 
-      ['app-income', 'outside-income', 'zoom-points', 'highway-fee'].forEach(id => {
+      ['app-income', 'outside-income', 'zoom-points', 'highway-fee', 'tip-income'].forEach(id => {
         document.getElementById(id).value = '';
       });
 
@@ -693,7 +914,7 @@
       btn.addEventListener('click', () => addEntry(btn.dataset.field));
     });
 
-    ['app-income', 'outside-income', 'zoom-points', 'highway-fee'].forEach(id => {
+    ['app-income', 'outside-income', 'zoom-points', 'highway-fee', 'tip-income'].forEach(id => {
       document.getElementById(id).addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           const field = Object.entries(FIELD_MAP).find(([, v]) => v.input === id);
