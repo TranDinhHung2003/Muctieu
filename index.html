@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chạy Đủ — Mục tiêu ngày</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep: #0c1218;
+      --bg-mid: #152028;
+      --bg-panel: rgba(22, 34, 44, 0.72);
+      --line: rgba(255, 214, 140, 0.18);
+      --text: #f3efe6;
+      --muted: #9aabba;
+      --accent: #f0a53a;
+      --accent-soft: #ffd27a;
+      --good: #3ecf8e;
+      --warn: #ff7a59;
+      --input-bg: rgba(8, 14, 20, 0.55);
+      --radius: 18px;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      --goal: 1200000;
+      --point-value: 80000;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100%;
+    }
+
+    body {
+      font-family: "Be Vietnam Pro", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 700px at 10% -10%, rgba(240, 165, 58, 0.22), transparent 55%),
+        radial-gradient(900px 600px at 100% 0%, rgba(62, 207, 142, 0.12), transparent 50%),
+        linear-gradient(165deg, #0a1016 0%, #121c24 42%, #0d151c 100%);
+      background-attachment: fixed;
+      line-height: 1.5;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+      opacity: 0.45;
+    }
+
+    .wrap {
+      width: min(560px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2.25rem 0 3rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand {
+      font-family: "Outfit", sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.6rem, 10vw, 3.6rem);
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+      margin-bottom: 0.55rem;
+      background: linear-gradient(120deg, var(--accent-soft), var(--accent) 55%, #fff6e4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: rise 0.7s ease both;
+    }
+
+    .tagline {
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 28ch;
+      margin-bottom: 1.75rem;
+      animation: rise 0.7s ease 0.08s both;
+    }
+
+    .goal-banner {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--line);
+      animation: rise 0.7s ease 0.14s both;
+    }
+
+    .goal-banner .label {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .goal-banner .value {
+      font-family: "Outfit", sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.5rem, 5vw, 1.85rem);
+      color: var(--accent-soft);
+      letter-spacing: -0.02em;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+      animation: rise 0.75s ease 0.2s both;
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    .field:last-of-type {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: rgba(154, 171, 186, 0.85);
+      font-weight: 400;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--input-bg);
+      border: 1px solid rgba(255, 214, 140, 0.14);
+      border-radius: 12px;
+      padding: 0.15rem 0.85rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-row:focus-within {
+      border-color: rgba(240, 165, 58, 0.55);
+      box-shadow: 0 0 0 3px rgba(240, 165, 58, 0.12);
+    }
+
+    input[type="number"] {
+      width: 100%;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1.15rem;
+      font-weight: 600;
+      padding: 0.85rem 0;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .suffix {
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--line);
+      margin: 1.25rem 0;
+    }
+
+    .result {
+      margin-top: 1.25rem;
+      animation: rise 0.75s ease 0.28s both;
+    }
+
+    .result-card {
+      border-radius: var(--radius);
+      padding: 1.35rem 1.25rem;
+      background:
+        linear-gradient(145deg, rgba(240, 165, 58, 0.16), rgba(22, 34, 44, 0.9) 55%),
+        var(--bg-mid);
+      border: 1px solid rgba(240, 165, 58, 0.28);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .result-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -20% -40% 40%;
+      height: 120%;
+      background: radial-gradient(circle, rgba(240, 165, 58, 0.2), transparent 60%);
+      pointer-events: none;
+    }
+
+    .result-card.done {
+      border-color: rgba(62, 207, 142, 0.4);
+      background:
+        linear-gradient(145deg, rgba(62, 207, 142, 0.18), rgba(22, 34, 44, 0.9) 55%),
+        var(--bg-mid);
+    }
+
+    .result-card.done::after {
+      background: radial-gradient(circle, rgba(62, 207, 142, 0.22), transparent 60%);
+    }
+
+    .result-label {
+      position: relative;
+      z-index: 1;
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .result-value {
+      position: relative;
+      z-index: 1;
+      font-family: "Outfit", sans-serif;
+      font-weight: 800;
+      font-size: clamp(2rem, 8vw, 2.6rem);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      transition: color 0.25s ease, transform 0.25s ease;
+    }
+
+    .result-card.done .result-value {
+      color: var(--good);
+    }
+
+    .result-card:not(.done) .result-value {
+      color: var(--accent-soft);
+    }
+
+    .result-sub {
+      position: relative;
+      z-index: 1;
+      margin-top: 0.55rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .progress-wrap {
+      position: relative;
+      z-index: 1;
+      margin-top: 1.1rem;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #d4892a, var(--accent-soft));
+      transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .result-card.done .bar > span {
+      background: linear-gradient(90deg, #249e68, var(--good));
+    }
+
+    .breakdown {
+      margin-top: 1rem;
+      display: grid;
+      gap: 0.45rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .breakdown-row strong {
+      color: var(--text);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .breakdown-row.neg strong {
+      color: var(--warn);
+    }
+
+    .breakdown-row.pos strong {
+      color: var(--good);
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    button {
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: 0;
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease, background 0.2s ease;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-reset {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-reset:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .foot {
+      margin-top: 1.5rem;
+      text-align: center;
+      color: rgba(154, 171, 186, 0.7);
+      font-size: 0.78rem;
+      animation: rise 0.7s ease 0.35s both;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse-once {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+
+    .pop {
+      animation: pulse-once 0.35s ease;
+    }
+
+    @media (max-width: 420px) {
+      .wrap {
+        width: calc(100% - 1.25rem);
+        padding-top: 1.5rem;
+      }
+
+      .panel {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1 class="brand">Chạy Đủ</h1>
+    <p class="tagline">Theo dõi doanh thu ngày và số tiền còn thiếu để đạt mục tiêu.</p>
+
+    <div class="goal-banner">
+      <span class="label">Mục tiêu hôm nay</span>
+      <span class="value" id="goalDisplay">1.200.000đ</span>
+    </div>
+
+    <section class="panel" aria-label="Nhập số liệu">
+      <div class="field">
+        <label for="appMoney">Số tiền chạy trên app</label>
+        <div class="input-row">
+          <input id="appMoney" type="number" inputmode="numeric" min="0" step="1000" placeholder="0" value="" />
+          <span class="suffix">đ</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="outsideMoney">Số tiền chạy ngoài</label>
+        <div class="input-row">
+          <input id="outsideMoney" type="number" inputmode="numeric" min="0" step="1000" placeholder="0" value="" />
+          <span class="suffix">đ</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="zoomPoints">
+          Số điểm trừ trên Zoom
+          <span class="hint">· 1 điểm = −80.000đ · nhập từ 0.5</span>
+        </label>
+        <div class="input-row">
+          <input id="zoomPoints" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0" value="" />
+          <span class="suffix">điểm</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="highwayFee">Số tiền cao tốc phải trả</label>
+        <div class="input-row">
+          <input id="highwayFee" type="number" inputmode="numeric" min="0" step="1000" placeholder="0" value="" />
+          <span class="suffix">đ</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="result" aria-live="polite">
+      <div class="result-card" id="resultCard">
+        <p class="result-label" id="resultLabel">Còn phải chạy</p>
+        <p class="result-value" id="resultValue">1.200.000đ</p>
+        <p class="result-sub" id="resultSub">Nhập số liệu để cập nhật tiến độ.</p>
+
+        <div class="progress-wrap">
+          <div class="progress-meta">
+            <span>Tiến độ</span>
+            <span id="progressPct">0%</span>
+          </div>
+          <div class="bar" aria-hidden="true"><span id="progressBar"></span></div>
+        </div>
+
+        <div class="breakdown">
+          <div class="breakdown-row pos">
+            <span>Tổng thu (app + ngoài)</span>
+            <strong id="totalIncome">0đ</strong>
+          </div>
+          <div class="breakdown-row neg">
+            <span>Trừ Zoom</span>
+            <strong id="zoomDeduction">0đ</strong>
+          </div>
+          <div class="breakdown-row neg">
+            <span>Trừ cao tốc</span>
+            <strong id="highwayDisplay">0đ</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>Thực nhận hôm nay</span>
+            <strong id="netIncome">0đ</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn-reset" id="resetBtn">Xóa số liệu</button>
+      </div>
+    </section>
+
+    <p class="foot">Công thức: Mục tiêu − (app + ngoài − Zoom × 80.000 − cao tốc)</p>
+  </main>
+
+  <script>
+    const GOAL = 1_200_000;
+    const POINT_VALUE = 80_000;
+    const STORAGE_KEY = "chay-du-inputs-v1";
+
+    const fields = {
+      appMoney: document.getElementById("appMoney"),
+      outsideMoney: document.getElementById("outsideMoney"),
+      zoomPoints: document.getElementById("zoomPoints"),
+      highwayFee: document.getElementById("highwayFee"),
+    };
+
+    const els = {
+      resultCard: document.getElementById("resultCard"),
+      resultLabel: document.getElementById("resultLabel"),
+      resultValue: document.getElementById("resultValue"),
+      resultSub: document.getElementById("resultSub"),
+      progressPct: document.getElementById("progressPct"),
+      progressBar: document.getElementById("progressBar"),
+      totalIncome: document.getElementById("totalIncome"),
+      zoomDeduction: document.getElementById("zoomDeduction"),
+      highwayDisplay: document.getElementById("highwayDisplay"),
+      netIncome: document.getElementById("netIncome"),
+      resetBtn: document.getElementById("resetBtn"),
+    };
+
+    function parseMoney(input) {
+      const n = Number(input.value);
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    }
+
+    function parsePoints(input) {
+      const n = Number(input.value);
+      if (!Number.isFinite(n) || n < 0) return 0;
+      return Math.round(n * 2) / 2;
+    }
+
+    function formatVnd(n) {
+      const abs = Math.abs(Math.round(n));
+      const formatted = abs.toLocaleString("vi-VN");
+      return (n < 0 ? "-" : "") + formatted + "đ";
+    }
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        Object.keys(fields).forEach((key) => {
+          if (data[key] != null && data[key] !== "") {
+            fields[key].value = data[key];
+          }
+        });
+      } catch (_) {}
+    }
+
+    function save() {
+      const data = {};
+      Object.keys(fields).forEach((key) => {
+        data[key] = fields[key].value;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function calc() {
+      const app = parseMoney(fields.appMoney);
+      const outside = parseMoney(fields.outsideMoney);
+      const points = parsePoints(fields.zoomPoints);
+      const highway = parseMoney(fields.highwayFee);
+
+      const totalIncome = app + outside;
+      const zoomDeduction = points * POINT_VALUE;
+      const net = totalIncome - zoomDeduction - highway;
+      const remaining = GOAL - net;
+      const pct = Math.max(0, Math.min(100, (net / GOAL) * 100));
+
+      els.totalIncome.textContent = formatVnd(totalIncome);
+      els.zoomDeduction.textContent = points > 0 ? "−" + formatVnd(zoomDeduction) : "0đ";
+      els.highwayDisplay.textContent = highway > 0 ? "−" + formatVnd(highway) : "0đ";
+      els.netIncome.textContent = formatVnd(net);
+      els.progressPct.textContent = Math.round(pct) + "%";
+      els.progressBar.style.width = pct + "%";
+
+      const done = remaining <= 0;
+      els.resultCard.classList.toggle("done", done);
+
+      if (done) {
+        els.resultLabel.textContent = "Đã vượt mục tiêu";
+        els.resultValue.textContent = "+" + formatVnd(Math.abs(remaining));
+        els.resultSub.textContent =
+          net >= GOAL
+            ? "Tuyệt vời! Bạn đã đạt và vượt " + formatVnd(GOAL) + "."
+            : "Bạn đã đạt mục tiêu ngày.";
+      } else {
+        els.resultLabel.textContent = "Còn phải chạy";
+        els.resultValue.textContent = formatVnd(remaining);
+        els.resultSub.textContent =
+          net > 0
+            ? "Thực nhận hiện tại " + formatVnd(net) + " / " + formatVnd(GOAL) + "."
+            : "Nhập số liệu để cập nhật tiến độ.";
+      }
+
+      els.resultValue.classList.remove("pop");
+      void els.resultValue.offsetWidth;
+      els.resultValue.classList.add("pop");
+
+      save();
+    }
+
+    Object.values(fields).forEach((input) => {
+      input.addEventListener("input", calc);
+      input.addEventListener("change", () => {
+        if (input === fields.zoomPoints && input.value !== "") {
+          input.value = String(parsePoints(input));
+        }
+        calc();
+      });
+    });
+
+    els.resetBtn.addEventListener("click", () => {
+      Object.values(fields).forEach((input) => {
+        input.value = "";
+      });
+      localStorage.removeItem(STORAGE_KEY);
+      calc();
+      fields.appMoney.focus();
+    });
+
+    load();
+    calc();
+  </script>
+</body>
+</html>
