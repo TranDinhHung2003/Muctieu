@@ -241,18 +241,22 @@
       padding-right: 52px;
     }
 
-    .add-btn {
+    .add-btn,
+    .sub-btn {
       flex-shrink: 0;
-      padding: 0 18px;
-      background: var(--accent);
-      color: #052e16;
+      padding: 0 14px;
       border: none;
       border-radius: 12px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 700;
       cursor: pointer;
       transition: background 0.2s, transform 0.1s;
       white-space: nowrap;
+    }
+
+    .add-btn {
+      background: var(--accent);
+      color: #052e16;
     }
 
     .add-btn:hover {
@@ -260,13 +264,97 @@
       color: #fff;
     }
 
-    .add-btn:active {
+    .sub-btn {
+      background: transparent;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+    }
+
+    .sub-btn:hover {
+      background: #ef444422;
+    }
+
+    .add-btn:active,
+    .sub-btn:active {
       transform: scale(0.97);
     }
 
-    .add-btn:disabled {
+    .add-btn:disabled,
+    .sub-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
+    }
+
+    .locked-badge {
+      gap: 8px;
+    }
+
+    .clear-field-btn {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      font-size: 0.72rem;
+      cursor: pointer;
+      padding: 0 2px;
+      text-decoration: underline;
+    }
+
+    .entries-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .entry-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+
+    .entry-item .entry-info {
+      min-width: 0;
+    }
+
+    .entry-item .entry-field {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .entry-item .entry-meta {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .entry-item .entry-value {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .entry-item .entry-value.plus { color: var(--accent); }
+    .entry-item .entry-value.minus { color: var(--danger); }
+
+    .entry-delete {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--danger);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .entry-delete:hover {
+      border-color: var(--danger);
+      background: #ef444422;
     }
 
     .summary {
@@ -728,25 +816,27 @@
 
     <div class="form-group">
       <label for="app-income">Số tiền chạy trên app</label>
-      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-app">0đ</strong></div>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-app">0đ</strong> <button type="button" class="clear-field-btn" data-clear="app">Xóa mục này</button></div>
       <div class="input-row">
         <div class="input-wrap">
           <input type="number" id="app-income" class="has-suffix" min="0" step="1000" placeholder="Nhập tiền lượt này">
           <span class="suffix">đ</span>
         </div>
-        <button class="add-btn" data-field="app">+ Thêm</button>
+        <button class="add-btn" data-field="app" data-action="add">+ Thêm</button>
+        <button class="sub-btn" data-field="app" data-action="sub">− Trừ</button>
       </div>
     </div>
 
     <div class="form-group">
       <label for="outside-income">Số tiền chạy ngoài</label>
-      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-outside">0đ</strong></div>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-outside">0đ</strong> <button type="button" class="clear-field-btn" data-clear="outside">Xóa mục này</button></div>
       <div class="input-row">
         <div class="input-wrap">
           <input type="number" id="outside-income" class="has-suffix" min="0" step="1000" placeholder="Nhập tiền lượt này">
           <span class="suffix">đ</span>
         </div>
-        <button class="add-btn" data-field="outside">+ Thêm</button>
+        <button class="add-btn" data-field="outside" data-action="add">+ Thêm</button>
+        <button class="sub-btn" data-field="outside" data-action="sub">− Trừ</button>
       </div>
     </div>
 
@@ -755,25 +845,27 @@
         Số điểm trừ trên Zoom
         <span class="hint">1 điểm = −80.000đ</span>
       </label>
-      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-zoom">0 điểm</strong></div>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-zoom">0 điểm</strong> <button type="button" class="clear-field-btn" data-clear="zoomPoints">Xóa mục này</button></div>
       <div class="input-row">
         <div class="input-wrap">
           <input type="number" id="zoom-points" class="has-suffix" min="0" step="0.5" placeholder="Nhập điểm lượt này">
           <span class="suffix">điểm</span>
         </div>
-        <button class="add-btn" data-field="zoomPoints">+ Thêm</button>
+        <button class="add-btn" data-field="zoomPoints" data-action="add">+ Thêm</button>
+        <button class="sub-btn" data-field="zoomPoints" data-action="sub">− Trừ</button>
       </div>
     </div>
 
     <div class="form-group">
       <label for="highway-fee">Số tiền cao tốc phải trả</label>
-      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-highway">0đ</strong></div>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-highway">0đ</strong> <button type="button" class="clear-field-btn" data-clear="highway">Xóa mục này</button></div>
       <div class="input-row">
         <div class="input-wrap">
           <input type="number" id="highway-fee" class="has-suffix" min="0" step="1000" placeholder="Nhập tiền lượt này">
           <span class="suffix">đ</span>
         </div>
-        <button class="add-btn" data-field="highway">+ Thêm</button>
+        <button class="add-btn" data-field="highway" data-action="add">+ Thêm</button>
+        <button class="sub-btn" data-field="highway" data-action="sub">− Trừ</button>
       </div>
     </div>
 
@@ -782,15 +874,19 @@
         Khách hàng TIP (thái độ phục vụ)
         <span class="hint">tiền thưởng thêm</span>
       </label>
-      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-tip">0đ</strong></div>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-tip">0đ</strong> <button type="button" class="clear-field-btn" data-clear="tip">Xóa mục này</button></div>
       <div class="input-row">
         <div class="input-wrap">
           <input type="number" id="tip-income" class="has-suffix" min="0" step="1000" placeholder="Nhập tiền TIP lượt này">
           <span class="suffix">đ</span>
         </div>
-        <button class="add-btn" data-field="tip">+ Thêm</button>
+        <button class="add-btn" data-field="tip" data-action="add">+ Thêm</button>
+        <button class="sub-btn" data-field="tip" data-action="sub">− Trừ</button>
       </div>
     </div>
+
+    <p class="section-title" style="margin-top: 24px;">Lượt đã nhập hôm nay</p>
+    <div class="entries-list" id="entries-list"></div>
 
     <p class="section-title" style="margin-top: 24px;">Chi tiết tính toán hôm nay</p>
 
@@ -856,6 +952,8 @@
 
     let appData = { days: {} };
     let isLoggedIn = false;
+    let currentDayKey = null;
+    let dayWatchTimer = null;
 
     const FIELD_MAP = {
       app: { input: 'app-income', locked: 'locked-app', label: 'tiền app' },
@@ -892,6 +990,7 @@
       sumTip: document.getElementById('sum-tip'),
       sumNet: document.getElementById('sum-net'),
       historyList: document.getElementById('history-list'),
+      entriesList: document.getElementById('entries-list'),
       resetBtn: document.getElementById('reset-btn'),
       toast: document.getElementById('toast'),
     };
@@ -1002,6 +1101,7 @@
         showApp(me.username);
         await loadFromServer();
         setTodayDate();
+        startDayWatcher();
         calculate();
       } catch {
         showLogin();
@@ -1018,6 +1118,7 @@
         showApp(username);
         await loadFromServer();
         setTodayDate();
+        startDayWatcher();
         calculate();
         showToast('Đăng nhập thành công');
       } catch (err) {
@@ -1086,24 +1187,80 @@
     }
 
     function emptyDay() {
-      return { app: 0, outside: 0, zoomPoints: 0, highway: 0, tip: 0 };
+      return { app: 0, outside: 0, zoomPoints: 0, highway: 0, tip: 0, entries: [] };
     }
 
     function normalizeDay(day) {
-      return {
+      const normalized = {
         app: day.app || 0,
         outside: day.outside || 0,
         zoomPoints: day.zoomPoints || 0,
         highway: day.highway || 0,
         tip: day.tip || 0,
+        entries: Array.isArray(day.entries) ? day.entries : [],
       };
+      return normalized;
+    }
+
+    function createEntryId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    function rebuildTotalsFromEntries(day) {
+      day.app = 0;
+      day.outside = 0;
+      day.zoomPoints = 0;
+      day.highway = 0;
+      day.tip = 0;
+      (day.entries || []).forEach(entry => {
+        if (!FIELD_MAP[entry.field]) return;
+        day[entry.field] = (day[entry.field] || 0) + entry.value;
+      });
+      // Guard against floating point / negative from bad data
+      Object.keys(FIELD_MAP).forEach(field => {
+        if (day[field] < 0) day[field] = 0;
+      });
     }
 
     function getTodayData(data) {
       const key = getTodayKey();
       if (!data.days[key]) data.days[key] = emptyDay();
       data.days[key] = normalizeDay(data.days[key]);
+      // Migrate old data without entries: keep totals as-is
       return data.days[key];
+    }
+
+    function ensureTodayReady() {
+      const key = getTodayKey();
+      if (!appData.days[key]) {
+        appData.days[key] = emptyDay();
+      } else {
+        appData.days[key] = normalizeDay(appData.days[key]);
+      }
+      return key;
+    }
+
+    async function handleDayRollover(showMessage) {
+      const newKey = getTodayKey();
+      if (currentDayKey && currentDayKey !== newKey) {
+        ensureTodayReady();
+        setTodayDate();
+        calculate();
+        if (showMessage) {
+          showToast('Ngày mới · mục tiêu reset về 1.200.000đ');
+        }
+      }
+      currentDayKey = newKey;
+    }
+
+    function startDayWatcher() {
+      if (dayWatchTimer) clearInterval(dayWatchTimer);
+      currentDayKey = getTodayKey();
+      dayWatchTimer = setInterval(() => handleDayRollover(true), 30000);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') handleDayRollover(true);
+      });
+      window.addEventListener('focus', () => handleDayRollover(true));
     }
 
     function calcNet(day) {
@@ -1122,6 +1279,41 @@
     function isDayEmpty(day) {
       const d = normalizeDay(day);
       return d.app === 0 && d.outside === 0 && d.zoomPoints === 0 && d.highway === 0 && d.tip === 0;
+    }
+
+    function renderEntries(data) {
+      const today = getTodayData(data);
+      const entries = [...(today.entries || [])].reverse();
+
+      if (entries.length === 0) {
+        els.entriesList.innerHTML = '<div class="history-empty">Chưa có lượt nào hôm nay.<br>Nhập sai? Dùng − Trừ hoặc Xóa mục này.</div>';
+        return;
+      }
+
+      els.entriesList.innerHTML = entries.map(entry => {
+        const config = FIELD_MAP[entry.field] || { label: entry.field };
+        const isZoom = entry.field === 'zoomPoints';
+        const valueText = isZoom
+          ? (entry.value >= 0 ? '+' : '') + formatPoints(entry.value) + ' điểm'
+          : (entry.value >= 0 ? '+' : '') + formatMoney(entry.value);
+        const time = new Date(entry.at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        const cls = entry.value >= 0 ? 'plus' : 'minus';
+
+        return `
+          <div class="entry-item" data-entry-id="${entry.id}">
+            <div class="entry-info">
+              <div class="entry-field">${config.label}</div>
+              <div class="entry-meta">${time}${entry.note ? ' · ' + entry.note : ''}</div>
+            </div>
+            <div class="entry-value ${cls}">${valueText}</div>
+            <button type="button" class="entry-delete" data-delete-id="${entry.id}">Xóa</button>
+          </div>
+        `;
+      }).join('');
+
+      els.entriesList.querySelectorAll('.entry-delete').forEach(btn => {
+        btn.addEventListener('click', () => deleteEntry(btn.dataset.deleteId));
+      });
     }
 
     function renderHistory(data) {
@@ -1256,6 +1448,7 @@
       els.sumNet.textContent = formatMoney(net);
 
       renderHistory(data);
+      renderEntries(data);
 
       els.resultCard.classList.remove('done');
       els.remaining.classList.remove('positive', 'zero', 'over');
@@ -1285,7 +1478,8 @@
       els.toast._timer = setTimeout(() => els.toast.classList.remove('show'), 2000);
     }
 
-    async function addEntry(field) {
+    async function addEntry(field, action) {
+      await handleDayRollover(true);
       const config = FIELD_MAP[field];
       const value = parseInput(config.input);
       if (value <= 0) {
@@ -1295,7 +1489,27 @@
 
       const data = loadData();
       const today = getTodayData(data);
-      today[field] += value;
+      const signedValue = action === 'sub' ? -value : value;
+
+      if (action === 'sub' && today[field] < value) {
+        showToast('Không thể trừ nhiều hơn số đã cộng (' + (
+          field === 'zoomPoints'
+            ? formatPoints(today[field]) + ' điểm'
+            : formatMoney(today[field])
+        ) + ')');
+        return;
+      }
+
+      today.entries = today.entries || [];
+      today.entries.push({
+        id: createEntryId(),
+        field,
+        value: signedValue,
+        at: new Date().toISOString(),
+        note: action === 'sub' ? 'điều chỉnh trừ' : '',
+      });
+      today[field] = (today[field] || 0) + signedValue;
+      if (today[field] < 0) today[field] = 0;
 
       try {
         await saveData(data);
@@ -1310,7 +1524,64 @@
       const displayVal = field === 'zoomPoints'
         ? formatPoints(value) + ' điểm'
         : formatMoney(value);
-      showToast('Đã cộng ' + displayVal + ' vào ' + config.label);
+      showToast((action === 'sub' ? 'Đã trừ ' : 'Đã cộng ') + displayVal + ' · ' + config.label);
+    }
+
+    async function deleteEntry(entryId) {
+      const data = loadData();
+      const today = getTodayData(data);
+      const idx = (today.entries || []).findIndex(e => e.id === entryId);
+      if (idx < 0) return;
+
+      const entry = today.entries[idx];
+      const config = FIELD_MAP[entry.field];
+      if (!confirm('Xóa lượt này?\n' + (config ? config.label : entry.field) + ': ' + (
+        entry.field === 'zoomPoints'
+          ? formatPoints(entry.value) + ' điểm'
+          : formatMoney(entry.value)
+      ))) return;
+
+      today.entries.splice(idx, 1);
+      today[entry.field] = (today[entry.field] || 0) - entry.value;
+      if (today[entry.field] < 0) today[entry.field] = 0;
+
+      try {
+        await saveData(data);
+      } catch (err) {
+        showToast('Lỗi lưu: ' + err.message);
+        return;
+      }
+
+      calculate();
+      showToast('Đã xóa lượt nhập sai');
+    }
+
+    async function clearField(field) {
+      const config = FIELD_MAP[field];
+      const data = loadData();
+      const today = getTodayData(data);
+      if (!today[field]) {
+        showToast('Mục này đang bằng 0');
+        return;
+      }
+
+      const display = field === 'zoomPoints'
+        ? formatPoints(today[field]) + ' điểm'
+        : formatMoney(today[field]);
+      if (!confirm('Xóa toàn bộ ' + config.label + ' hôm nay (' + display + ')?')) return;
+
+      today.entries = (today.entries || []).filter(e => e.field !== field);
+      today[field] = 0;
+
+      try {
+        await saveData(data);
+      } catch (err) {
+        showToast('Lỗi lưu: ' + err.message);
+        return;
+      }
+
+      calculate();
+      showToast('Đã xóa ' + config.label);
     }
 
     async function resetToday() {
@@ -1331,7 +1602,7 @@
       });
 
       calculate();
-      showToast('Đã đặt lại dữ liệu hôm nay');
+      showToast('Đã đặt lại · mục tiêu còn 1.200.000đ');
     }
 
     function setTodayDate() {
@@ -1340,15 +1611,19 @@
       els.todayDate.textContent = now.toLocaleDateString('vi-VN', options);
     }
 
-    document.querySelectorAll('.add-btn').forEach(btn => {
-      btn.addEventListener('click', () => addEntry(btn.dataset.field));
+    document.querySelectorAll('.add-btn, .sub-btn').forEach(btn => {
+      btn.addEventListener('click', () => addEntry(btn.dataset.field, btn.dataset.action));
+    });
+
+    document.querySelectorAll('.clear-field-btn').forEach(btn => {
+      btn.addEventListener('click', () => clearField(btn.dataset.clear));
     });
 
     ['app-income', 'outside-income', 'zoom-points', 'highway-fee', 'tip-income'].forEach(id => {
       document.getElementById(id).addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           const field = Object.entries(FIELD_MAP).find(([, v]) => v.input === id);
-          if (field) addEntry(field[0]);
+          if (field) addEntry(field[0], 'add');
         }
       });
     });
