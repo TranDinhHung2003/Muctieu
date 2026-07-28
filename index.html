@@ -755,34 +755,28 @@
       margin-left: -12px;
     }
 
-    .login-screen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 16px;
+    .login-panel {
+      margin-bottom: 20px;
     }
 
     .login-card {
-      width: 100%;
-      max-width: 400px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 32px 24px;
+      padding: 24px 20px;
     }
 
     .login-card h1 {
       text-align: center;
-      font-size: 1.4rem;
-      margin-bottom: 8px;
+      font-size: 1.3rem;
+      margin-bottom: 6px;
     }
 
     .login-card p {
       text-align: center;
       color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 24px;
+      font-size: 0.85rem;
+      margin-bottom: 18px;
     }
 
     .login-card label {
@@ -827,50 +821,6 @@
       color: #fff;
     }
 
-    .login-hint {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 18px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .login-hint strong {
-      color: var(--text);
-    }
-
-    .login-accounts {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .login-accounts button {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      padding: 10px 8px;
-      font-size: 0.75rem;
-      cursor: pointer;
-      line-height: 1.35;
-    }
-
-    .login-accounts button:hover {
-      border-color: var(--accent);
-    }
-
-    .login-accounts em {
-      display: block;
-      color: var(--text-muted);
-      font-style: normal;
-      font-size: 0.7rem;
-      margin-top: 2px;
-    }
-
     .login-error {
       color: var(--danger);
       font-size: 0.85rem;
@@ -878,6 +828,14 @@
       margin-top: 12px;
       min-height: 20px;
       line-height: 1.4;
+    }
+
+    body.logged-in #login-panel {
+      display: none;
+    }
+
+    body.logged-out #main-content {
+      display: none;
     }
 
     .admin-bar {
@@ -1038,36 +996,7 @@
     }
   </style>
 </head>
-<body>
-  <div id="login-screen" class="login-screen hidden">
-    <div class="login-card">
-      <h1>🔐 Đăng nhập</h1>
-      <p>Admin quản lý dữ liệu · Theo dõi chỉ xem</p>
-      <div class="login-hint">
-        Chọn nhanh tài khoản hoặc nhập tay:
-        <div class="login-accounts">
-          <button type="button" id="fill-admin">
-            <strong>Admin</strong>
-            <em>admin / admin123</em>
-          </button>
-          <button type="button" id="fill-viewer">
-            <strong>Theo dõi</strong>
-            <em>theodoi / xem123</em>
-          </button>
-        </div>
-      </div>
-      <form id="login-form" autocomplete="on">
-        <label for="login-username">Tên đăng nhập</label>
-        <input type="text" id="login-username" name="username" autocomplete="username" required placeholder="admin hoặc theodoi">
-        <label for="login-password">Mật khẩu</label>
-        <input type="password" id="login-password" name="password" autocomplete="current-password" required placeholder="Nhập mật khẩu">
-        <button type="submit" class="login-btn" id="login-submit">Đăng nhập</button>
-      </form>
-      <div class="login-error" id="login-error"></div>
-    </div>
-  </div>
-
-  <div id="app-screen" class="hidden">
+<body class="logged-out">
   <div class="drawer-overlay" id="drawer-overlay"></div>
   <nav class="drawer" id="drawer">
     <div class="drawer-header">
@@ -1082,6 +1011,22 @@
   </nav>
 
   <div class="container">
+    <div id="login-panel" class="login-panel">
+      <div class="login-card">
+        <h1>🔐 Đăng nhập</h1>
+        <p>Nhập tài khoản để sử dụng</p>
+        <form id="login-form" autocomplete="on">
+          <label for="login-username">Tên đăng nhập</label>
+          <input type="text" id="login-username" name="username" autocomplete="off" autocapitalize="none" spellcheck="false" required placeholder="Nhập tên đăng nhập">
+          <label for="login-password">Mật khẩu</label>
+          <input type="password" id="login-password" name="password" autocomplete="current-password" required placeholder="Nhập mật khẩu">
+          <button type="submit" class="login-btn" id="login-submit">Đăng nhập</button>
+        </form>
+        <div class="login-error" id="login-error"></div>
+      </div>
+    </div>
+
+    <div id="main-content">
     <div class="top-bar">
       <button type="button" class="menu-btn" id="menu-btn" aria-label="Mở menu">
         <span></span><span></span><span></span>
@@ -1269,7 +1214,7 @@
     </div>
 
     <footer>Mục tiêu: 1.200.000đ / ngày · Dữ liệu lưu trên server</footer>
-  </div>
+    </div>
   </div>
 
   <div class="modal-overlay" id="password-modal">
@@ -1311,8 +1256,8 @@
     };
 
     const els = {
-      loginScreen: document.getElementById('login-screen'),
-      appScreen: document.getElementById('app-screen'),
+      loginPanel: document.getElementById('login-panel'),
+      mainContent: document.getElementById('main-content'),
       loginForm: document.getElementById('login-form'),
       loginError: document.getElementById('login-error'),
       adminName: document.getElementById('admin-name'),
@@ -1419,10 +1364,11 @@
       isLoggedIn = false;
       currentRole = 'admin';
       document.body.classList.remove('role-viewer', 'role-admin');
+      document.body.classList.remove('logged-in');
+      document.body.classList.add('logged-out');
       closeDrawer();
-      els.loginScreen.classList.remove('hidden');
-      els.appScreen.classList.add('hidden');
       if (message) els.loginError.textContent = message;
+      else els.loginError.textContent = '';
     }
 
     function showApp(username, role) {
@@ -1430,8 +1376,8 @@
       applyRoleUI(role);
       els.adminName.textContent = username;
       els.loginError.textContent = '';
-      els.loginScreen.classList.add('hidden');
-      els.appScreen.classList.remove('hidden');
+      document.body.classList.remove('logged-out');
+      document.body.classList.add('logged-in');
       navigateTo('home');
     }
 
@@ -1565,7 +1511,7 @@
       } catch { /* ignore */ }
       document.getElementById('login-username').value = '';
       document.getElementById('login-password').value = '';
-      showLogin('Đã thoát. Chọn Admin để quản lý hoặc Theo dõi để xem.');
+      showLogin('Đã thoát đăng nhập');
     }
 
     async function handleBackup() {
@@ -2098,18 +2044,6 @@
     els.passwordBtn.addEventListener('click', () => { closeDrawer(); openPasswordModal(); });
     document.getElementById('password-cancel').addEventListener('click', () => els.passwordModal.classList.remove('show'));
     document.getElementById('password-save').addEventListener('click', savePassword);
-    document.getElementById('fill-admin').addEventListener('click', () => {
-      document.getElementById('login-username').value = 'admin';
-      document.getElementById('login-password').value = 'admin123';
-      els.loginError.textContent = '';
-      handleLogin({ preventDefault() {} });
-    });
-    document.getElementById('fill-viewer').addEventListener('click', () => {
-      document.getElementById('login-username').value = 'theodoi';
-      document.getElementById('login-password').value = 'xem123';
-      els.loginError.textContent = '';
-      handleLogin({ preventDefault() {} });
-    });
 
     els.menuBtn.addEventListener('click', openDrawer);
     els.drawerOverlay.addEventListener('click', closeDrawer);
