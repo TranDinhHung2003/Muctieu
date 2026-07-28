@@ -150,27 +150,41 @@ function saveStoredData(data) {
   fs.writeFileSync(backupPath, json, 'utf8');
 }
 
-function setAuthCookie(res, token) {
-  res.cookie(COOKIE_NAME, token, {
+function cookieOptions(extra = {}) {
+  return {
     httpOnly: true,
     sameSite: 'lax',
-    maxAge: 30 * 24 * 60 * 60 * 1000,
+    path: '/',
     secure: process.env.NODE_ENV === 'production',
-  });
+    ...extra,
+  };
+}
+
+function setAuthCookie(res, token) {
+  res.cookie(COOKIE_NAME, token, cookieOptions({
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+  }));
+}
+
+function clearAuthCookie(res) {
+  res.clearCookie(COOKIE_NAME, cookieOptions());
 }
 
 app.post('/api/login', (req, res) => {
-  const { username, password } = req.body || {};
+  const username = String((req.body || {}).username || '').trim();
+  const password = String((req.body || {}).password || '');
   if (!username || !password) {
     return res.status(400).json({ error: 'Vui lòng nhập tên đăng nhập và mật khẩu' });
   }
 
   const user = db.prepare(
-    'SELECT id, username, password_hash, role FROM users WHERE username = ?'
+    'SELECT id, username, password_hash, role FROM users WHERE lower(username) = lower(?)'
   ).get(username);
 
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
-    return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
+    return res.status(401).json({
+      error: 'Sai tên đăng nhập hoặc mật khẩu. Thử: admin / admin123 hoặc theodoi / xem123',
+    });
   }
 
   const token = createToken(user);
@@ -179,7 +193,7 @@ app.post('/api/login', (req, res) => {
 });
 
 app.post('/api/logout', (_req, res) => {
-  res.clearCookie(COOKIE_NAME);
+  clearAuthCookie(res);
   res.json({ ok: true });
 });
 
@@ -189,10 +203,16 @@ app.get('/api/me', (req, res) => {
     return res.json({ loggedIn: false });
   }
   try {
-    const user = jwt.verify(token, JWT_SECRET);
-    res.json({ loggedIn: true, username: user.username, role: user.role || 'admin' });
+    const payload = jwt.verify(token, JWT_SECRET);
+    // Always refresh role from DB in case JWT is old
+    const user = db.prepare('SELECT username, role FROM users WHERE username = ?').get(payload.username);
+    if (!user) {
+      clearAuthCookie(res);
+      return res.json({ loggedIn: false });
+    }
+    res.json({ loggedIn: true, username: user.username, role: user.role });
   } catch {
-    res.clearCookie(COOKIE_NAME);
+    clearAuthCookie(res);
     res.json({ loggedIn: false });
   }
 });

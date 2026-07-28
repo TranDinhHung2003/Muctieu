@@ -827,12 +827,57 @@
       color: #fff;
     }
 
+    .login-hint {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 18px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .login-hint strong {
+      color: var(--text);
+    }
+
+    .login-accounts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .login-accounts button {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 10px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      line-height: 1.35;
+    }
+
+    .login-accounts button:hover {
+      border-color: var(--accent);
+    }
+
+    .login-accounts em {
+      display: block;
+      color: var(--text-muted);
+      font-style: normal;
+      font-size: 0.7rem;
+      margin-top: 2px;
+    }
+
     .login-error {
       color: var(--danger);
       font-size: 0.85rem;
       text-align: center;
       margin-top: 12px;
       min-height: 20px;
+      line-height: 1.4;
     }
 
     .admin-bar {
@@ -998,12 +1043,25 @@
     <div class="login-card">
       <h1>🔐 Đăng nhập</h1>
       <p>Admin quản lý dữ liệu · Theo dõi chỉ xem</p>
-      <form id="login-form">
+      <div class="login-hint">
+        Chọn nhanh tài khoản hoặc nhập tay:
+        <div class="login-accounts">
+          <button type="button" id="fill-admin">
+            <strong>Admin</strong>
+            <em>admin / admin123</em>
+          </button>
+          <button type="button" id="fill-viewer">
+            <strong>Theo dõi</strong>
+            <em>theodoi / xem123</em>
+          </button>
+        </div>
+      </div>
+      <form id="login-form" autocomplete="on">
         <label for="login-username">Tên đăng nhập</label>
-        <input type="text" id="login-username" autocomplete="username" required>
+        <input type="text" id="login-username" name="username" autocomplete="username" required placeholder="admin hoặc theodoi">
         <label for="login-password">Mật khẩu</label>
-        <input type="password" id="login-password" autocomplete="current-password" required>
-        <button type="submit" class="login-btn">Đăng nhập</button>
+        <input type="password" id="login-password" name="password" autocomplete="current-password" required placeholder="Nhập mật khẩu">
+        <button type="submit" class="login-btn" id="login-submit">Đăng nhập</button>
       </form>
       <div class="login-error" id="login-error"></div>
     </div>
@@ -1338,32 +1396,43 @@
     }
 
     async function api(url, options = {}) {
-      const res = await fetch('/api' + url, {
-        ...options,
-        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-        credentials: 'same-origin',
-        body: options.body ? JSON.stringify(options.body) : undefined,
-      });
+      if (location.protocol === 'file:') {
+        throw new Error('Không mở bằng file HTML. Hãy chạy: npm start rồi vào http://localhost:3000');
+      }
+      let res;
+      try {
+        res = await fetch('/api' + url, {
+          ...options,
+          headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+          credentials: 'same-origin',
+          body: options.body ? JSON.stringify(options.body) : undefined,
+        });
+      } catch {
+        throw new Error('Không kết nối được server. Chạy npm start rồi mở http://localhost:3000');
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Lỗi kết nối server');
       return data;
     }
 
-    function showLogin() {
+    function showLogin(message) {
       isLoggedIn = false;
       currentRole = 'admin';
       document.body.classList.remove('role-viewer', 'role-admin');
       closeDrawer();
       els.loginScreen.classList.remove('hidden');
       els.appScreen.classList.add('hidden');
+      if (message) els.loginError.textContent = message;
     }
 
     function showApp(username, role) {
       isLoggedIn = true;
       applyRoleUI(role);
       els.adminName.textContent = username;
+      els.loginError.textContent = '';
       els.loginScreen.classList.add('hidden');
       els.appScreen.classList.remove('hidden');
+      navigateTo('home');
     }
 
     function setSyncStatus(msg, ok = true) {
@@ -1455,16 +1524,24 @@
         setTodayDate();
         startDayWatcher();
         calculate();
-      } catch {
-        showLogin();
+        applyRoleUI(me.role || 'admin');
+      } catch (err) {
+        showLogin(err.message);
       }
     }
 
     async function handleLogin(e) {
       e.preventDefault();
       els.loginError.textContent = '';
+      const submitBtn = document.getElementById('login-submit');
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
+      if (!username || !password) {
+        els.loginError.textContent = 'Vui lòng nhập tên đăng nhập và mật khẩu';
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Đang đăng nhập...';
       try {
         const result = await api('/login', { method: 'POST', body: { username, password } });
         showApp(result.username, result.role || 'admin');
@@ -1472,9 +1549,13 @@
         setTodayDate();
         startDayWatcher();
         calculate();
+        applyRoleUI(result.role || 'admin');
         showToast(result.role === 'viewer' ? 'Đăng nhập theo dõi · chỉ xem' : 'Đăng nhập admin thành công');
       } catch (err) {
         els.loginError.textContent = err.message;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Đăng nhập';
       }
     }
 
@@ -1482,8 +1563,9 @@
       try {
         await api('/logout', { method: 'POST' });
       } catch { /* ignore */ }
-      showLogin();
+      document.getElementById('login-username').value = '';
       document.getElementById('login-password').value = '';
+      showLogin('Đã thoát. Chọn Admin để quản lý hoặc Theo dõi để xem.');
     }
 
     async function handleBackup() {
@@ -2016,6 +2098,18 @@
     els.passwordBtn.addEventListener('click', () => { closeDrawer(); openPasswordModal(); });
     document.getElementById('password-cancel').addEventListener('click', () => els.passwordModal.classList.remove('show'));
     document.getElementById('password-save').addEventListener('click', savePassword);
+    document.getElementById('fill-admin').addEventListener('click', () => {
+      document.getElementById('login-username').value = 'admin';
+      document.getElementById('login-password').value = 'admin123';
+      els.loginError.textContent = '';
+      handleLogin({ preventDefault() {} });
+    });
+    document.getElementById('fill-viewer').addEventListener('click', () => {
+      document.getElementById('login-username').value = 'theodoi';
+      document.getElementById('login-password').value = 'xem123';
+      els.loginError.textContent = '';
+      handleLogin({ preventDefault() {} });
+    });
 
     els.menuBtn.addEventListener('click', openDrawer);
     els.drawerOverlay.addEventListener('click', closeDrawer);
