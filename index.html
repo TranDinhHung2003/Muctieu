@@ -1246,6 +1246,9 @@
     let currentRole = 'admin';
     let currentDayKey = null;
     let dayWatchTimer = null;
+    let syncPollTimer = null;
+    let lastUpdatedAt = null;
+    let isSaving = false;
 
     const FIELD_MAP = {
       app: { input: 'app-income', locked: 'locked-app', label: 'tiền app', preview: 'preview-app', money: true },
@@ -1363,6 +1366,8 @@
     function showLogin(message) {
       isLoggedIn = false;
       currentRole = 'admin';
+      lastUpdatedAt = null;
+      stopRealtimeSync();
       document.body.classList.remove('role-viewer', 'role-admin');
       document.body.classList.remove('logged-in');
       document.body.classList.add('logged-out');
@@ -1410,39 +1415,96 @@
       return merged;
     }
 
-    async function loadFromServer() {
+    async function loadFromServer(options = {}) {
       const result = await api('/data');
       appData = result.data || { days: {} };
+      lastUpdatedAt = result.updatedAt || null;
 
-      const local = loadLocalData();
-      if (isAdmin() && hasLocalData(local)) {
-        const serverEmpty = !hasLocalData(appData);
-        if (serverEmpty || confirm('Phát hiện dữ liệu cũ trên trình duyệt. Bạn có muốn nhập vào server không?')) {
-          appData = mergeData(appData, local);
-          await saveToServer();
-          localStorage.removeItem(STORAGE_KEY);
-          showToast('Đã nhập dữ liệu cũ lên server');
+      if (!options.skipMigration) {
+        const local = loadLocalData();
+        if (isAdmin() && hasLocalData(local)) {
+          const serverEmpty = !hasLocalData(appData);
+          if (serverEmpty || confirm('Phát hiện dữ liệu cũ trên trình duyệt. Bạn có muốn nhập vào server không?')) {
+            appData = mergeData(appData, local);
+            await saveToServer();
+            localStorage.removeItem(STORAGE_KEY);
+            showToast('Đã nhập dữ liệu cũ lên server');
+          }
+        } else if (!isAdmin()) {
+          setSyncStatus('👁 Theo dõi thời gian thực · đang đồng bộ');
         }
-      } else if (!isAdmin()) {
-        setSyncStatus('👁 Chế độ theo dõi · chỉ xem dữ liệu');
       }
 
-      if (result.updatedAt) {
-        const time = new Date(result.updatedAt).toLocaleString('vi-VN');
-        setSyncStatus('✓ Đã đồng bộ · Cập nhật: ' + time);
+      updateSyncTime(result.updatedAt);
+    }
+
+    function updateSyncTime(updatedAt) {
+      if (!updatedAt) return;
+      const time = new Date(updatedAt).toLocaleString('vi-VN');
+      if (isAdmin()) {
+        setSyncStatus('✓ Đã lưu trên server · ' + time);
+      } else {
+        setSyncStatus('👁 Đồng bộ thời gian thực · ' + time);
       }
+    }
+
+    async function refreshFromServer(notify) {
+      const result = await api('/data');
+      appData = result.data || { days: {} };
+      lastUpdatedAt = result.updatedAt || null;
+      calculate();
+      updateSyncTime(result.updatedAt);
+      if (notify) showToast('Có dữ liệu mới từ admin');
+    }
+
+    async function checkForUpdates() {
+      if (!isLoggedIn || isSaving) return;
+      try {
+        const result = await api('/data/sync');
+        if (!result.updatedAt || result.updatedAt === lastUpdatedAt) return;
+        await refreshFromServer(!isAdmin());
+      } catch {
+        // ignore transient network errors during polling
+      }
+    }
+
+    function startRealtimeSync() {
+      stopRealtimeSync();
+      syncPollTimer = setInterval(checkForUpdates, 3000);
+      document.addEventListener('visibilitychange', onVisibilitySync);
+      window.addEventListener('focus', onFocusSync);
+    }
+
+    function stopRealtimeSync() {
+      if (syncPollTimer) {
+        clearInterval(syncPollTimer);
+        syncPollTimer = null;
+      }
+      document.removeEventListener('visibilitychange', onVisibilitySync);
+      window.removeEventListener('focus', onFocusSync);
+    }
+
+    function onVisibilitySync() {
+      if (document.visibilityState === 'visible' && isLoggedIn) checkForUpdates();
+    }
+
+    function onFocusSync() {
+      if (isLoggedIn) checkForUpdates();
     }
 
     async function saveToServer() {
       if (!isAdmin()) return;
+      isSaving = true;
       setSyncStatus('⏳ Đang lưu...', false);
       try {
         const result = await api('/data', { method: 'PUT', body: { data: appData } });
-        const time = new Date(result.updatedAt).toLocaleString('vi-VN');
-        setSyncStatus('✓ Dữ liệu đã lưu trên server · ' + time);
+        lastUpdatedAt = result.updatedAt || lastUpdatedAt;
+        updateSyncTime(result.updatedAt);
       } catch (e) {
         setSyncStatus('⚠ Lỗi lưu: ' + e.message, false);
         throw e;
+      } finally {
+        isSaving = false;
       }
     }
 
@@ -1469,6 +1531,7 @@
         await loadFromServer();
         setTodayDate();
         startDayWatcher();
+        startRealtimeSync();
         calculate();
         applyRoleUI(me.role || 'admin');
       } catch (err) {
@@ -1494,6 +1557,7 @@
         await loadFromServer();
         setTodayDate();
         startDayWatcher();
+        startRealtimeSync();
         calculate();
         applyRoleUI(result.role || 'admin');
         showToast(result.role === 'viewer' ? 'Đăng nhập theo dõi · chỉ xem' : 'Đăng nhập admin thành công');

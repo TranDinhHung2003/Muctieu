@@ -223,6 +223,11 @@ app.get('/api/data', authMiddleware, (_req, res) => {
   res.json({ data, updatedAt: row.updated_at });
 });
 
+app.get('/api/data/sync', authMiddleware, (_req, res) => {
+  const row = db.prepare('SELECT updated_at FROM app_data WHERE id = 1').get();
+  res.json({ updatedAt: row.updated_at });
+});
+
 app.put('/api/data', authMiddleware, adminOnly, (req, res) => {
   const { data } = req.body || {};
   if (!data || typeof data !== 'object' || !data.days || typeof data.days !== 'object') {
