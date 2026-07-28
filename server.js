@@ -6,7 +6,6 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const Database = require('better-sqlite3');
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -19,90 +18,95 @@ const IS_PROD = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
 const DATA_DIR = process.env.DATA_DIR
   ? path.resolve(process.env.DATA_DIR)
   : path.join(__dirname, 'data');
-const DB_PATH = path.join(DATA_DIR, 'muctieu.db');
+
+const USERS_PATH = path.join(DATA_DIR, 'users.json');
+const APP_DATA_PATH = path.join(DATA_DIR, 'app-data.json');
+const BACKUP_PATH = path.join(DATA_DIR, 'backup-latest.json');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('admin', 'viewer')),
-    updated_at TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS app_data (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    data_json TEXT NOT NULL DEFAULT '{"days":{}}',
-    updated_at TEXT NOT NULL
-  );
-`);
-
 function nowIso() {
   return new Date().toISOString();
 }
 
-function ensureUser(username, password, role) {
-  const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
-  if (existing) return false;
-  const hash = bcrypt.hashSync(password, 10);
-  db.prepare(
-    'INSERT INTO users (username, password_hash, role, updated_at) VALUES (?, ?, ?, ?)'
-  ).run(username, hash, role, nowIso());
+function readJson(filePath, fallback) {
+  try {
+    if (!fs.existsSync(filePath)) return fallback;
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJson(filePath, data) {
+  const tmp = filePath + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
+  fs.renameSync(tmp, filePath);
+}
+
+function loadUsersStore() {
+  return readJson(USERS_PATH, { users: [] });
+}
+
+function saveUsersStore(store) {
+  writeJson(USERS_PATH, store);
+}
+
+function loadAppStore() {
+  const store = readJson(APP_DATA_PATH, null);
+  if (store && store.data) return store;
+
+  // Migrate from older backup file if present
+  const backup = readJson(BACKUP_PATH, null);
+  if (backup && backup.days) {
+    return { data: backup, updatedAt: nowIso() };
+  }
+  if (backup && backup.data && backup.data.days) {
+    return { data: backup.data, updatedAt: backup.updatedAt || nowIso() };
+  }
+
+  return { data: { days: {} }, updatedAt: nowIso() };
+}
+
+function saveAppStore(store) {
+  writeJson(APP_DATA_PATH, store);
+  writeJson(BACKUP_PATH, store.data);
+}
+
+function ensureUser(store, username, password, role) {
+  const exists = store.users.find((u) => u.username.toLowerCase() === username.toLowerCase());
+  if (exists) return false;
+  store.users.push({
+    id: store.users.length ? Math.max(...store.users.map((u) => u.id)) + 1 : 1,
+    username,
+    password_hash: bcrypt.hashSync(password, 10),
+    role,
+    updated_at: nowIso(),
+  });
   return true;
 }
 
-function migrateLegacyAdmin() {
-  const hasAdminTable = db.prepare(
-    "SELECT name FROM sqlite_master WHERE type='table' AND name='admin'"
-  ).get();
-  if (!hasAdminTable) return;
-
-  const legacy = db.prepare('SELECT username, password_hash FROM admin WHERE id = 1').get();
-  if (legacy) {
-    const exists = db.prepare('SELECT id FROM users WHERE username = ?').get(legacy.username);
-    if (!exists) {
-      db.prepare(
-        'INSERT INTO users (username, password_hash, role, updated_at) VALUES (?, ?, ?, ?)'
-      ).run(legacy.username, legacy.password_hash, 'admin', nowIso());
-      console.log('Đã chuyển tài khoản admin cũ sang bảng users:', legacy.username);
-    }
-  }
-}
-
-function initUsers() {
-  migrateLegacyAdmin();
-
-  if (ensureUser(ADMIN_USERNAME, ADMIN_PASSWORD, 'admin')) {
+function initStore() {
+  const usersStore = loadUsersStore();
+  let changed = false;
+  if (ensureUser(usersStore, ADMIN_USERNAME, ADMIN_PASSWORD, 'admin')) {
     console.log('Đã tạo tài khoản admin:', ADMIN_USERNAME);
+    changed = true;
   }
-  if (ensureUser(VIEWER_USERNAME, VIEWER_PASSWORD, 'viewer')) {
+  if (ensureUser(usersStore, VIEWER_USERNAME, VIEWER_PASSWORD, 'viewer')) {
     console.log('Đã tạo tài khoản theo dõi:', VIEWER_USERNAME);
+    changed = true;
   }
+  if (changed) saveUsersStore(usersStore);
 
-  // Avoid username collision if someone set same names
-  if (ADMIN_USERNAME === VIEWER_USERNAME) {
-    console.warn('Cảnh báo: ADMIN_USERNAME và VIEWER_USERNAME trùng nhau.');
-  }
-}
-
-function initData() {
-  const existing = db.prepare('SELECT id FROM app_data WHERE id = 1').get();
-  if (!existing) {
-    db.prepare(
-      'INSERT INTO app_data (id, data_json, updated_at) VALUES (1, ?, ?)'
-    ).run('{"days":{}}', nowIso());
+  if (!fs.existsSync(APP_DATA_PATH)) {
+    saveAppStore(loadAppStore());
   }
 }
 
-initUsers();
-initData();
+initStore();
 
 const app = express();
 app.set('trust proxy', 1);
@@ -141,21 +145,19 @@ function adminOnly(req, res, next) {
   next();
 }
 
+function findUserByUsername(username) {
+  const store = loadUsersStore();
+  return store.users.find((u) => u.username.toLowerCase() === String(username || '').toLowerCase()) || null;
+}
+
 function getStoredData() {
-  const row = db.prepare('SELECT data_json FROM app_data WHERE id = 1').get();
-  try {
-    return JSON.parse(row.data_json);
-  } catch {
-    return { days: {} };
-  }
+  return loadAppStore().data || { days: {} };
 }
 
 function saveStoredData(data) {
-  const json = JSON.stringify(data);
-  db.prepare('UPDATE app_data SET data_json = ?, updated_at = ? WHERE id = 1').run(json, nowIso());
-
-  const backupPath = path.join(DATA_DIR, 'backup-latest.json');
-  fs.writeFileSync(backupPath, json, 'utf8');
+  const updatedAt = nowIso();
+  saveAppStore({ data, updatedAt });
+  return updatedAt;
 }
 
 function cookieOptions(extra = {}) {
@@ -185,10 +187,7 @@ app.post('/api/login', (req, res) => {
     return res.status(400).json({ error: 'Vui lòng nhập tên đăng nhập và mật khẩu' });
   }
 
-  const user = db.prepare(
-    'SELECT id, username, password_hash, role FROM users WHERE lower(username) = lower(?)'
-  ).get(username);
-
+  const user = findUserByUsername(username);
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return res.status(401).json({
       error: '( sai tên đăng nhập và mật khẩu )',
@@ -212,8 +211,7 @@ app.get('/api/me', (req, res) => {
   }
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    // Always refresh role from DB in case JWT is old
-    const user = db.prepare('SELECT username, role FROM users WHERE username = ?').get(payload.username);
+    const user = findUserByUsername(payload.username);
     if (!user) {
       clearAuthCookie(res);
       return res.json({ loggedIn: false });
@@ -226,14 +224,13 @@ app.get('/api/me', (req, res) => {
 });
 
 app.get('/api/data', authMiddleware, (_req, res) => {
-  const data = getStoredData();
-  const row = db.prepare('SELECT updated_at FROM app_data WHERE id = 1').get();
-  res.json({ data, updatedAt: row.updated_at });
+  const store = loadAppStore();
+  res.json({ data: store.data || { days: {} }, updatedAt: store.updatedAt });
 });
 
 app.get('/api/data/sync', authMiddleware, (_req, res) => {
-  const row = db.prepare('SELECT updated_at FROM app_data WHERE id = 1').get();
-  res.json({ updatedAt: row.updated_at });
+  const store = loadAppStore();
+  res.json({ updatedAt: store.updatedAt });
 });
 
 app.put('/api/data', authMiddleware, adminOnly, (req, res) => {
@@ -241,8 +238,8 @@ app.put('/api/data', authMiddleware, adminOnly, (req, res) => {
   if (!data || typeof data !== 'object' || !data.days || typeof data.days !== 'object') {
     return res.status(400).json({ error: 'Dữ liệu không hợp lệ' });
   }
-  saveStoredData(data);
-  res.json({ ok: true, updatedAt: nowIso() });
+  const updatedAt = saveStoredData(data);
+  res.json({ ok: true, updatedAt });
 });
 
 app.post('/api/change-password', authMiddleware, (req, res) => {
@@ -254,25 +251,26 @@ app.post('/api/change-password', authMiddleware, (req, res) => {
     return res.status(400).json({ error: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
   }
 
-  const user = db.prepare('SELECT id, password_hash FROM users WHERE username = ?').get(req.user.username);
+  const store = loadUsersStore();
+  const user = store.users.find((u) => u.username === req.user.username);
   if (!user || !bcrypt.compareSync(currentPassword, user.password_hash)) {
     return res.status(401).json({ error: 'Mật khẩu hiện tại không đúng' });
   }
 
-  const hash = bcrypt.hashSync(newPassword, 10);
-  db.prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?').run(hash, nowIso(), user.id);
+  user.password_hash = bcrypt.hashSync(newPassword, 10);
+  user.updated_at = nowIso();
+  saveUsersStore(store);
   res.json({ ok: true });
 });
 
 app.get('/api/backup', authMiddleware, adminOnly, (_req, res) => {
-  const data = getStoredData();
-  const row = db.prepare('SELECT updated_at FROM app_data WHERE id = 1').get();
+  const store = loadAppStore();
   const filename = 'muctieu-backup-' + new Date().toISOString().slice(0, 10) + '.json';
   res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
   res.json({
     exportedAt: nowIso(),
-    updatedAt: row.updated_at,
-    data,
+    updatedAt: store.updatedAt,
+    data: store.data || { days: {} },
   });
 });
 
