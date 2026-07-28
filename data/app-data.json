@@ -3,7 +3,7 @@
     "days": {
       "2026-07-28": {
         "app": 250000,
-        "outside": 0,
+        "outside": 350000,
         "zoomPoints": 1,
         "highway": 40000,
         "tip": 0,
@@ -25,10 +25,16 @@
             "field": "app",
             "value": 250000,
             "at": "2026-07-28T06:26:05.962Z"
+          },
+          {
+            "id": "ms49vwnntxga4l",
+            "field": "outside",
+            "value": 350000,
+            "at": "2026-07-28T06:26:25.427Z"
           }
         ]
       }
     }
   },
-  "updatedAt": "2026-07-28T06:26:06.118Z"
+  "updatedAt": "2026-07-28T06:26:25.577Z"
 }
