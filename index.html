@@ -1160,19 +1160,6 @@
     </div>
     </div>
 
-    <div class="collapse" id="collapse-entries">
-      <button type="button" class="collapse-toggle" data-collapse="collapse-entries">
-        <span>Lượt đã nhập hôm nay</span>
-        <span>
-          <span class="meta" id="entries-count">0 lượt</span>
-          <span class="chevron">▼</span>
-        </span>
-      </button>
-      <div class="collapse-body">
-        <div class="entries-list" id="entries-list"></div>
-      </div>
-    </div>
-
     <div class="collapse" id="collapse-summary">
       <button type="button" class="collapse-toggle" data-collapse="collapse-summary">
         <span>Chi tiết hôm nay</span>
@@ -1294,8 +1281,6 @@
       sumTip: document.getElementById('sum-tip'),
       sumNet: document.getElementById('sum-net'),
       historyList: document.getElementById('history-list'),
-      entriesList: document.getElementById('entries-list'),
-      entriesCount: document.getElementById('entries-count'),
       summaryNetMeta: document.getElementById('summary-net-meta'),
       pageTitle: document.getElementById('page-title'),
       pageHome: document.getElementById('page-home'),
@@ -1428,7 +1413,8 @@
 
     async function loadFromServer(options = {}) {
       const result = await api('/data');
-      appData = result.data || { days: {} };
+      // Bỏ mọi log từng lượt cũ — chỉ giữ tổng theo ngày
+      appData = stripLogsFromData(result.data || { days: {} });
       lastUpdatedAt = result.updatedAt || null;
 
       if (!options.skipMigration) {
@@ -1436,7 +1422,7 @@
         if (isAdmin() && hasLocalData(local)) {
           const serverEmpty = !hasLocalData(appData);
           if (serverEmpty || confirm('Phát hiện dữ liệu cũ trên trình duyệt. Bạn có muốn nhập vào server không?')) {
-            appData = mergeData(appData, local);
+            appData = stripLogsFromData(mergeData(appData, local));
             await saveToServer();
             localStorage.removeItem(STORAGE_KEY);
             showToast('Đã nhập dữ liệu cũ lên server');
@@ -1446,7 +1432,21 @@
         }
       }
 
+      // Dọn log cũ trên server (admin)
+      if (isAdmin() && result.data && JSON.stringify(result.data) !== JSON.stringify(appData)) {
+        try { await saveToServer(); } catch { /* ignore */ }
+      }
+
       updateSyncTime(result.updatedAt);
+    }
+
+    async function refreshFromServer(notify) {
+      const result = await api('/data');
+      appData = stripLogsFromData(result.data || { days: {} });
+      lastUpdatedAt = result.updatedAt || null;
+      calculate();
+      updateSyncTime(result.updatedAt);
+      if (notify) showToast('Có dữ liệu mới từ admin');
     }
 
     function updateSyncTime(updatedAt) {
@@ -1457,15 +1457,6 @@
       } else {
         setSyncStatus('👁 Đồng bộ thời gian thực · ' + time);
       }
-    }
-
-    async function refreshFromServer(notify) {
-      const result = await api('/data');
-      appData = result.data || { days: {} };
-      lastUpdatedAt = result.updatedAt || null;
-      calculate();
-      updateSyncTime(result.updatedAt);
-      if (notify) showToast('Có dữ liệu mới từ admin');
     }
 
     async function checkForUpdates() {
@@ -1527,7 +1518,8 @@
       if (!isAdmin()) {
         throw new Error('Tài khoản theo dõi chỉ được xem');
       }
-      appData = data;
+      // Không lưu log từng lượt — chỉ giữ tổng số tiền theo ngày
+      appData = stripLogsFromData(data);
       await saveToServer();
     }
 
@@ -1642,46 +1634,44 @@
     }
 
     function emptyDay() {
-      return { app: 0, outside: 0, zoomPoints: 0, highway: 0, tip: 0, entries: [] };
+      return { app: 0, outside: 0, zoomPoints: 0, highway: 0, tip: 0 };
     }
 
     function normalizeDay(day) {
-      const normalized = {
+      return {
         app: day.app || 0,
         outside: day.outside || 0,
         zoomPoints: day.zoomPoints || 0,
         highway: day.highway || 0,
         tip: day.tip || 0,
-        entries: Array.isArray(day.entries) ? day.entries : [],
       };
-      return normalized;
     }
 
-    function createEntryId() {
-      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    function clearInputFields() {
+      ['app-income', 'outside-income', 'zoom-points', 'highway-fee', 'tip-income'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      Object.values(FIELD_MAP).forEach(config => {
+        if (config.preview) {
+          const preview = document.getElementById(config.preview);
+          if (preview) preview.textContent = '';
+        }
+      });
     }
 
-    function rebuildTotalsFromEntries(day) {
-      day.app = 0;
-      day.outside = 0;
-      day.zoomPoints = 0;
-      day.highway = 0;
-      day.tip = 0;
-      (day.entries || []).forEach(entry => {
-        if (!FIELD_MAP[entry.field]) return;
-        day[entry.field] = (day[entry.field] || 0) + entry.value;
-      });
-      // Guard against floating point / negative from bad data
-      Object.keys(FIELD_MAP).forEach(field => {
-        if (day[field] < 0) day[field] = 0;
-      });
+    function stripLogsFromData(data) {
+      const cleaned = { days: {} };
+      for (const [key, day] of Object.entries(data.days || {})) {
+        cleaned.days[key] = normalizeDay(day);
+      }
+      return cleaned;
     }
 
     function getTodayData(data) {
       const key = getTodayKey();
       if (!data.days[key]) data.days[key] = emptyDay();
       data.days[key] = normalizeDay(data.days[key]);
-      // Migrate old data without entries: keep totals as-is
       return data.days[key];
     }
 
@@ -1698,11 +1688,18 @@
     async function handleDayRollover(showMessage) {
       const newKey = getTodayKey();
       if (currentDayKey && currentDayKey !== newKey) {
-        ensureTodayReady();
+        // Ngày mới: tự reset số tiền đã nhập về 0
+        appData.days[newKey] = emptyDay();
+        clearInputFields();
         setTodayDate();
+        if (isAdmin()) {
+          try {
+            await saveData(stripLogsFromData(appData));
+          } catch { /* ignore */ }
+        }
         calculate();
         if (showMessage) {
-          showToast('Ngày mới · mục tiêu reset về 1.200.000đ');
+          showToast('Ngày mới · đã reset số tiền · mục tiêu 1.200.000đ');
         }
       }
       currentDayKey = newKey;
@@ -1734,44 +1731,6 @@
     function isDayEmpty(day) {
       const d = normalizeDay(day);
       return d.app === 0 && d.outside === 0 && d.zoomPoints === 0 && d.highway === 0 && d.tip === 0;
-    }
-
-    function renderEntries(data) {
-      const today = getTodayData(data);
-      const entries = [...(today.entries || [])].reverse();
-
-      if (entries.length === 0) {
-        els.entriesList.innerHTML = '<div class="history-empty" style="padding:14px;font-size:0.82rem">Chưa có lượt nào. Nhập sai? Dùng Xóa.</div>';
-        if (els.entriesCount) els.entriesCount.textContent = '0 lượt';
-        return;
-      }
-
-      if (els.entriesCount) els.entriesCount.textContent = entries.length + ' lượt';
-
-      els.entriesList.innerHTML = entries.map(entry => {
-        const config = FIELD_MAP[entry.field] || { label: entry.field };
-        const isZoom = entry.field === 'zoomPoints';
-        const valueText = isZoom
-          ? (entry.value >= 0 ? '+' : '') + formatPoints(entry.value) + ' điểm'
-          : (entry.value >= 0 ? '+' : '') + formatMoney(entry.value);
-        const time = new Date(entry.at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        const cls = entry.value >= 0 ? 'plus' : 'minus';
-
-        return `
-          <div class="entry-item" data-entry-id="${entry.id}">
-            <div class="entry-info">
-              <div class="entry-field">${config.label}</div>
-              <div class="entry-meta">${time}${entry.note ? ' · ' + entry.note : ''}</div>
-            </div>
-            <div class="entry-value ${cls}">${valueText}</div>
-            <button type="button" class="entry-delete" data-delete-id="${entry.id}">Xóa</button>
-          </div>
-        `;
-      }).join('');
-
-      els.entriesList.querySelectorAll('.entry-delete').forEach(btn => {
-        btn.addEventListener('click', () => deleteEntry(btn.dataset.deleteId));
-      });
     }
 
     function renderHistory(data) {
@@ -1919,7 +1878,6 @@
       els.sumNet.textContent = formatMoney(net);
       if (els.summaryNetMeta) els.summaryNetMeta.textContent = formatMoney(net);
 
-      renderEntries(data);
       if (els.pageHistory.classList.contains('active')) {
         renderHistory(data);
       }
@@ -1969,15 +1927,6 @@
 
       const data = loadData();
       const today = getTodayData(data);
-
-      today.entries = today.entries || [];
-      today.entries.push({
-        id: createEntryId(),
-        field,
-        value,
-        at: new Date().toISOString(),
-        note: '',
-      });
       today[field] = (today[field] || 0) + value;
 
       try {
@@ -1989,46 +1938,12 @@
 
       document.getElementById(config.input).value = '';
       if (config.preview) document.getElementById(config.preview).textContent = '';
-      document.getElementById('collapse-entries').classList.add('open');
       calculate();
 
       const displayVal = field === 'zoomPoints'
         ? formatPoints(value) + ' điểm'
         : formatMoney(value);
       showToast('Đã cộng ' + displayVal + ' · ' + config.label);
-    }
-
-    async function deleteEntry(entryId) {
-      if (!isAdmin()) {
-        showToast('Tài khoản theo dõi không thể xóa dữ liệu');
-        return;
-      }
-      const data = loadData();
-      const today = getTodayData(data);
-      const idx = (today.entries || []).findIndex(e => e.id === entryId);
-      if (idx < 0) return;
-
-      const entry = today.entries[idx];
-      const config = FIELD_MAP[entry.field];
-      if (!confirm('Xóa lượt này?\n' + (config ? config.label : entry.field) + ': ' + (
-        entry.field === 'zoomPoints'
-          ? formatPoints(entry.value) + ' điểm'
-          : formatMoney(entry.value)
-      ))) return;
-
-      today.entries.splice(idx, 1);
-      today[entry.field] = (today[entry.field] || 0) - entry.value;
-      if (today[entry.field] < 0) today[entry.field] = 0;
-
-      try {
-        await saveData(data);
-      } catch (err) {
-        showToast('Lỗi lưu: ' + err.message);
-        return;
-      }
-
-      calculate();
-      showToast('Đã xóa lượt nhập sai');
     }
 
     async function clearField(field) {
@@ -2049,7 +1964,6 @@
         : formatMoney(today[field]);
       if (!confirm('Xóa toàn bộ ' + config.label + ' hôm nay (' + display + ')?')) return;
 
-      today.entries = (today.entries || []).filter(e => e.field !== field);
       today[field] = 0;
 
       try {
@@ -2080,10 +1994,7 @@
         return;
       }
 
-      ['app-income', 'outside-income', 'zoom-points', 'highway-fee', 'tip-income'].forEach(id => {
-        document.getElementById(id).value = '';
-      });
-
+      clearInputFields();
       calculate();
       showToast('Đã đặt lại · mục tiêu còn 1.200.000đ');
     }
