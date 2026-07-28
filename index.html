@@ -2084,6 +2084,8 @@
       isLoggedIn = false;
       currentRole = 'admin';
       lastUpdatedAt = null;
+      goalMetToday = false;
+      closeCelebrate();
       stopRealtimeSync();
       document.body.classList.remove('role-viewer', 'role-admin');
       document.body.classList.remove('logged-in');
@@ -2322,7 +2324,7 @@
         setTodayDate();
         startDayWatcher();
         startRealtimeSync();
-        calculate({ silent: true });
+        calculate();
         applyRoleUI(me.role || 'admin');
         startWeatherEffects();
       } catch (err) {
@@ -2350,7 +2352,7 @@
         setTodayDate();
         startDayWatcher();
         startRealtimeSync();
-        calculate({ silent: true });
+        calculate();
         applyRoleUI(result.role || 'admin');
         startWeatherEffects();
         showToast(result.role === 'viewer' ? 'Đăng nhập theo dõi · chỉ xem' : 'Đăng nhập admin thành công');
@@ -2737,8 +2739,7 @@
       document.getElementById('locked-tip').textContent = formatMoney(today.tip);
     }
 
-    function calculate(options = {}) {
-      const silent = !!options.silent;
+    function calculate() {
       const data = loadData();
       const today = getTodayData(data);
       const goal = getDailyGoal(data);
@@ -2777,6 +2778,12 @@
         els.resultSub.textContent = surplus > 0
           ? 'Vượt mục tiêu ' + formatMoney(surplus)
           : 'Chúc mừng! Bạn đã đạt đủ ' + formatMoney(goal);
+
+        // Bắn pháo hoa khi vừa đạt, hoặc khi F5 / đăng nhập lại mà hôm nay đã đạt
+        if (!goalMetToday) {
+          celebrateGoalComplete(goal, net);
+        }
+        goalMetToday = true;
       } else {
         els.remaining.textContent = formatMoney(remaining);
         els.remaining.classList.add('positive');
@@ -2785,12 +2792,8 @@
         els.resultSub.textContent = isAdmin()
           ? 'Đã đạt ' + pct + '% mục tiêu (' + formatMoney(net) + ' / ' + formatMoney(goal) + ')'
           : 'Đã đạt ' + pct + '% · chế độ theo dõi (chỉ xem)';
+        goalMetToday = false;
       }
-
-      if (!silent && achieved && !goalMetToday) {
-        celebrateGoalComplete(goal, net);
-      }
-      goalMetToday = achieved;
     }
 
     function resizeCelebrateCanvas() {
