@@ -942,7 +942,46 @@
       font-weight: 700;
     }
 
-    .hidden {
+    .viewer-banner {
+      background: #1e3a5f;
+      border: 1px solid #3b82f655;
+      color: #93c5fd;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .role-badge {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      vertical-align: middle;
+    }
+
+    .role-badge.admin {
+      background: #22c55e22;
+      color: var(--accent);
+    }
+
+    .role-badge.viewer {
+      background: #3b82f622;
+      color: var(--info);
+    }
+
+    body.role-viewer .admin-only {
+      display: none !important;
+    }
+
+    body.role-viewer .locked-badge .clear-field-btn {
+      display: none !important;
+    }
+
+    body.role-viewer .entry-delete {
       display: none !important;
     }
 
@@ -957,8 +996,8 @@
 <body>
   <div id="login-screen" class="login-screen hidden">
     <div class="login-card">
-      <h1>🔐 Đăng nhập Admin</h1>
-      <p>Đăng nhập để quản lý và lưu dữ liệu an toàn trên server</p>
+      <h1>🔐 Đăng nhập</h1>
+      <p>Admin quản lý dữ liệu · Theo dõi chỉ xem</p>
       <form id="login-form">
         <label for="login-username">Tên đăng nhập</label>
         <input type="text" id="login-username" autocomplete="username" required>
@@ -975,11 +1014,11 @@
   <nav class="drawer" id="drawer">
     <div class="drawer-header">
       <strong>Menu</strong>
-      <span>👤 <span id="admin-name">admin</span></span>
+      <span>👤 <span id="admin-name">admin</span> <span class="role-badge" id="role-badge">admin</span></span>
     </div>
     <button type="button" class="drawer-item active" data-nav="home">🏠 Hôm nay</button>
     <button type="button" class="drawer-item" data-nav="history">📅 Doanh số các ngày</button>
-    <button type="button" class="drawer-item" id="backup-btn">💾 Sao lưu dữ liệu</button>
+    <button type="button" class="drawer-item admin-only" id="backup-btn">💾 Sao lưu dữ liệu</button>
     <button type="button" class="drawer-item" id="password-btn">🔑 Đổi mật khẩu</button>
     <button type="button" class="drawer-item danger" id="logout-btn">Thoát đăng nhập</button>
   </nav>
@@ -996,6 +1035,7 @@
       <div class="top-bar-spacer"></div>
     </div>
     <div class="sync-status" id="sync-status">✓ Dữ liệu đã lưu trên server</div>
+    <div class="viewer-banner hidden" id="viewer-banner">👁 Bạn đang xem với tài khoản theo dõi — không thể thêm hoặc sửa dữ liệu</div>
 
     <div id="page-home" class="page active">
     <p class="section-title">Tổng doanh thu đã nhận</p>
@@ -1025,6 +1065,7 @@
       <div class="result-sub" id="result-sub">Nhấn Thêm sau mỗi lượt chạy</div>
     </div>
 
+    <div class="admin-only" id="input-section">
     <p class="section-title">Nhập từng lượt &amp; cộng dồn</p>
 
     <div class="form-group">
@@ -1105,6 +1146,7 @@
       </div>
       <div class="input-preview" id="preview-tip"></div>
     </div>
+    </div>
 
     <div class="collapse" id="collapse-entries">
       <button type="button" class="collapse-toggle" data-collapse="collapse-entries">
@@ -1157,7 +1199,7 @@
       </div>
     </div>
 
-    <button class="reset-btn" id="reset-btn">Đặt lại dữ liệu hôm nay</button>
+    <button class="reset-btn admin-only" id="reset-btn">Đặt lại dữ liệu hôm nay</button>
     </div>
 
     <div id="page-history" class="page">
@@ -1198,6 +1240,7 @@
 
     let appData = { days: {} };
     let isLoggedIn = false;
+    let currentRole = 'admin';
     let currentDayKey = null;
     let dayWatchTimer = null;
 
@@ -1245,9 +1288,31 @@
       menuBtn: document.getElementById('menu-btn'),
       drawer: document.getElementById('drawer'),
       drawerOverlay: document.getElementById('drawer-overlay'),
+      roleBadge: document.getElementById('role-badge'),
+      viewerBanner: document.getElementById('viewer-banner'),
       resetBtn: document.getElementById('reset-btn'),
       toast: document.getElementById('toast'),
     };
+
+    function isAdmin() {
+      return currentRole === 'admin';
+    }
+
+    function applyRoleUI(role) {
+      currentRole = role === 'viewer' ? 'viewer' : 'admin';
+      document.body.classList.toggle('role-viewer', currentRole === 'viewer');
+      document.body.classList.toggle('role-admin', currentRole === 'admin');
+      if (els.roleBadge) {
+        els.roleBadge.textContent = currentRole === 'admin' ? 'admin' : 'theo dõi';
+        els.roleBadge.className = 'role-badge ' + currentRole;
+      }
+      if (els.viewerBanner) {
+        els.viewerBanner.classList.toggle('hidden', currentRole !== 'viewer');
+      }
+      if (els.resultSub && currentRole === 'viewer') {
+        // will be overwritten by calculate, but set fallback
+      }
+    }
 
     function openDrawer() {
       els.drawer.classList.add('open');
@@ -1286,13 +1351,16 @@
 
     function showLogin() {
       isLoggedIn = false;
+      currentRole = 'admin';
+      document.body.classList.remove('role-viewer', 'role-admin');
       closeDrawer();
       els.loginScreen.classList.remove('hidden');
       els.appScreen.classList.add('hidden');
     }
 
-    function showApp(username) {
+    function showApp(username, role) {
       isLoggedIn = true;
+      applyRoleUI(role);
       els.adminName.textContent = username;
       els.loginScreen.classList.add('hidden');
       els.appScreen.classList.remove('hidden');
@@ -1332,7 +1400,7 @@
       appData = result.data || { days: {} };
 
       const local = loadLocalData();
-      if (hasLocalData(local)) {
+      if (isAdmin() && hasLocalData(local)) {
         const serverEmpty = !hasLocalData(appData);
         if (serverEmpty || confirm('Phát hiện dữ liệu cũ trên trình duyệt. Bạn có muốn nhập vào server không?')) {
           appData = mergeData(appData, local);
@@ -1340,6 +1408,8 @@
           localStorage.removeItem(STORAGE_KEY);
           showToast('Đã nhập dữ liệu cũ lên server');
         }
+      } else if (!isAdmin()) {
+        setSyncStatus('👁 Chế độ theo dõi · chỉ xem dữ liệu');
       }
 
       if (result.updatedAt) {
@@ -1349,6 +1419,7 @@
     }
 
     async function saveToServer() {
+      if (!isAdmin()) return;
       setSyncStatus('⏳ Đang lưu...', false);
       try {
         const result = await api('/data', { method: 'PUT', body: { data: appData } });
@@ -1365,6 +1436,9 @@
     }
 
     async function saveData(data) {
+      if (!isAdmin()) {
+        throw new Error('Tài khoản theo dõi chỉ được xem');
+      }
       appData = data;
       await saveToServer();
     }
@@ -1376,7 +1450,7 @@
           showLogin();
           return;
         }
-        showApp(me.username);
+        showApp(me.username, me.role || 'admin');
         await loadFromServer();
         setTodayDate();
         startDayWatcher();
@@ -1392,13 +1466,13 @@
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
       try {
-        await api('/login', { method: 'POST', body: { username, password } });
-        showApp(username);
+        const result = await api('/login', { method: 'POST', body: { username, password } });
+        showApp(result.username, result.role || 'admin');
         await loadFromServer();
         setTodayDate();
         startDayWatcher();
         calculate();
-        showToast('Đăng nhập thành công');
+        showToast(result.role === 'viewer' ? 'Đăng nhập theo dõi · chỉ xem' : 'Đăng nhập admin thành công');
       } catch (err) {
         els.loginError.textContent = err.message;
       }
@@ -1764,7 +1838,9 @@
         els.remaining.classList.add('positive');
         els.resultLabel.textContent = 'Còn phải chạy thêm';
         const pct = Math.round((net / GOAL) * 100);
-        els.resultSub.textContent = 'Đã đạt ' + pct + '% mục tiêu (' + formatMoney(net) + ' / 1.200.000đ)';
+        els.resultSub.textContent = isAdmin()
+          ? 'Đã đạt ' + pct + '% mục tiêu (' + formatMoney(net) + ' / 1.200.000đ)'
+          : 'Đã đạt ' + pct + '% · chế độ theo dõi (chỉ xem)';
       }
     }
 
@@ -1776,6 +1852,10 @@
     }
 
     async function addEntry(field) {
+      if (!isAdmin()) {
+        showToast('Tài khoản theo dõi không thể thêm dữ liệu');
+        return;
+      }
       await handleDayRollover(true);
       const config = FIELD_MAP[field];
       const value = parseInput(config.input, config.money);
@@ -1806,6 +1886,7 @@
 
       document.getElementById(config.input).value = '';
       if (config.preview) document.getElementById(config.preview).textContent = '';
+      document.getElementById('collapse-entries').classList.add('open');
       calculate();
 
       const displayVal = field === 'zoomPoints'
@@ -1815,6 +1896,10 @@
     }
 
     async function deleteEntry(entryId) {
+      if (!isAdmin()) {
+        showToast('Tài khoản theo dõi không thể xóa dữ liệu');
+        return;
+      }
       const data = loadData();
       const today = getTodayData(data);
       const idx = (today.entries || []).findIndex(e => e.id === entryId);
@@ -1844,6 +1929,10 @@
     }
 
     async function clearField(field) {
+      if (!isAdmin()) {
+        showToast('Tài khoản theo dõi không thể xóa dữ liệu');
+        return;
+      }
       const config = FIELD_MAP[field];
       const data = loadData();
       const today = getTodayData(data);
@@ -1872,6 +1961,10 @@
     }
 
     async function resetToday() {
+      if (!isAdmin()) {
+        showToast('Tài khoản theo dõi không thể đặt lại dữ liệu');
+        return;
+      }
       if (!confirm('Đặt lại toàn bộ dữ liệu hôm nay? Hành động này không thể hoàn tác.')) return;
 
       const data = loadData();

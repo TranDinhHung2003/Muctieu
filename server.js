@@ -12,6 +12,8 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const VIEWER_USERNAME = process.env.VIEWER_USERNAME || 'theodoi';
+const VIEWER_PASSWORD = process.env.VIEWER_PASSWORD || 'xem123';
 const COOKIE_NAME = 'muctieu_token';
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_PATH = path.join(DATA_DIR, 'muctieu.db');
@@ -24,10 +26,11 @@ const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 
 db.exec(`
-  CREATE TABLE IF NOT EXISTS admin (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('admin', 'viewer')),
     updated_at TEXT NOT NULL
   );
 
@@ -42,14 +45,47 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-function initAdmin() {
-  const existing = db.prepare('SELECT id FROM admin WHERE id = 1').get();
-  if (!existing) {
-    const hash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
-    db.prepare(
-      'INSERT INTO admin (id, username, password_hash, updated_at) VALUES (1, ?, ?, ?)'
-    ).run(ADMIN_USERNAME, hash, nowIso());
-    console.log('Đã tạo tài khoản admin mặc định:', ADMIN_USERNAME);
+function ensureUser(username, password, role) {
+  const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+  if (existing) return false;
+  const hash = bcrypt.hashSync(password, 10);
+  db.prepare(
+    'INSERT INTO users (username, password_hash, role, updated_at) VALUES (?, ?, ?, ?)'
+  ).run(username, hash, role, nowIso());
+  return true;
+}
+
+function migrateLegacyAdmin() {
+  const hasAdminTable = db.prepare(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='admin'"
+  ).get();
+  if (!hasAdminTable) return;
+
+  const legacy = db.prepare('SELECT username, password_hash FROM admin WHERE id = 1').get();
+  if (legacy) {
+    const exists = db.prepare('SELECT id FROM users WHERE username = ?').get(legacy.username);
+    if (!exists) {
+      db.prepare(
+        'INSERT INTO users (username, password_hash, role, updated_at) VALUES (?, ?, ?, ?)'
+      ).run(legacy.username, legacy.password_hash, 'admin', nowIso());
+      console.log('Đã chuyển tài khoản admin cũ sang bảng users:', legacy.username);
+    }
+  }
+}
+
+function initUsers() {
+  migrateLegacyAdmin();
+
+  if (ensureUser(ADMIN_USERNAME, ADMIN_PASSWORD, 'admin')) {
+    console.log('Đã tạo tài khoản admin:', ADMIN_USERNAME);
+  }
+  if (ensureUser(VIEWER_USERNAME, VIEWER_PASSWORD, 'viewer')) {
+    console.log('Đã tạo tài khoản theo dõi:', VIEWER_USERNAME);
+  }
+
+  // Avoid username collision if someone set same names
+  if (ADMIN_USERNAME === VIEWER_USERNAME) {
+    console.warn('Cảnh báo: ADMIN_USERNAME và VIEWER_USERNAME trùng nhau.');
   }
 }
 
@@ -62,15 +98,19 @@ function initData() {
   }
 }
 
-initAdmin();
+initUsers();
 initData();
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
 
-function createToken(username) {
-  return jwt.sign({ username }, JWT_SECRET, { expiresIn: '30d' });
+function createToken(user) {
+  return jwt.sign(
+    { id: user.id, username: user.username, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '30d' }
+  );
 }
 
 function authMiddleware(req, res, next) {
@@ -84,6 +124,13 @@ function authMiddleware(req, res, next) {
   } catch {
     return res.status(401).json({ error: 'Phiên đăng nhập hết hạn, vui lòng đăng nhập lại' });
   }
+}
+
+function adminOnly(req, res, next) {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Tài khoản theo dõi chỉ được xem, không được chỉnh sửa' });
+  }
+  next();
 }
 
 function getStoredData() {
@@ -103,26 +150,32 @@ function saveStoredData(data) {
   fs.writeFileSync(backupPath, json, 'utf8');
 }
 
-app.post('/api/login', (req, res) => {
-  const { username, password } = req.body || {};
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Vui lòng nhập tên đăng nhập và mật khẩu' });
-  }
-
-  const admin = db.prepare('SELECT username, password_hash FROM admin WHERE id = 1').get();
-  if (!admin || admin.username !== username || !bcrypt.compareSync(password, admin.password_hash)) {
-    return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
-  }
-
-  const token = createToken(username);
+function setAuthCookie(res, token) {
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: 'lax',
     maxAge: 30 * 24 * 60 * 60 * 1000,
     secure: process.env.NODE_ENV === 'production',
   });
+}
 
-  res.json({ ok: true, username });
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body || {};
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Vui lòng nhập tên đăng nhập và mật khẩu' });
+  }
+
+  const user = db.prepare(
+    'SELECT id, username, password_hash, role FROM users WHERE username = ?'
+  ).get(username);
+
+  if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+    return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
+  }
+
+  const token = createToken(user);
+  setAuthCookie(res, token);
+  res.json({ ok: true, username: user.username, role: user.role });
 });
 
 app.post('/api/logout', (_req, res) => {
@@ -137,7 +190,7 @@ app.get('/api/me', (req, res) => {
   }
   try {
     const user = jwt.verify(token, JWT_SECRET);
-    res.json({ loggedIn: true, username: user.username });
+    res.json({ loggedIn: true, username: user.username, role: user.role || 'admin' });
   } catch {
     res.clearCookie(COOKIE_NAME);
     res.json({ loggedIn: false });
@@ -150,7 +203,7 @@ app.get('/api/data', authMiddleware, (_req, res) => {
   res.json({ data, updatedAt: row.updated_at });
 });
 
-app.put('/api/data', authMiddleware, (req, res) => {
+app.put('/api/data', authMiddleware, adminOnly, (req, res) => {
   const { data } = req.body || {};
   if (!data || typeof data !== 'object' || !data.days || typeof data.days !== 'object') {
     return res.status(400).json({ error: 'Dữ liệu không hợp lệ' });
@@ -168,17 +221,17 @@ app.post('/api/change-password', authMiddleware, (req, res) => {
     return res.status(400).json({ error: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
   }
 
-  const admin = db.prepare('SELECT password_hash FROM admin WHERE id = 1').get();
-  if (!bcrypt.compareSync(currentPassword, admin.password_hash)) {
+  const user = db.prepare('SELECT id, password_hash FROM users WHERE username = ?').get(req.user.username);
+  if (!user || !bcrypt.compareSync(currentPassword, user.password_hash)) {
     return res.status(401).json({ error: 'Mật khẩu hiện tại không đúng' });
   }
 
   const hash = bcrypt.hashSync(newPassword, 10);
-  db.prepare('UPDATE admin SET password_hash = ?, updated_at = ? WHERE id = 1').run(hash, nowIso());
+  db.prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?').run(hash, nowIso(), user.id);
   res.json({ ok: true });
 });
 
-app.get('/api/backup', authMiddleware, (_req, res) => {
+app.get('/api/backup', authMiddleware, adminOnly, (_req, res) => {
   const data = getStoredData();
   const row = db.prepare('SELECT updated_at FROM app_data WHERE id = 1').get();
   const filename = 'muctieu-backup-' + new Date().toISOString().slice(0, 10) + '.json';
@@ -190,7 +243,7 @@ app.get('/api/backup', authMiddleware, (_req, res) => {
   });
 });
 
-app.post('/api/restore', authMiddleware, (req, res) => {
+app.post('/api/restore', authMiddleware, adminOnly, (req, res) => {
   const { data } = req.body || {};
   if (!data || typeof data !== 'object' || !data.days) {
     return res.status(400).json({ error: 'File sao lưu không hợp lệ' });
@@ -207,5 +260,5 @@ app.get('*', (_req, res) => {
 
 app.listen(PORT, () => {
   console.log('Server chạy tại http://localhost:' + PORT);
-  console.log('Tài khoản admin:', ADMIN_USERNAME);
+  console.log('Admin:', ADMIN_USERNAME, '| Theo dõi:', VIEWER_USERNAME);
 });
