@@ -202,18 +202,6 @@
       margin-top: auto;
     }
 
-    .drawer-item .toggle-state {
-      margin-left: auto;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--accent);
-      padding-left: 8px;
-    }
-
-    .drawer-item.weather-off .toggle-state {
-      color: var(--text-muted);
-    }
-
     body.weather-disabled .weather-fx,
     body.weather-disabled .weather-badge {
       display: none !important;
@@ -775,6 +763,175 @@
 
     .modal-actions .primary:active {
       filter: brightness(1.05);
+    }
+
+    .modal-actions .danger {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .modal.sheet {
+      text-align: center;
+      padding: 28px 22px 22px;
+      max-width: 360px;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(34, 197, 94, 0.12), transparent 55%),
+        var(--surface);
+    }
+
+    .modal.sheet.logout-sheet {
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(239, 68, 68, 0.14), transparent 55%),
+        var(--surface);
+    }
+
+    .modal.sheet.weather-sheet {
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.16), transparent 55%),
+        var(--surface);
+    }
+
+    .sheet-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 14px;
+      border-radius: 20px;
+      display: grid;
+      place-items: center;
+      font-size: 1.8rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    .sheet-icon.logout {
+      background: linear-gradient(145deg, #7f1d1d, #450a0a);
+      border-color: #ef444455;
+    }
+
+    .sheet-icon.weather {
+      background: linear-gradient(145deg, #1e3a5f, #0f172a);
+      border-color: #3b82f655;
+    }
+
+    .modal.sheet h2 {
+      margin-bottom: 8px;
+      font-size: 1.2rem;
+    }
+
+    .sheet-desc {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+      margin: 0 0 20px;
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      text-align: left;
+    }
+
+    .switch-row .switch-copy strong {
+      display: block;
+      font-size: 0.92rem;
+      margin-bottom: 2px;
+    }
+
+    .switch-row .switch-copy span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .switch {
+      position: relative;
+      width: 52px;
+      height: 32px;
+      flex-shrink: 0;
+      border: none;
+      padding: 0;
+      border-radius: 999px;
+      background: #475569;
+      cursor: pointer;
+      transition: background 0.25s ease;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    .switch.on {
+      background: var(--accent);
+    }
+
+    .switch .knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .switch.on .knob {
+      transform: translateX(20px);
+    }
+
+    .switch-label-on,
+    .switch-label-off {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .switch-label-on {
+      left: 8px;
+      color: #052e16;
+      opacity: 0;
+    }
+
+    .switch-label-off {
+      right: 7px;
+      color: #e2e8f0;
+      opacity: 0.85;
+    }
+
+    .switch.on .switch-label-on { opacity: 0.9; }
+    .switch.on .switch-label-off { opacity: 0; }
+    .switch:not(.on) .switch-label-on { opacity: 0; }
+
+    .drawer-item .switch {
+      width: 46px;
+      height: 28px;
+      margin-left: auto;
+    }
+
+    .drawer-item .switch .knob {
+      width: 22px;
+      height: 22px;
+    }
+
+    .drawer-item .switch.on .knob {
+      transform: translateX(18px);
+    }
+
+    .drawer-item .switch-label-on,
+    .drawer-item .switch-label-off {
+      display: none;
     }
 
     .tap-ripple {
@@ -1349,10 +1506,12 @@
     <button type="button" class="drawer-item admin-only" id="backup-btn">💾 Sao lưu dữ liệu</button>
     <button type="button" class="drawer-item" id="password-btn">🔑 Đổi mật khẩu</button>
     <button type="button" class="drawer-item danger drawer-end" id="logout-btn">Thoát đăng nhập</button>
-    <button type="button" class="drawer-item" id="weather-toggle-btn" aria-pressed="true">
-      🌤 Hiệu ứng thời tiết
-      <span class="toggle-state" id="weather-toggle-state">Bật</span>
-    </button>
+    <div class="drawer-item" id="weather-toggle-btn" role="button" tabindex="0" aria-pressed="true">
+      <span class="drawer-item-label">🌤 Hiệu ứng thời tiết</span>
+      <button type="button" class="switch on" id="weather-drawer-switch" role="switch" aria-checked="true" aria-label="Bật tắt hiệu ứng thời tiết">
+        <span class="knob"></span>
+      </button>
+    </div>
   </nav>
 
   <div class="container">
@@ -1597,6 +1756,40 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="logout-modal">
+    <div class="modal sheet logout-sheet">
+      <div class="sheet-icon logout">🚪</div>
+      <h2>Đăng xuất?</h2>
+      <p class="sheet-desc">Bạn sẽ thoát khỏi tài khoản hiện tại. Dữ liệu vẫn được lưu trên server và có thể đăng nhập lại bất cứ lúc nào.</p>
+      <div class="modal-actions">
+        <button type="button" id="logout-cancel">Ở lại</button>
+        <button type="button" class="danger" id="logout-confirm">Đăng xuất</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="weather-modal">
+    <div class="modal sheet weather-sheet">
+      <div class="sheet-icon weather">🌦️</div>
+      <h2>Hiệu ứng thời tiết</h2>
+      <p class="sheet-desc">Hiển thị nắng / mưa realtime theo vị trí hiện tại, phong cách giống màn hình khóa iPhone.</p>
+      <div class="switch-row">
+        <div class="switch-copy">
+          <strong id="weather-modal-title">Đang bật</strong>
+          <span id="weather-modal-hint">Mưa, nắng sẽ hiện trên màn hình</span>
+        </div>
+        <button type="button" class="switch on" id="weather-modal-switch" role="switch" aria-checked="true">
+          <span class="switch-label-on">ON</span>
+          <span class="switch-label-off">OFF</span>
+          <span class="knob"></span>
+        </button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="primary" id="weather-modal-done">Xong</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
@@ -1629,6 +1822,8 @@
       adminName: document.getElementById('admin-name'),
       syncStatus: document.getElementById('sync-status'),
       logoutBtn: document.getElementById('logout-btn'),
+      logoutModal: document.getElementById('logout-modal'),
+      weatherModal: document.getElementById('weather-modal'),
       backupBtn: document.getElementById('backup-btn'),
       goalBtn: document.getElementById('goal-btn'),
       goalModal: document.getElementById('goal-modal'),
@@ -2016,7 +2211,13 @@
       }
     }
 
+    function openLogoutModal() {
+      closeDrawer();
+      if (els.logoutModal) els.logoutModal.classList.add('show');
+    }
+
     async function handleLogout() {
+      if (els.logoutModal) els.logoutModal.classList.remove('show');
       try {
         await api('/logout', { method: 'POST' });
       } catch { /* ignore */ }
@@ -2681,7 +2882,9 @@
 
     els.resetBtn.addEventListener('click', resetToday);
     els.loginForm.addEventListener('submit', handleLogin);
-    els.logoutBtn.addEventListener('click', handleLogout);
+    els.logoutBtn.addEventListener('click', openLogoutModal);
+    document.getElementById('logout-cancel').addEventListener('click', () => els.logoutModal.classList.remove('show'));
+    document.getElementById('logout-confirm').addEventListener('click', handleLogout);
     els.backupBtn.addEventListener('click', () => { closeDrawer(); handleBackup(); });
     els.goalBtn.addEventListener('click', () => { closeDrawer(); openGoalModal(); });
     els.passwordBtn.addEventListener('click', () => { closeDrawer(); openPasswordModal(); });
@@ -2696,6 +2899,13 @@
         saveDailyGoal();
       }
     });
+    document.getElementById('weather-modal-done').addEventListener('click', () => {
+      els.weatherModal.classList.remove('show');
+    });
+    document.getElementById('weather-modal-switch').addEventListener('click', (e) => {
+      e.stopPropagation();
+      setWeatherEnabled(!isWeatherEnabled());
+    });
 
     els.menuBtn.addEventListener('click', openDrawer);
     els.drawerOverlay.addEventListener('click', closeDrawer);
@@ -2709,7 +2919,7 @@
     });
 
     // Đóng popup khi bấm nền tối
-    [els.passwordModal, els.goalModal].forEach(overlay => {
+    [els.passwordModal, els.goalModal, els.logoutModal, els.weatherModal].forEach(overlay => {
       if (!overlay) return;
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.classList.remove('show');
@@ -2743,28 +2953,55 @@
       return weatherState.enabled;
     }
 
+    function syncSwitchEl(el, on) {
+      if (!el) return;
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-checked', on ? 'true' : 'false');
+    }
+
     function updateWeatherToggleUI() {
       const btn = document.getElementById('weather-toggle-btn');
-      const stateEl = document.getElementById('weather-toggle-state');
+      const drawerSwitch = document.getElementById('weather-drawer-switch');
+      const modalSwitch = document.getElementById('weather-modal-switch');
+      const title = document.getElementById('weather-modal-title');
+      const hint = document.getElementById('weather-modal-hint');
       const on = isWeatherEnabled();
       document.body.classList.toggle('weather-disabled', !on);
       if (btn) {
         btn.classList.toggle('weather-off', !on);
         btn.setAttribute('aria-pressed', on ? 'true' : 'false');
       }
-      if (stateEl) stateEl.textContent = on ? 'Bật' : 'Tắt';
+      syncSwitchEl(drawerSwitch, on);
+      syncSwitchEl(modalSwitch, on);
+      if (title) title.textContent = on ? 'Đang bật' : 'Đang tắt';
+      if (hint) {
+        hint.textContent = on
+          ? 'Mưa, nắng sẽ hiện trên màn hình'
+          : 'Ẩn toàn bộ hiệu ứng thời tiết';
+      }
     }
 
-    function setWeatherEnabled(on) {
-      weatherState.enabled = !!on;
+    function openWeatherModal() {
+      closeDrawer();
+      updateWeatherToggleUI();
+      if (els.weatherModal) els.weatherModal.classList.add('show');
+    }
+
+    function setWeatherEnabled(on, opts = {}) {
+      const next = !!on;
+      const changed = weatherState.enabled !== next;
+      weatherState.enabled = next;
       try {
-        localStorage.setItem(WEATHER_ENABLED_KEY, on ? '1' : '0');
+        localStorage.setItem(WEATHER_ENABLED_KEY, next ? '1' : '0');
       } catch { /* ignore */ }
       updateWeatherToggleUI();
-      if (on) {
+      if (next) {
         startWeatherEffects();
       } else {
         stopWeatherEffects();
+      }
+      if (changed && opts.toast !== false) {
+        showToast(next ? 'Đã bật hiệu ứng thời tiết' : 'Đã tắt hiệu ứng thời tiết');
       }
     }
 
@@ -3000,13 +3237,26 @@
     }
 
     const weatherToggleBtn = document.getElementById('weather-toggle-btn');
+    const weatherDrawerSwitch = document.getElementById('weather-drawer-switch');
     if (weatherToggleBtn) {
       updateWeatherToggleUI();
-      weatherToggleBtn.addEventListener('click', () => {
-        const next = !isWeatherEnabled();
-        setWeatherEnabled(next);
-        closeDrawer();
-        showToast(next ? 'Đã bật hiệu ứng thời tiết' : 'Đã tắt hiệu ứng thời tiết');
+      weatherToggleBtn.addEventListener('click', (e) => {
+        if (e.target.closest('.switch')) return;
+        openWeatherModal();
+      });
+      weatherToggleBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (e.target.closest('.switch')) return;
+          e.preventDefault();
+          openWeatherModal();
+        }
+      });
+    }
+    if (weatherDrawerSwitch) {
+      weatherDrawerSwitch.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setWeatherEnabled(!isWeatherEnabled());
       });
     }
 
