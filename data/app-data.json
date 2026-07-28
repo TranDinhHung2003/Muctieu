@@ -3,7 +3,7 @@
     "days": {
       "2026-07-28": {
         "app": 638000,
-        "outside": 350000,
+        "outside": 430000,
         "zoomPoints": 1,
         "highway": 40000,
         "tip": 78000,
@@ -73,11 +73,17 @@
             "field": "tip",
             "value": 13000,
             "at": "2026-07-28T11:36:15.952Z"
+          },
+          {
+            "id": "ms4mnualir7xt3",
+            "field": "outside",
+            "value": 80000,
+            "at": "2026-07-28T12:24:04.125Z"
           }
         ]
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-07-28T11:36:16.079Z"
+  "updatedAt": "2026-07-28T12:24:04.266Z"
 }
