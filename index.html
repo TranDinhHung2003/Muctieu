@@ -1427,36 +1427,48 @@
       top: auto;
       bottom: 18px;
       right: 14px;
+      left: auto;
       z-index: 50;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px;
+      padding: 8px 12px;
+      border-radius: 14px;
       border: 1px solid var(--border);
-      background: rgba(26, 35, 50, 0.82);
-      backdrop-filter: blur(8px);
+      background: rgba(26, 35, 50, 0.88);
+      backdrop-filter: blur(10px);
       color: var(--text);
       font-size: 0.72rem;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
       transition: transform 0.15s ease, border-color 0.2s ease;
-      max-width: calc(100vw - 28px);
+      max-width: min(280px, calc(100vw - 28px));
+      text-align: left;
     }
 
     .weather-badge:active {
-      transform: scale(0.96);
+      transform: scale(0.97);
+    }
+
+    .weather-badge .wb-top {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
     }
 
     .weather-badge .wb-icon {
       font-size: 0.95rem;
       line-height: 1;
+      flex-shrink: 0;
     }
 
     .weather-badge .wb-temp {
       color: var(--warning);
       font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
     }
 
     .weather-badge .wb-label {
@@ -1465,7 +1477,33 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 110px;
+      min-width: 0;
+    }
+
+    .weather-badge .wb-location {
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+      color: #93c5fd;
+      font-size: 0.68rem;
+      font-weight: 500;
+      line-height: 1.3;
+      border-top: 1px solid rgba(51, 65, 85, 0.8);
+      padding-top: 5px;
+      margin-top: 1px;
+    }
+
+    .weather-badge .wb-pin {
+      flex-shrink: 0;
+      line-height: 1.3;
+    }
+
+    .weather-badge .wb-address {
+      min-width: 0;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1488,10 +1526,16 @@
       <div class="sun-core"></div>
     </div>
   </div>
-  <button type="button" class="weather-badge" id="weather-badge" title="Làm mới thời tiết" aria-label="Thời tiết hiện tại">
-    <span class="wb-icon" id="wb-icon">🌤</span>
-    <span class="wb-temp" id="wb-temp">--°</span>
-    <span class="wb-label" id="wb-label">Đang lấy vị trí…</span>
+  <button type="button" class="weather-badge" id="weather-badge" title="Làm mới thời tiết" aria-label="Thời tiết và vị trí hiện tại">
+    <span class="wb-top">
+      <span class="wb-icon" id="wb-icon">🌤</span>
+      <span class="wb-temp" id="wb-temp">--°</span>
+      <span class="wb-label" id="wb-label">Đang lấy vị trí…</span>
+    </span>
+    <span class="wb-location">
+      <span class="wb-pin" aria-hidden="true">📍</span>
+      <span class="wb-address" id="wb-address">Đang xác định địa chỉ…</span>
+    </span>
   </button>
 
   <div class="drawer-overlay" id="drawer-overlay"></div>
@@ -3050,13 +3094,51 @@
       return { icon: '🌤', label: 'Thời tiết' };
     }
 
-    function setWeatherBadge(icon, temp, label) {
+    function setWeatherBadge(icon, temp, label, address) {
       const iconEl = document.getElementById('wb-icon');
       const tempEl = document.getElementById('wb-temp');
       const labelEl = document.getElementById('wb-label');
+      const addressEl = document.getElementById('wb-address');
       if (iconEl) iconEl.textContent = icon;
       if (tempEl) tempEl.textContent = (temp == null || isNaN(temp)) ? '--°' : Math.round(temp) + '°';
       if (labelEl) labelEl.textContent = label || '';
+      if (addressEl && address != null) addressEl.textContent = address;
+    }
+
+    function setWeatherAddress(address) {
+      const addressEl = document.getElementById('wb-address');
+      if (addressEl) addressEl.textContent = address || 'Không rõ địa chỉ';
+    }
+
+    function formatCoords(lat, lon) {
+      return lat.toFixed(4) + ', ' + lon.toFixed(4);
+    }
+
+    function buildAddressFromGeo(data) {
+      if (!data) return '';
+      const parts = [];
+      const locality = data.locality || data.city || '';
+      const district = data.localityInfo && Array.isArray(data.localityInfo.administrative)
+        ? (data.localityInfo.administrative.find(a => a.adminLevel === 6 || a.adminLevel === 7) || {}).name
+        : '';
+      const city = data.city || data.principalSubdivision || '';
+      const country = data.countryName || '';
+      if (locality && locality !== city) parts.push(locality);
+      if (district && district !== locality && district !== city) parts.push(district);
+      if (city) parts.push(city);
+      if (country && country !== city) parts.push(country);
+      return parts.filter(Boolean).join(', ') || data.plusCode || '';
+    }
+
+    async function reverseGeocode(lat, lon) {
+      const url = 'https://api.bigdatacloud.net/data/reverse-geocode-client'
+        + '?latitude=' + encodeURIComponent(lat)
+        + '&longitude=' + encodeURIComponent(lon)
+        + '&localityLanguage=vi';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Không lấy được địa chỉ');
+      const data = await res.json();
+      return buildAddressFromGeo(data) || formatCoords(lat, lon);
     }
 
     function resizeWeatherCanvas() {
@@ -3180,25 +3262,41 @@
         if (manual) showToast('Hiệu ứng thời tiết đang tắt');
         return;
       }
-      const badge = document.getElementById('weather-badge');
-      if (manual && badge) setWeatherBadge('⏳', null, 'Đang cập nhật…');
+      if (manual) setWeatherBadge('⏳', null, 'Đang cập nhật…', 'Đang xác định địa chỉ…');
       try {
         const pos = await getCurrentPosition();
-        if (pos.fallback && manual) {
-          setWeatherBadge('📍', null, 'Dùng vị trí mặc định');
-        }
-        const data = await fetchWeather(pos.lat, pos.lon);
+        setWeatherAddress(pos.fallback ? ('Mặc định · ' + formatCoords(pos.lat, pos.lon)) : ('GPS · ' + formatCoords(pos.lat, pos.lon)));
+
+        const [weatherResult, addressResult] = await Promise.allSettled([
+          fetchWeather(pos.lat, pos.lon),
+          reverseGeocode(pos.lat, pos.lon),
+        ]);
+
         if (!isWeatherEnabled()) return;
-        const current = data.current || {};
+
+        let addressText = formatCoords(pos.lat, pos.lon);
+        if (addressResult.status === 'fulfilled' && addressResult.value) {
+          addressText = addressResult.value + (pos.fallback ? ' (ước lượng)' : '');
+        } else if (pos.fallback) {
+          addressText = 'Hà Nội (vị trí mặc định)';
+        }
+
+        if (weatherResult.status !== 'fulfilled') {
+          setWeatherBadge('⚠️', null, 'Lỗi thời tiết', addressText);
+          if (manual) showToast(weatherResult.reason?.message || 'Không lấy được thời tiết');
+          return;
+        }
+
+        const current = weatherResult.value.current || {};
         const code = current.weather_code;
         const isDay = current.is_day === 1;
         const mode = weatherModeFromCode(code, isDay);
         const meta = weatherMeta(code, isDay);
         applyWeatherMode(mode);
-        setWeatherBadge(meta.icon, current.temperature_2m, meta.label);
-        if (manual) showToast(meta.label + ' · ' + Math.round(current.temperature_2m) + '°C');
+        setWeatherBadge(meta.icon, current.temperature_2m, meta.label, addressText);
+        if (manual) showToast(meta.label + ' · ' + Math.round(current.temperature_2m) + '°C · ' + addressText);
       } catch (err) {
-        setWeatherBadge('⚠️', null, 'Lỗi thời tiết');
+        setWeatherBadge('⚠️', null, 'Lỗi thời tiết', 'Không lấy được vị trí');
         if (manual) showToast(err.message || 'Không lấy được thời tiết');
       }
     }
