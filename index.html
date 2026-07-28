@@ -22,19 +22,11 @@
       --input-bg: rgba(8, 14, 20, 0.55);
       --radius: 18px;
       --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-      --goal: 1200000;
-      --point-value: 80000;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body {
-      min-height: 100%;
-    }
+    html, body { min-height: 100%; }
 
     body {
       font-family: "Be Vietnam Pro", sans-serif;
@@ -85,34 +77,12 @@
     .tagline {
       color: var(--muted);
       font-size: 1rem;
-      max-width: 28ch;
+      max-width: 32ch;
       margin-bottom: 1.75rem;
       animation: rise 0.7s ease 0.08s both;
     }
 
-    .goal-banner {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--line);
-      animation: rise 0.7s ease 0.14s both;
-    }
-
-    .goal-banner .label {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .goal-banner .value {
-      font-family: "Outfit", sans-serif;
-      font-weight: 700;
-      font-size: clamp(1.5rem, 5vw, 1.85rem);
-      color: var(--accent-soft);
-      letter-spacing: -0.02em;
-    }
+    .hidden { display: none !important; }
 
     .panel {
       background: var(--bg-panel);
@@ -124,13 +94,8 @@
       animation: rise 0.75s ease 0.2s both;
     }
 
-    .field {
-      margin-bottom: 1rem;
-    }
-
-    .field:last-of-type {
-      margin-bottom: 0;
-    }
+    .field { margin-bottom: 1rem; }
+    .field:last-of-type { margin-bottom: 0; }
 
     label {
       display: block;
@@ -162,7 +127,10 @@
       box-shadow: 0 0 0 3px rgba(240, 165, 58, 0.12);
     }
 
-    input[type="number"] {
+    input[type="number"],
+    input[type="tel"],
+    input[type="password"],
+    input[type="text"] {
       width: 100%;
       border: 0;
       outline: none;
@@ -172,9 +140,9 @@
       font-size: 1.15rem;
       font-weight: 600;
       padding: 0.85rem 0;
-      -moz-appearance: textfield;
     }
 
+    input[type="number"] { -moz-appearance: textfield; }
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button {
       -webkit-appearance: none;
@@ -188,16 +156,101 @@
       white-space: nowrap;
     }
 
-    .divider {
-      height: 1px;
-      background: var(--line);
-      margin: 1.25rem 0;
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 1.1rem;
     }
 
-    .result {
-      margin-top: 1.25rem;
-      animation: rise 0.75s ease 0.28s both;
+    .auth-tab {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 0.75rem;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
     }
+
+    .auth-tab.active {
+      color: var(--text);
+      border-color: rgba(240, 165, 58, 0.45);
+      background: rgba(240, 165, 58, 0.14);
+    }
+
+    .auth-error {
+      margin-top: 0.85rem;
+      color: var(--warn);
+      font-size: 0.88rem;
+      min-height: 1.25rem;
+    }
+
+    .auth-note {
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      animation: rise 0.7s ease 0.1s both;
+    }
+
+    .user-chip {
+      color: var(--muted);
+      font-size: 0.88rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-chip strong {
+      color: var(--accent-soft);
+      font-weight: 600;
+    }
+
+    .goal-banner {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--line);
+      animation: rise 0.7s ease 0.14s both;
+    }
+
+    .goal-banner .label { color: var(--muted); font-size: 0.9rem; }
+
+    .goal-banner .value {
+      font-family: "Outfit", sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.5rem, 5vw, 1.85rem);
+      color: var(--accent-soft);
+      letter-spacing: -0.02em;
+    }
+
+    .save-status {
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--good);
+      min-height: 1.2rem;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .save-status.show { opacity: 1; }
+    .save-status.warn { color: var(--warn); }
+
+    .result { margin-top: 1.25rem; animation: rise 0.75s ease 0.28s both; }
 
     .result-card {
       border-radius: var(--radius);
@@ -247,16 +300,10 @@
       font-size: clamp(2rem, 8vw, 2.6rem);
       letter-spacing: -0.03em;
       line-height: 1.1;
-      transition: color 0.25s ease, transform 0.25s ease;
     }
 
-    .result-card.done .result-value {
-      color: var(--good);
-    }
-
-    .result-card:not(.done) .result-value {
-      color: var(--accent-soft);
-    }
+    .result-card.done .result-value { color: var(--good); }
+    .result-card:not(.done) .result-value { color: var(--accent-soft); }
 
     .result-sub {
       position: relative;
@@ -266,11 +313,7 @@
       font-size: 0.88rem;
     }
 
-    .progress-wrap {
-      position: relative;
-      z-index: 1;
-      margin-top: 1.1rem;
-    }
+    .progress-wrap { position: relative; z-index: 1; margin-top: 1.1rem; }
 
     .progress-meta {
       display: flex;
@@ -320,18 +363,14 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .breakdown-row.neg strong {
-      color: var(--warn);
-    }
-
-    .breakdown-row.pos strong {
-      color: var(--good);
-    }
+    .breakdown-row.neg strong { color: var(--warn); }
+    .breakdown-row.pos strong { color: var(--good); }
 
     .actions {
       display: flex;
       gap: 0.75rem;
       margin-top: 1rem;
+      flex-wrap: wrap;
     }
 
     button {
@@ -345,19 +384,37 @@
       transition: transform 0.15s ease, opacity 0.15s ease, background 0.2s ease;
     }
 
-    button:active {
-      transform: scale(0.98);
+    button:active { transform: scale(0.98); }
+
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(120deg, #d4892a, var(--accent));
+      color: #1a1208;
+      margin-top: 0.35rem;
     }
 
-    .btn-reset {
+    .btn-primary:hover { opacity: 0.95; }
+
+    .btn-reset,
+    .btn-ghost {
       flex: 1;
+      min-width: 120px;
       background: rgba(255, 255, 255, 0.06);
       color: var(--text);
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .btn-reset:hover {
-      background: rgba(255, 255, 255, 0.1);
+    .btn-reset:hover,
+    .btn-ghost:hover { background: rgba(255, 255, 255, 0.1); }
+
+    .btn-link {
+      background: transparent;
+      color: var(--muted);
+      border: 0;
+      padding: 0.35rem 0.5rem;
+      font-size: 0.85rem;
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
 
     .foot {
@@ -369,14 +426,8 @@
     }
 
     @keyframes rise {
-      from {
-        opacity: 0;
-        transform: translateY(14px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes pulse-once {
@@ -385,115 +436,163 @@
       100% { transform: scale(1); }
     }
 
-    .pop {
-      animation: pulse-once 0.35s ease;
-    }
+    .pop { animation: pulse-once 0.35s ease; }
 
     @media (max-width: 420px) {
-      .wrap {
-        width: calc(100% - 1.25rem);
-        padding-top: 1.5rem;
-      }
-
-      .panel {
-        padding: 1rem;
-      }
+      .wrap { width: calc(100% - 1.25rem); padding-top: 1.5rem; }
+      .panel { padding: 1rem; }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
     <h1 class="brand">Chạy Đủ</h1>
-    <p class="tagline">Theo dõi doanh thu ngày và số tiền còn thiếu để đạt mục tiêu.</p>
+    <p class="tagline" id="tagline">Đăng nhập để lưu số liệu. Lần sau mở lại vẫn còn dữ liệu cũ.</p>
 
-    <div class="goal-banner">
-      <span class="label">Mục tiêu hôm nay</span>
-      <span class="value" id="goalDisplay">1.200.000đ</span>
-    </div>
+    <!-- AUTH -->
+    <section id="authView" class="panel" aria-label="Đăng nhập">
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab active" id="tabLogin" data-mode="login">Đăng nhập</button>
+        <button type="button" class="auth-tab" id="tabRegister" data-mode="register">Tạo tài khoản</button>
+      </div>
 
-    <section class="panel" aria-label="Nhập số liệu">
       <div class="field">
-        <label for="appMoney">Số tiền chạy trên app</label>
+        <label for="phone">Số điện thoại</label>
         <div class="input-row">
-          <input id="appMoney" type="number" inputmode="numeric" min="0" step="1000" placeholder="0" value="" />
-          <span class="suffix">đ</span>
+          <input id="phone" type="tel" inputmode="numeric" autocomplete="username" placeholder="09xxxxxxxx" maxlength="11" />
         </div>
       </div>
 
       <div class="field">
-        <label for="outsideMoney">Số tiền chạy ngoài</label>
+        <label for="pin">Mã PIN (4–6 số)</label>
         <div class="input-row">
-          <input id="outsideMoney" type="number" inputmode="numeric" min="0" step="1000" placeholder="0" value="" />
-          <span class="suffix">đ</span>
+          <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••" maxlength="6" />
         </div>
       </div>
 
-      <div class="field">
-        <label for="zoomPoints">
-          Số điểm trừ trên Zoom
-          <span class="hint">· 1 điểm = −80.000đ · nhập từ 0.5</span>
-        </label>
-        <div class="input-row">
-          <input id="zoomPoints" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0" value="" />
-          <span class="suffix">điểm</span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="highwayFee">Số tiền cao tốc phải trả</label>
-        <div class="input-row">
-          <input id="highwayFee" type="number" inputmode="numeric" min="0" step="1000" placeholder="0" value="" />
-          <span class="suffix">đ</span>
-        </div>
-      </div>
+      <button type="button" class="btn-primary" id="authSubmit">Đăng nhập</button>
+      <p class="auth-error" id="authError"></p>
+      <p class="auth-note">
+        Dữ liệu được lưu trên máy này theo số điện thoại + PIN.
+        Đăng nhập lại cùng tài khoản sẽ khôi phục số liệu đã nhập.
+      </p>
     </section>
 
-    <section class="result" aria-live="polite">
-      <div class="result-card" id="resultCard">
-        <p class="result-label" id="resultLabel">Còn phải chạy</p>
-        <p class="result-value" id="resultValue">1.200.000đ</p>
-        <p class="result-sub" id="resultSub">Nhập số liệu để cập nhật tiến độ.</p>
-
-        <div class="progress-wrap">
-          <div class="progress-meta">
-            <span>Tiến độ</span>
-            <span id="progressPct">0%</span>
-          </div>
-          <div class="bar" aria-hidden="true"><span id="progressBar"></span></div>
-        </div>
-
-        <div class="breakdown">
-          <div class="breakdown-row pos">
-            <span>Tổng thu (app + ngoài)</span>
-            <strong id="totalIncome">0đ</strong>
-          </div>
-          <div class="breakdown-row neg">
-            <span>Trừ Zoom</span>
-            <strong id="zoomDeduction">0đ</strong>
-          </div>
-          <div class="breakdown-row neg">
-            <span>Trừ cao tốc</span>
-            <strong id="highwayDisplay">0đ</strong>
-          </div>
-          <div class="breakdown-row">
-            <span>Thực nhận hôm nay</span>
-            <strong id="netIncome">0đ</strong>
-          </div>
-        </div>
+    <!-- APP -->
+    <section id="appView" class="hidden">
+      <div class="topbar">
+        <p class="user-chip">Xin chào, <strong id="userLabel"></strong></p>
+        <button type="button" class="btn-link" id="logoutBtn">Đăng xuất</button>
       </div>
 
-      <div class="actions">
-        <button type="button" class="btn-reset" id="resetBtn">Xóa số liệu</button>
+      <div class="goal-banner">
+        <span class="label">Mục tiêu hôm nay · <span id="todayLabel"></span></span>
+        <span class="value">1.200.000đ</span>
       </div>
+
+      <section class="panel" aria-label="Nhập số liệu">
+        <div class="field">
+          <label for="appMoney">Số tiền chạy trên app</label>
+          <div class="input-row">
+            <input id="appMoney" type="number" inputmode="numeric" min="0" step="1000" placeholder="0" />
+            <span class="suffix">đ</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="outsideMoney">Số tiền chạy ngoài</label>
+          <div class="input-row">
+            <input id="outsideMoney" type="number" inputmode="numeric" min="0" step="1000" placeholder="0" />
+            <span class="suffix">đ</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="zoomPoints">
+            Số điểm trừ trên Zoom
+            <span class="hint">· 1 điểm = −80.000đ · nhập từ 0.5</span>
+          </label>
+          <div class="input-row">
+            <input id="zoomPoints" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0" />
+            <span class="suffix">điểm</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="highwayFee">Số tiền cao tốc phải trả</label>
+          <div class="input-row">
+            <input id="highwayFee" type="number" inputmode="numeric" min="0" step="1000" placeholder="0" />
+            <span class="suffix">đ</span>
+          </div>
+        </div>
+
+        <p class="save-status" id="saveStatus">Đã lưu</p>
+      </section>
+
+      <section class="result" aria-live="polite">
+        <div class="result-card" id="resultCard">
+          <p class="result-label" id="resultLabel">Còn phải chạy</p>
+          <p class="result-value" id="resultValue">1.200.000đ</p>
+          <p class="result-sub" id="resultSub">Nhập số liệu để cập nhật tiến độ.</p>
+
+          <div class="progress-wrap">
+            <div class="progress-meta">
+              <span>Tiến độ</span>
+              <span id="progressPct">0%</span>
+            </div>
+            <div class="bar" aria-hidden="true"><span id="progressBar"></span></div>
+          </div>
+
+          <div class="breakdown">
+            <div class="breakdown-row pos">
+              <span>Tổng thu (app + ngoài)</span>
+              <strong id="totalIncome">0đ</strong>
+            </div>
+            <div class="breakdown-row neg">
+              <span>Trừ Zoom</span>
+              <strong id="zoomDeduction">0đ</strong>
+            </div>
+            <div class="breakdown-row neg">
+              <span>Trừ cao tốc</span>
+              <strong id="highwayDisplay">0đ</strong>
+            </div>
+            <div class="breakdown-row">
+              <span>Thực nhận hôm nay</span>
+              <strong id="netIncome">0đ</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn-reset" id="resetBtn">Xóa số liệu hôm nay</button>
+        </div>
+      </section>
+
+      <p class="foot">Công thức: Mục tiêu − (app + ngoài − Zoom × 80.000 − cao tốc)</p>
     </section>
-
-    <p class="foot">Công thức: Mục tiêu − (app + ngoài − Zoom × 80.000 − cao tốc)</p>
   </main>
 
   <script>
     const GOAL = 1_200_000;
     const POINT_VALUE = 80_000;
-    const STORAGE_KEY = "chay-du-inputs-v1";
+    const DB_KEY = "chay-du-db-v2";
+    const SESSION_KEY = "chay-du-session-v2";
+    const LEGACY_KEY = "chay-du-inputs-v1";
+
+    const authView = document.getElementById("authView");
+    const appView = document.getElementById("appView");
+    const tagline = document.getElementById("tagline");
+    const authError = document.getElementById("authError");
+    const authSubmit = document.getElementById("authSubmit");
+    const phoneInput = document.getElementById("phone");
+    const pinInput = document.getElementById("pin");
+    const tabLogin = document.getElementById("tabLogin");
+    const tabRegister = document.getElementById("tabRegister");
+    const userLabel = document.getElementById("userLabel");
+    const todayLabel = document.getElementById("todayLabel");
+    const saveStatus = document.getElementById("saveStatus");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const resetBtn = document.getElementById("resetBtn");
 
     const fields = {
       appMoney: document.getElementById("appMoney"),
@@ -513,8 +612,129 @@
       zoomDeduction: document.getElementById("zoomDeduction"),
       highwayDisplay: document.getElementById("highwayDisplay"),
       netIncome: document.getElementById("netIncome"),
-      resetBtn: document.getElementById("resetBtn"),
     };
+
+    let authMode = "login";
+    let currentPhone = null;
+    let saveTimer = null;
+    let skipSave = false;
+
+    function todayKey() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return y + "-" + m + "-" + day;
+    }
+
+    function formatTodayLabel() {
+      return new Date().toLocaleDateString("vi-VN", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    }
+
+    function normalizePhone(raw) {
+      return String(raw || "").replace(/\D/g, "");
+    }
+
+    function isValidPhone(phone) {
+      return /^0\d{9,10}$/.test(phone);
+    }
+
+    function isValidPin(pin) {
+      return /^\d{4,6}$/.test(pin);
+    }
+
+    async function hashPin(pin) {
+      const data = new TextEncoder().encode("chay-du|" + pin);
+      const buf = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(buf))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
+    function readDb() {
+      try {
+        const raw = localStorage.getItem(DB_KEY);
+        if (!raw) return { users: {} };
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return { users: {} };
+        if (!parsed.users || typeof parsed.users !== "object") parsed.users = {};
+        return parsed;
+      } catch (_) {
+        return { users: {} };
+      }
+    }
+
+    function writeDb(db) {
+      localStorage.setItem(DB_KEY, JSON.stringify(db));
+    }
+
+    function getSession() {
+      try {
+        return localStorage.getItem(SESSION_KEY) || null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function setSession(phone) {
+      localStorage.setItem(SESSION_KEY, phone);
+    }
+
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+    }
+
+    function emptyDay() {
+      return {
+        appMoney: "",
+        outsideMoney: "",
+        zoomPoints: "",
+        highwayFee: "",
+        updatedAt: null,
+      };
+    }
+
+    function migrateLegacyIfNeeded(phone) {
+      try {
+        const legacy = localStorage.getItem(LEGACY_KEY);
+        if (!legacy) return;
+        const data = JSON.parse(legacy);
+        const db = readDb();
+        const user = db.users[phone];
+        if (!user) return;
+        const key = todayKey();
+        if (!user.days[key] || !hasAnyValue(user.days[key])) {
+          user.days[key] = {
+            appMoney: data.appMoney || "",
+            outsideMoney: data.outsideMoney || "",
+            zoomPoints: data.zoomPoints || "",
+            highwayFee: data.highwayFee || "",
+            updatedAt: new Date().toISOString(),
+          };
+          writeDb(db);
+        }
+        localStorage.removeItem(LEGACY_KEY);
+      } catch (_) {}
+    }
+
+    function hasAnyValue(day) {
+      return !!(day.appMoney || day.outsideMoney || day.zoomPoints || day.highwayFee);
+    }
+
+    function showSaveStatus(ok, message) {
+      saveStatus.textContent = message;
+      saveStatus.classList.toggle("warn", !ok);
+      saveStatus.classList.add("show");
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        saveStatus.classList.remove("show");
+      }, 2200);
+    }
 
     function parseMoney(input) {
       const n = Number(input.value);
@@ -529,32 +749,66 @@
 
     function formatVnd(n) {
       const abs = Math.abs(Math.round(n));
-      const formatted = abs.toLocaleString("vi-VN");
-      return (n < 0 ? "-" : "") + formatted + "đ";
+      return (n < 0 ? "-" : "") + abs.toLocaleString("vi-VN") + "đ";
     }
 
-    function load() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
-        const data = JSON.parse(raw);
-        Object.keys(fields).forEach((key) => {
-          if (data[key] != null && data[key] !== "") {
-            fields[key].value = data[key];
-          }
+    function loadDayIntoForm() {
+      const db = readDb();
+      const user = db.users[currentPhone];
+      const day = (user && user.days && user.days[todayKey()]) || emptyDay();
+      skipSave = true;
+      fields.appMoney.value = day.appMoney || "";
+      fields.outsideMoney.value = day.outsideMoney || "";
+      fields.zoomPoints.value = day.zoomPoints || "";
+      fields.highwayFee.value = day.highwayFee || "";
+      skipSave = false;
+      calc(false);
+      if (day.updatedAt) {
+        const t = new Date(day.updatedAt).toLocaleTimeString("vi-VN", {
+          hour: "2-digit",
+          minute: "2-digit",
         });
-      } catch (_) {}
+        showSaveStatus(true, "Đã khôi phục dữ liệu · lưu lúc " + t);
+      }
     }
 
-    function save() {
-      const data = {};
-      Object.keys(fields).forEach((key) => {
-        data[key] = fields[key].value;
-      });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    function saveDay() {
+      if (!currentPhone || skipSave) return;
+      try {
+        const db = readDb();
+        const user = db.users[currentPhone];
+        if (!user) {
+          showSaveStatus(false, "Không lưu được — hãy đăng nhập lại");
+          return;
+        }
+        if (!user.days) user.days = {};
+        user.days[todayKey()] = {
+          appMoney: fields.appMoney.value,
+          outsideMoney: fields.outsideMoney.value,
+          zoomPoints: fields.zoomPoints.value,
+          highwayFee: fields.highwayFee.value,
+          updatedAt: new Date().toISOString(),
+        };
+        writeDb(db);
+        // Verify round-trip so user knows data really stuck
+        const check = readDb();
+        const saved = check.users[currentPhone] && check.users[currentPhone].days[todayKey()];
+        if (saved) {
+          const t = new Date(saved.updatedAt).toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          });
+          showSaveStatus(true, "Đã lưu · " + t);
+        } else {
+          showSaveStatus(false, "Lưu thất bại — thử lại");
+        }
+      } catch (err) {
+        showSaveStatus(false, "Trình duyệt chặn lưu dữ liệu");
+      }
     }
 
-    function calc() {
+    function calc(shouldSave) {
       const app = parseMoney(fields.appMoney);
       const outside = parseMoney(fields.outsideMoney);
       const points = parsePoints(fields.zoomPoints);
@@ -596,30 +850,131 @@
       void els.resultValue.offsetWidth;
       els.resultValue.classList.add("pop");
 
-      save();
+      if (shouldSave !== false) saveDay();
     }
 
+    function showApp(phone) {
+      currentPhone = phone;
+      setSession(phone);
+      migrateLegacyIfNeeded(phone);
+      authView.classList.add("hidden");
+      appView.classList.remove("hidden");
+      tagline.textContent = "Theo dõi doanh thu ngày và số tiền còn thiếu để đạt mục tiêu.";
+      userLabel.textContent = phone;
+      todayLabel.textContent = formatTodayLabel();
+      loadDayIntoForm();
+    }
+
+    function showAuth() {
+      currentPhone = null;
+      clearSession();
+      appView.classList.add("hidden");
+      authView.classList.remove("hidden");
+      tagline.textContent = "Đăng nhập để lưu số liệu. Lần sau mở lại vẫn còn dữ liệu cũ.";
+      authError.textContent = "";
+      pinInput.value = "";
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      tabLogin.classList.toggle("active", mode === "login");
+      tabRegister.classList.toggle("active", mode === "register");
+      authSubmit.textContent = mode === "login" ? "Đăng nhập" : "Tạo tài khoản";
+      authError.textContent = "";
+      pinInput.autocomplete = mode === "login" ? "current-password" : "new-password";
+    }
+
+    async function handleAuth() {
+      authError.textContent = "";
+      const phone = normalizePhone(phoneInput.value);
+      const pin = String(pinInput.value || "").trim();
+
+      if (!isValidPhone(phone)) {
+        authError.textContent = "Số điện thoại không hợp lệ (10–11 số, bắt đầu bằng 0).";
+        return;
+      }
+      if (!isValidPin(pin)) {
+        authError.textContent = "PIN phải gồm 4–6 chữ số.";
+        return;
+      }
+
+      const pinHash = await hashPin(pin);
+      const db = readDb();
+
+      if (authMode === "register") {
+        if (db.users[phone]) {
+          authError.textContent = "Số này đã có tài khoản. Hãy đăng nhập.";
+          setAuthMode("login");
+          return;
+        }
+        db.users[phone] = {
+          pinHash,
+          createdAt: new Date().toISOString(),
+          days: {},
+        };
+        writeDb(db);
+        showApp(phone);
+        return;
+      }
+
+      const user = db.users[phone];
+      if (!user) {
+        authError.textContent = "Chưa có tài khoản. Hãy tạo tài khoản trước.";
+        setAuthMode("register");
+        return;
+      }
+      if (user.pinHash !== pinHash) {
+        authError.textContent = "Sai mã PIN. Thử lại.";
+        return;
+      }
+      showApp(phone);
+    }
+
+    tabLogin.addEventListener("click", () => setAuthMode("login"));
+    tabRegister.addEventListener("click", () => setAuthMode("register"));
+    authSubmit.addEventListener("click", () => handleAuth());
+    pinInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleAuth();
+    });
+    phoneInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") pinInput.focus();
+    });
+
     Object.values(fields).forEach((input) => {
-      input.addEventListener("input", calc);
+      input.addEventListener("input", () => calc(true));
       input.addEventListener("change", () => {
         if (input === fields.zoomPoints && input.value !== "") {
           input.value = String(parsePoints(input));
         }
-        calc();
+        calc(true);
       });
     });
 
-    els.resetBtn.addEventListener("click", () => {
+    resetBtn.addEventListener("click", () => {
       Object.values(fields).forEach((input) => {
         input.value = "";
       });
-      localStorage.removeItem(STORAGE_KEY);
-      calc();
+      calc(true);
       fields.appMoney.focus();
     });
 
-    load();
-    calc();
+    logoutBtn.addEventListener("click", () => {
+      // Đăng xuất KHÔNG xóa dữ liệu — chỉ thoát phiên
+      showAuth();
+      phoneInput.focus();
+    });
+
+    // Auto restore session
+    (function boot() {
+      const sessionPhone = getSession();
+      const db = readDb();
+      if (sessionPhone && db.users[sessionPhone]) {
+        phoneInput.value = sessionPhone;
+        showApp(sessionPhone);
+      } else {
+        showAuth();
+      }
+    })();
   </script>
 </body>
 </html>
