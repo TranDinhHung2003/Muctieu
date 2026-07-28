@@ -1511,6 +1511,100 @@
       .weather-sun .sun-core {
         animation: none !important;
       }
+
+      .celebrate-overlay,
+      #celebrate-canvas {
+        display: none !important;
+      }
+    }
+
+    .celebrate-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(2, 8, 18, 0.55);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
+      backdrop-filter: blur(3px);
+    }
+
+    .celebrate-overlay.show {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    #celebrate-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .celebrate-card {
+      position: relative;
+      z-index: 1;
+      width: min(360px, 100%);
+      text-align: center;
+      background:
+        radial-gradient(ellipse 90% 60% at 50% 0%, rgba(34, 197, 94, 0.28), transparent 60%),
+        var(--surface);
+      border: 1px solid rgba(34, 197, 94, 0.45);
+      border-radius: 20px;
+      padding: 28px 22px 22px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      transform: translateY(18px) scale(0.94);
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+    }
+
+    .celebrate-overlay.show .celebrate-card {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .celebrate-emoji {
+      font-size: 2.6rem;
+      line-height: 1;
+      margin-bottom: 10px;
+      animation: celebrate-bounce 0.9s ease infinite alternate;
+    }
+
+    @keyframes celebrate-bounce {
+      from { transform: translateY(0) scale(1); }
+      to { transform: translateY(-6px) scale(1.06); }
+    }
+
+    .celebrate-card h2 {
+      font-size: 1.25rem;
+      margin: 0 0 8px;
+      color: #86efac;
+    }
+
+    .celebrate-card p {
+      margin: 0 0 18px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .celebrate-card .primary {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: var(--accent);
+      color: #052e16;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -1524,6 +1618,15 @@
         <span></span><span></span><span></span><span></span>
       </div>
       <div class="sun-core"></div>
+    </div>
+  </div>
+  <div class="celebrate-overlay" id="celebrate-overlay" aria-hidden="true">
+    <canvas id="celebrate-canvas"></canvas>
+    <div class="celebrate-card">
+      <div class="celebrate-emoji">🎉🚀✨</div>
+      <h2>Chúc mừng bạn!</h2>
+      <p id="celebrate-text">Bạn đã hoàn thành mục tiêu trong ngày. Pháo hoa đây — tiếp tục giữ phong độ nhé!</p>
+      <button type="button" class="primary" id="celebrate-close">Tuyệt vời</button>
     </div>
   </div>
   <button type="button" class="weather-badge" id="weather-badge" title="Làm mới thời tiết" aria-label="Thời tiết và vị trí hiện tại">
@@ -1849,6 +1952,10 @@
     let syncPollTimer = null;
     let lastUpdatedAt = null;
     let isSaving = false;
+    let goalMetToday = false;
+    let celebrateRaf = 0;
+    let celebrateParticles = [];
+    let celebrateBurstsLeft = 0;
 
     const FIELD_MAP = {
       app: { input: 'app-income', locked: 'locked-app', label: 'tiền app', preview: 'preview-app', money: true },
@@ -2215,7 +2322,7 @@
         setTodayDate();
         startDayWatcher();
         startRealtimeSync();
-        calculate();
+        calculate({ silent: true });
         applyRoleUI(me.role || 'admin');
         startWeatherEffects();
       } catch (err) {
@@ -2243,7 +2350,7 @@
         setTodayDate();
         startDayWatcher();
         startRealtimeSync();
-        calculate();
+        calculate({ silent: true });
         applyRoleUI(result.role || 'admin');
         startWeatherEffects();
         showToast(result.role === 'viewer' ? 'Đăng nhập theo dõi · chỉ xem' : 'Đăng nhập admin thành công');
@@ -2419,6 +2526,7 @@
         if (showMessage) {
           showToast('Ngày mới · đã reset số tiền · mục tiêu ' + formatMoney(getDailyGoal()));
         }
+        goalMetToday = false;
       }
       currentDayKey = newKey;
     }
@@ -2629,7 +2737,8 @@
       document.getElementById('locked-tip').textContent = formatMoney(today.tip);
     }
 
-    function calculate() {
+    function calculate(options = {}) {
+      const silent = !!options.silent;
       const data = loadData();
       const today = getTodayData(data);
       const goal = getDailyGoal(data);
@@ -2658,7 +2767,8 @@
       els.resultCard.classList.remove('done');
       els.remaining.classList.remove('positive', 'zero', 'over');
 
-      if (remaining <= 0) {
+      const achieved = remaining <= 0;
+      if (achieved) {
         const surplus = Math.abs(remaining);
         els.resultCard.classList.add('done');
         els.resultLabel.textContent = 'Đã đạt mục tiêu!';
@@ -2675,6 +2785,122 @@
         els.resultSub.textContent = isAdmin()
           ? 'Đã đạt ' + pct + '% mục tiêu (' + formatMoney(net) + ' / ' + formatMoney(goal) + ')'
           : 'Đã đạt ' + pct + '% · chế độ theo dõi (chỉ xem)';
+      }
+
+      if (!silent && achieved && !goalMetToday) {
+        celebrateGoalComplete(goal, net);
+      }
+      goalMetToday = achieved;
+    }
+
+    function resizeCelebrateCanvas() {
+      const canvas = document.getElementById('celebrate-canvas');
+      if (!canvas) return null;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return canvas;
+    }
+
+    function spawnFireworkBurst(x, y) {
+      const colors = ['#22c55e', '#f59e0b', '#3b82f6', '#ef4444', '#e879f9', '#f8fafc', '#fbbf24'];
+      const count = 42 + Math.floor(Math.random() * 18);
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.2;
+        const speed = 2.2 + Math.random() * 4.8;
+        celebrateParticles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1,
+          decay: 0.012 + Math.random() * 0.018,
+          size: 1.6 + Math.random() * 2.4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          gravity: 0.045 + Math.random() * 0.03,
+        });
+      }
+    }
+
+    function drawCelebrateFrame() {
+      const canvas = document.getElementById('celebrate-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      if (celebrateBurstsLeft > 0 && Math.random() < 0.12) {
+        celebrateBurstsLeft -= 1;
+        spawnFireworkBurst(
+          w * (0.15 + Math.random() * 0.7),
+          h * (0.15 + Math.random() * 0.4)
+        );
+      }
+
+      celebrateParticles = celebrateParticles.filter((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.vx *= 0.99;
+        p.life -= p.decay;
+        if (p.life <= 0) return false;
+        ctx.globalAlpha = Math.max(p.life, 0);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        return true;
+      });
+      ctx.globalAlpha = 1;
+
+      if (celebrateParticles.length || celebrateBurstsLeft > 0) {
+        celebrateRaf = requestAnimationFrame(drawCelebrateFrame);
+      } else {
+        celebrateRaf = 0;
+      }
+    }
+
+    function celebrateGoalComplete(goal, net) {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        showToast('🎉 Chúc mừng! Đã hoàn thành mục tiêu');
+        return;
+      }
+      const overlay = document.getElementById('celebrate-overlay');
+      const text = document.getElementById('celebrate-text');
+      if (text) {
+        text.textContent = 'Bạn đã hoàn thành mục tiêu ' + formatMoney(goal)
+          + ' trong ngày (đạt ' + formatMoney(net) + '). Pháo hoa đây — tiếp tục giữ phong độ nhé!';
+      }
+      resizeCelebrateCanvas();
+      celebrateParticles = [];
+      celebrateBurstsLeft = 18;
+      spawnFireworkBurst(window.innerWidth * 0.5, window.innerHeight * 0.35);
+      spawnFireworkBurst(window.innerWidth * 0.28, window.innerHeight * 0.28);
+      spawnFireworkBurst(window.innerWidth * 0.72, window.innerHeight * 0.3);
+      if (overlay) {
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden', 'false');
+      }
+      if (!celebrateRaf) celebrateRaf = requestAnimationFrame(drawCelebrateFrame);
+      showToast('🎉 Chúc mừng bạn đã hoàn thành mục tiêu!');
+    }
+
+    function closeCelebrate() {
+      const overlay = document.getElementById('celebrate-overlay');
+      if (overlay) {
+        overlay.classList.remove('show');
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+      celebrateBurstsLeft = 0;
+      celebrateParticles = [];
+      cancelAnimationFrame(celebrateRaf);
+      celebrateRaf = 0;
+      const canvas = document.getElementById('celebrate-canvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       }
     }
 
@@ -2929,6 +3155,18 @@
     els.logoutBtn.addEventListener('click', openLogoutModal);
     document.getElementById('logout-cancel').addEventListener('click', () => els.logoutModal.classList.remove('show'));
     document.getElementById('logout-confirm').addEventListener('click', handleLogout);
+    document.getElementById('celebrate-close').addEventListener('click', closeCelebrate);
+    const celebrateOverlay = document.getElementById('celebrate-overlay');
+    if (celebrateOverlay) {
+      celebrateOverlay.addEventListener('click', (e) => {
+        if (e.target === celebrateOverlay) closeCelebrate();
+      });
+    }
+    window.addEventListener('resize', () => {
+      if (document.getElementById('celebrate-overlay')?.classList.contains('show')) {
+        resizeCelebrateCanvas();
+      }
+    });
     els.backupBtn.addEventListener('click', () => { closeDrawer(); handleBackup(); });
     els.goalBtn.addEventListener('click', () => { closeDrawer(); openGoalModal(); });
     els.passwordBtn.addEventListener('click', () => { closeDrawer(); openPasswordModal(); });
@@ -3245,7 +3483,7 @@
           () => {
             resolve(getSavedPosition() || { lat: 21.0285, lon: 105.8542, fallback: true });
           },
-          { enableHighAccuracy: false, timeout: 10000, maximumAge: 10 * 60 * 1000 }
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
         );
       });
     }
@@ -3326,7 +3564,7 @@
       }
       refreshWeather(false);
       if (weatherState.timer) clearInterval(weatherState.timer);
-      weatherState.timer = setInterval(() => refreshWeather(false), 15 * 60 * 1000);
+      weatherState.timer = setInterval(() => refreshWeather(false), 30000);
     }
 
     const weatherBadgeBtn = document.getElementById('weather-badge');
