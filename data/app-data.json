@@ -2,7 +2,7 @@
   "data": {
     "days": {
       "2026-07-28": {
-        "app": 638000,
+        "app": 688000,
         "outside": 430000,
         "zoomPoints": 1,
         "highway": 40000,
@@ -79,11 +79,17 @@
             "field": "outside",
             "value": 80000,
             "at": "2026-07-28T12:24:04.125Z"
+          },
+          {
+            "id": "ms4mo4v309gntm",
+            "field": "app",
+            "value": 50000,
+            "at": "2026-07-28T12:24:17.823Z"
           }
         ]
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-07-28T12:24:04.266Z"
+  "updatedAt": "2026-07-28T12:24:17.955Z"
 }
