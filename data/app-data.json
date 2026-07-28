@@ -2,7 +2,7 @@
   "data": {
     "days": {
       "2026-07-28": {
-        "app": 0,
+        "app": 250000,
         "outside": 0,
         "zoomPoints": 1,
         "highway": 40000,
@@ -19,10 +19,16 @@
             "field": "zoomPoints",
             "value": 1,
             "at": "2026-07-28T06:12:20.115Z"
+          },
+          {
+            "id": "ms49vhmyre5uae",
+            "field": "app",
+            "value": 250000,
+            "at": "2026-07-28T06:26:05.962Z"
           }
         ]
       }
     }
   },
-  "updatedAt": "2026-07-28T06:25:58.979Z"
+  "updatedAt": "2026-07-28T06:26:06.118Z"
 }
