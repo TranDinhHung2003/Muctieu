@@ -1160,6 +1160,19 @@
     </div>
     </div>
 
+    <div class="collapse" id="collapse-entries">
+      <button type="button" class="collapse-toggle" data-collapse="collapse-entries">
+        <span>Lượt đã nhập hôm nay</span>
+        <span>
+          <span class="meta" id="entries-count">0 lượt</span>
+          <span class="chevron">▼</span>
+        </span>
+      </button>
+      <div class="collapse-body">
+        <div class="entries-list" id="entries-list"></div>
+      </div>
+    </div>
+
     <div class="collapse" id="collapse-summary">
       <button type="button" class="collapse-toggle" data-collapse="collapse-summary">
         <span>Chi tiết hôm nay</span>
@@ -1281,6 +1294,8 @@
       sumTip: document.getElementById('sum-tip'),
       sumNet: document.getElementById('sum-net'),
       historyList: document.getElementById('history-list'),
+      entriesList: document.getElementById('entries-list'),
+      entriesCount: document.getElementById('entries-count'),
       summaryNetMeta: document.getElementById('summary-net-meta'),
       pageTitle: document.getElementById('page-title'),
       pageHome: document.getElementById('page-home'),
@@ -1678,7 +1693,7 @@
     }
 
     function emptyDay() {
-      return { app: 0, outside: 0, zoomPoints: 0, highway: 0, tip: 0 };
+      return { app: 0, outside: 0, zoomPoints: 0, highway: 0, tip: 0, entries: [] };
     }
 
     function normalizeDay(day) {
@@ -1688,7 +1703,12 @@
         zoomPoints: day.zoomPoints || 0,
         highway: day.highway || 0,
         tip: day.tip || 0,
+        entries: Array.isArray(day.entries) ? day.entries : [],
       };
+    }
+
+    function createEntryId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     }
 
     function clearInputFields() {
@@ -1704,12 +1724,17 @@
       });
     }
 
-    function stripLogsFromData(data) {
+    function cleanDaysData(data) {
       const cleaned = { days: {} };
       for (const [key, day] of Object.entries(data.days || {})) {
         cleaned.days[key] = normalizeDay(day);
       }
       return cleaned;
+    }
+
+    // Giữ tên cũ để không phải sửa mọi chỗ gọi
+    function stripLogsFromData(data) {
+      return cleanDaysData(data);
     }
 
     function getTodayData(data) {
@@ -1775,6 +1800,45 @@
     function isDayEmpty(day) {
       const d = normalizeDay(day);
       return d.app === 0 && d.outside === 0 && d.zoomPoints === 0 && d.highway === 0 && d.tip === 0;
+    }
+
+    function renderEntries(data) {
+      if (!els.entriesList) return;
+      const today = getTodayData(data);
+      const entries = [...(today.entries || [])].reverse();
+
+      if (entries.length === 0) {
+        els.entriesList.innerHTML = '<div class="history-empty" style="padding:14px;font-size:0.82rem">Chưa có lượt nào.<br>Nhập sai? Xóa ngay trong danh sách này.</div>';
+        if (els.entriesCount) els.entriesCount.textContent = '0 lượt';
+        return;
+      }
+
+      if (els.entriesCount) els.entriesCount.textContent = entries.length + ' lượt';
+
+      els.entriesList.innerHTML = entries.map(entry => {
+        const config = FIELD_MAP[entry.field] || { label: entry.field };
+        const isZoom = entry.field === 'zoomPoints';
+        const valueText = isZoom
+          ? (entry.value >= 0 ? '+' : '') + formatPoints(entry.value) + ' điểm'
+          : (entry.value >= 0 ? '+' : '') + formatMoney(entry.value);
+        const time = new Date(entry.at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        const cls = entry.value >= 0 ? 'plus' : 'minus';
+
+        return `
+          <div class="entry-item" data-entry-id="${entry.id}">
+            <div class="entry-info">
+              <div class="entry-field">${config.label}</div>
+              <div class="entry-meta">${time}</div>
+            </div>
+            <div class="entry-value ${cls}">${valueText}</div>
+            <button type="button" class="entry-delete admin-only" data-delete-id="${entry.id}">Xóa</button>
+          </div>
+        `;
+      }).join('');
+
+      els.entriesList.querySelectorAll('.entry-delete').forEach(btn => {
+        btn.addEventListener('click', () => deleteEntry(btn.dataset.deleteId));
+      });
     }
 
     function renderHistory(data) {
@@ -1922,6 +1986,7 @@
       els.sumNet.textContent = formatMoney(net);
       if (els.summaryNetMeta) els.summaryNetMeta.textContent = formatMoney(net);
 
+      renderEntries(data);
       if (els.pageHistory.classList.contains('active')) {
         renderHistory(data);
       }
@@ -1971,6 +2036,13 @@
 
       const data = loadData();
       const today = getTodayData(data);
+      today.entries = today.entries || [];
+      today.entries.push({
+        id: createEntryId(),
+        field,
+        value,
+        at: new Date().toISOString(),
+      });
       today[field] = (today[field] || 0) + value;
 
       try {
@@ -1982,12 +2054,46 @@
 
       document.getElementById(config.input).value = '';
       if (config.preview) document.getElementById(config.preview).textContent = '';
+      document.getElementById('collapse-entries').classList.add('open');
       calculate();
 
       const displayVal = field === 'zoomPoints'
         ? formatPoints(value) + ' điểm'
         : formatMoney(value);
       showToast('Đã cộng ' + displayVal + ' · ' + config.label);
+    }
+
+    async function deleteEntry(entryId) {
+      if (!isAdmin()) {
+        showToast('Tài khoản theo dõi không thể xóa dữ liệu');
+        return;
+      }
+      const data = loadData();
+      const today = getTodayData(data);
+      const idx = (today.entries || []).findIndex(e => e.id === entryId);
+      if (idx < 0) return;
+
+      const entry = today.entries[idx];
+      const config = FIELD_MAP[entry.field];
+      const label = config ? config.label : entry.field;
+      const display = entry.field === 'zoomPoints'
+        ? formatPoints(entry.value) + ' điểm'
+        : formatMoney(entry.value);
+      if (!confirm('Xóa lượt này?\n' + label + ': ' + display)) return;
+
+      today.entries.splice(idx, 1);
+      today[entry.field] = (today[entry.field] || 0) - entry.value;
+      if (today[entry.field] < 0) today[entry.field] = 0;
+
+      try {
+        await saveData(data);
+      } catch (err) {
+        showToast('Lỗi lưu: ' + err.message);
+        return;
+      }
+
+      calculate();
+      showToast('Đã xóa lượt nhập sai');
     }
 
     async function clearField(field) {
@@ -2008,6 +2114,7 @@
         : formatMoney(today[field]);
       if (!confirm('Xóa toàn bộ ' + config.label + ' hôm nay (' + display + ')?')) return;
 
+      today.entries = (today.entries || []).filter(e => e.field !== field);
       today[field] = 0;
 
       try {
