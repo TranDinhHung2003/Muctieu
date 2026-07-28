@@ -62,6 +62,12 @@
       justify-content: center;
       gap: 5px;
       flex-shrink: 0;
+      transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .menu-btn:active {
+      transform: scale(0.92);
+      background: var(--surface-2);
     }
 
     .menu-btn span {
@@ -70,6 +76,19 @@
       height: 2px;
       background: var(--text);
       border-radius: 2px;
+      transition: transform 0.25s ease, opacity 0.2s ease;
+    }
+
+    body.drawer-open .menu-btn span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    body.drawer-open .menu-btn span:nth-child(2) {
+      opacity: 0;
+    }
+
+    body.drawer-open .menu-btn span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
     }
 
     .top-bar-title {
@@ -96,15 +115,20 @@
     }
 
     .drawer-overlay {
-      display: none;
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.55);
       z-index: 300;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.28s ease, visibility 0.28s ease;
     }
 
     .drawer-overlay.show {
-      display: block;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
     }
 
     .drawer {
@@ -117,15 +141,17 @@
       border-right: 1px solid var(--border);
       z-index: 310;
       transform: translateX(-105%);
-      transition: transform 0.25s ease;
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.32s ease;
       padding: 20px 16px;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      box-shadow: none;
     }
 
     .drawer.open {
       transform: translateX(0);
+      box-shadow: 8px 0 32px rgba(0, 0, 0, 0.35);
     }
 
     .drawer-header {
@@ -154,11 +180,16 @@
       border-radius: 12px;
       font-size: 0.95rem;
       cursor: pointer;
+      transition: background 0.2s ease, transform 0.15s ease;
     }
 
     .drawer-item:hover,
     .drawer-item.active {
       background: var(--surface-2);
+    }
+
+    .drawer-item:active {
+      transform: scale(0.98);
     }
 
     .drawer-item.danger {
@@ -300,7 +331,7 @@
       padding: 24px;
       margin-bottom: 24px;
       text-align: center;
-      transition: border-color 0.3s, background 0.3s;
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s, background 0.3s;
     }
 
     .result-card.done {
@@ -627,7 +658,7 @@
       position: fixed;
       bottom: 24px;
       left: 50%;
-      transform: translateX(-50%) translateY(80px);
+      transform: translateX(-50%) translateY(80px) scale(0.96);
       background: var(--surface-2);
       border: 1px solid var(--accent);
       color: var(--text);
@@ -635,14 +666,161 @@
       border-radius: 12px;
       font-size: 0.9rem;
       opacity: 0;
-      transition: transform 0.3s, opacity 0.3s;
-      z-index: 100;
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+      z-index: 400;
       pointer-events: none;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
     }
 
     .toast.show {
-      transform: translateX(-50%) translateY(0);
+      transform: translateX(-50%) translateY(0) scale(1);
       opacity: 1;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.28s ease, visibility 0.28s ease;
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transform: translateY(18px) scale(0.94);
+      opacity: 0;
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    }
+
+    .modal-overlay.show .modal {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .modal h2 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 0.9rem;
+      background: var(--surface-2);
+      color: var(--text);
+      transition: transform 0.15s ease, filter 0.2s ease, background 0.2s ease;
+    }
+
+    .modal-actions button:active {
+      transform: scale(0.97);
+    }
+
+    .modal-actions .primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #052e16;
+      font-weight: 700;
+    }
+
+    .modal-actions .primary:active {
+      filter: brightness(1.05);
+    }
+
+    .tap-ripple {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      margin-left: -6px;
+      margin-top: -6px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      background: radial-gradient(circle, rgba(34, 197, 94, 0.45) 0%, rgba(34, 197, 94, 0.12) 45%, transparent 70%);
+      transform: scale(0);
+      opacity: 0.9;
+      animation: tap-ripple 0.55s ease-out forwards;
+    }
+
+    @keyframes tap-ripple {
+      0% {
+        transform: scale(0.35);
+        opacity: 0.7;
+      }
+      100% {
+        transform: scale(14);
+        opacity: 0;
+      }
+    }
+
+    .pressable:active,
+    .add-btn:active,
+    .reset-btn:active,
+    .entry-delete:active,
+    .clear-field-btn:active,
+    .login-btn:active,
+    .collapse-toggle:active {
+      transform: scale(0.97);
+    }
+
+    .add-btn,
+    .reset-btn,
+    .login-btn,
+    .collapse-toggle,
+    .entry-delete {
+      transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease, filter 0.2s ease;
+    }
+
+    .result-card.pulse {
+      animation: card-pulse 0.45s ease;
+    }
+
+    @keyframes card-pulse {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .tap-ripple {
+        display: none !important;
+      }
     }
 
     .history-list {
@@ -896,57 +1074,6 @@
       font-size: 0.75rem;
       color: var(--accent);
       margin-bottom: 16px;
-    }
-
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .modal-overlay.show {
-      display: flex;
-    }
-
-    .modal {
-      width: 100%;
-      max-width: 400px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-    }
-
-    .modal h2 {
-      font-size: 1.1rem;
-      margin-bottom: 16px;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 16px;
-    }
-
-    .modal-actions button {
-      flex: 1;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .modal-actions .primary {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #052e16;
-      font-weight: 700;
     }
 
     .role-banner {
@@ -1361,11 +1488,13 @@
     function openDrawer() {
       els.drawer.classList.add('open');
       els.drawerOverlay.classList.add('show');
+      document.body.classList.add('drawer-open');
     }
 
     function closeDrawer() {
       els.drawer.classList.remove('open');
       els.drawerOverlay.classList.remove('show');
+      document.body.classList.remove('drawer-open');
     }
 
     function navigateTo(page) {
@@ -2098,9 +2227,30 @@
 
     function showToast(msg) {
       els.toast.textContent = msg;
+      els.toast.classList.remove('show');
+      // restart animation
+      void els.toast.offsetWidth;
       els.toast.classList.add('show');
       clearTimeout(els.toast._timer);
-      els.toast._timer = setTimeout(() => els.toast.classList.remove('show'), 2000);
+      els.toast._timer = setTimeout(() => els.toast.classList.remove('show'), 2200);
+    }
+
+    function spawnTapRipple(x, y) {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const ripple = document.createElement('span');
+      ripple.className = 'tap-ripple';
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      document.body.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove());
+      setTimeout(() => ripple.remove(), 700);
+    }
+
+    function pulseResultCard() {
+      if (!els.resultCard) return;
+      els.resultCard.classList.remove('pulse');
+      void els.resultCard.offsetWidth;
+      els.resultCard.classList.add('pulse');
     }
 
     async function addEntry(field) {
@@ -2138,6 +2288,7 @@
       if (config.preview) document.getElementById(config.preview).textContent = '';
       document.getElementById('collapse-entries').classList.add('open');
       calculate();
+      pulseResultCard();
 
       const displayVal = field === 'zoomPoints'
         ? formatPoints(value) + ' điểm'
@@ -2202,6 +2353,7 @@
 
       els.goalModal.classList.remove('show');
       calculate();
+      pulseResultCard();
       showToast('Đã đặt mục tiêu ngày: ' + formatMoney(newGoal));
     }
 
@@ -2347,6 +2499,24 @@
         document.getElementById(btn.dataset.collapse).classList.toggle('open');
       });
     });
+
+    // Đóng popup khi bấm nền tối
+    [els.passwordModal, els.goalModal].forEach(overlay => {
+      if (!overlay) return;
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('show');
+      });
+    });
+
+    // Hiệu ứng gợn sóng khi chạm / click màn hình
+    let lastRippleAt = 0;
+    document.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      const now = Date.now();
+      if (now - lastRippleAt < 40) return;
+      lastRippleAt = now;
+      spawnTapRipple(e.clientX, e.clientY);
+    }, { passive: true });
 
     initApp();
   </script>
