@@ -181,6 +181,8 @@
       font-size: 0.95rem;
       cursor: pointer;
       transition: background 0.2s ease, transform 0.15s ease;
+      display: flex;
+      align-items: center;
     }
 
     .drawer-item:hover,
@@ -194,7 +196,27 @@
 
     .drawer-item.danger {
       color: var(--danger);
+    }
+
+    .drawer-item.drawer-end {
       margin-top: auto;
+    }
+
+    .drawer-item .toggle-state {
+      margin-left: auto;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+      padding-left: 8px;
+    }
+
+    .drawer-item.weather-off .toggle-state {
+      color: var(--text-muted);
+    }
+
+    body.weather-disabled .weather-fx,
+    body.weather-disabled .weather-badge {
+      display: none !important;
     }
 
     .page {
@@ -1326,7 +1348,11 @@
     <button type="button" class="drawer-item admin-only" id="goal-btn">🎯 Điều chỉnh mục tiêu ngày</button>
     <button type="button" class="drawer-item admin-only" id="backup-btn">💾 Sao lưu dữ liệu</button>
     <button type="button" class="drawer-item" id="password-btn">🔑 Đổi mật khẩu</button>
-    <button type="button" class="drawer-item danger" id="logout-btn">Thoát đăng nhập</button>
+    <button type="button" class="drawer-item danger drawer-end" id="logout-btn">Thoát đăng nhập</button>
+    <button type="button" class="drawer-item" id="weather-toggle-btn" aria-pressed="true">
+      🌤 Hiệu ứng thời tiết
+      <span class="toggle-state" id="weather-toggle-state">Bật</span>
+    </button>
   </nav>
 
   <div class="container">
@@ -2702,14 +2728,63 @@
 
     /* ========== Thời tiết realtime theo vị trí ========== */
     const WEATHER_POS_KEY = 'muctieu-weather-pos';
+    const WEATHER_ENABLED_KEY = 'muctieu-weather-enabled';
     const weatherState = {
       mode: 'none',
       drops: [],
       raf: 0,
       timer: null,
       started: false,
+      enabled: localStorage.getItem(WEATHER_ENABLED_KEY) !== '0',
       reduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     };
+
+    function isWeatherEnabled() {
+      return weatherState.enabled;
+    }
+
+    function updateWeatherToggleUI() {
+      const btn = document.getElementById('weather-toggle-btn');
+      const stateEl = document.getElementById('weather-toggle-state');
+      const on = isWeatherEnabled();
+      document.body.classList.toggle('weather-disabled', !on);
+      if (btn) {
+        btn.classList.toggle('weather-off', !on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      if (stateEl) stateEl.textContent = on ? 'Bật' : 'Tắt';
+    }
+
+    function setWeatherEnabled(on) {
+      weatherState.enabled = !!on;
+      try {
+        localStorage.setItem(WEATHER_ENABLED_KEY, on ? '1' : '0');
+      } catch { /* ignore */ }
+      updateWeatherToggleUI();
+      if (on) {
+        startWeatherEffects();
+      } else {
+        stopWeatherEffects();
+      }
+    }
+
+    function stopWeatherEffects() {
+      if (weatherState.timer) {
+        clearInterval(weatherState.timer);
+        weatherState.timer = null;
+      }
+      cancelAnimationFrame(weatherState.raf);
+      weatherState.raf = 0;
+      weatherState.drops = [];
+      weatherState.mode = 'none';
+      const fx = document.getElementById('weather-fx');
+      if (fx) fx.dataset.mode = 'none';
+      const canvas = document.getElementById('weather-canvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      }
+    }
 
     function weatherModeFromCode(code, isDay) {
       const c = Number(code);
@@ -2864,6 +2939,10 @@
     }
 
     async function refreshWeather(manual) {
+      if (!isWeatherEnabled()) {
+        if (manual) showToast('Hiệu ứng thời tiết đang tắt');
+        return;
+      }
       const badge = document.getElementById('weather-badge');
       if (manual && badge) setWeatherBadge('⏳', null, 'Đang cập nhật…');
       try {
@@ -2872,6 +2951,7 @@
           setWeatherBadge('📍', null, 'Dùng vị trí mặc định');
         }
         const data = await fetchWeather(pos.lat, pos.lon);
+        if (!isWeatherEnabled()) return;
         const current = data.current || {};
         const code = current.weather_code;
         const isDay = current.is_day === 1;
@@ -2887,22 +2967,27 @@
     }
 
     function startWeatherEffects() {
+      updateWeatherToggleUI();
+      if (!isWeatherEnabled()) {
+        stopWeatherEffects();
+        return;
+      }
       resizeWeatherCanvas();
       if (!weatherState.started) {
         weatherState.started = true;
-        if (!weatherState.reduced) {
-          cancelAnimationFrame(weatherState.raf);
-          weatherState.raf = requestAnimationFrame(drawWeatherFrame);
-        }
         window.addEventListener('resize', () => {
+          if (!isWeatherEnabled()) return;
           resizeWeatherCanvas();
           if (weatherState.mode === 'rain' || weatherState.mode === 'storm') {
             buildRainDrops(weatherState.mode);
           }
         });
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') refreshWeather(false);
+          if (document.visibilityState === 'visible' && isWeatherEnabled()) refreshWeather(false);
         });
+      }
+      if (!weatherState.reduced && !weatherState.raf) {
+        weatherState.raf = requestAnimationFrame(drawWeatherFrame);
       }
       refreshWeather(false);
       if (weatherState.timer) clearInterval(weatherState.timer);
@@ -2912,6 +2997,17 @@
     const weatherBadgeBtn = document.getElementById('weather-badge');
     if (weatherBadgeBtn) {
       weatherBadgeBtn.addEventListener('click', () => refreshWeather(true));
+    }
+
+    const weatherToggleBtn = document.getElementById('weather-toggle-btn');
+    if (weatherToggleBtn) {
+      updateWeatherToggleUI();
+      weatherToggleBtn.addEventListener('click', () => {
+        const next = !isWeatherEnabled();
+        setWeatherEnabled(next);
+        closeDrawer();
+        showToast(next ? 'Đã bật hiệu ứng thời tiết' : 'Đã tắt hiệu ứng thời tiết');
+      });
     }
 
     initApp();
