@@ -481,6 +481,64 @@
       text-decoration: underline;
     }
 
+    .adjust-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .adjust-row {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .adjust-row .adjust-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .adjust-row .adjust-current {
+      font-weight: 500;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .adjust-row .adjust-current strong.plus { color: var(--accent); }
+    .adjust-row .adjust-current strong.minus { color: var(--danger); }
+
+    .adjust-row .input-row {
+      gap: 8px;
+    }
+
+    .adjust-btn {
+      flex-shrink: 0;
+      padding: 0 14px;
+      background: var(--info);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .adjust-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    .adjust-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      padding: 4px 2px 0;
+    }
+
     .entries-list {
       display: flex;
       flex-direction: column;
@@ -1164,6 +1222,86 @@
     </div>
     </div>
 
+    <div class="collapse admin-only" id="collapse-adjust">
+      <button type="button" class="collapse-toggle" data-collapse="collapse-adjust">
+        <span>Điều chỉnh doanh thu</span>
+        <span>
+          <span class="meta">sửa số đúng</span>
+          <span class="chevron">▼</span>
+        </span>
+      </button>
+      <div class="collapse-body">
+        <p class="adjust-hint">Nhập số đúng muốn đặt cho hôm nay (tiền theo nghìn, Zoom theo điểm), rồi nhấn Cập nhật.</p>
+        <div class="adjust-list">
+          <div class="adjust-row">
+            <div class="adjust-label">
+              <span>Tiền app</span>
+              <span class="adjust-current">Hiện: <strong class="plus" id="adjust-cur-app">0đ</strong></span>
+            </div>
+            <div class="input-row">
+              <div class="input-wrap">
+                <input type="number" id="adjust-app" class="has-suffix money-input" min="0" step="1" placeholder="vd: 250" inputmode="decimal">
+                <span class="suffix">.000đ</span>
+              </div>
+              <button type="button" class="adjust-btn" data-adjust="app">Cập nhật</button>
+            </div>
+          </div>
+          <div class="adjust-row">
+            <div class="adjust-label">
+              <span>Tiền ngoài</span>
+              <span class="adjust-current">Hiện: <strong class="plus" id="adjust-cur-outside">0đ</strong></span>
+            </div>
+            <div class="input-row">
+              <div class="input-wrap">
+                <input type="number" id="adjust-outside" class="has-suffix money-input" min="0" step="1" placeholder="vd: 100" inputmode="decimal">
+                <span class="suffix">.000đ</span>
+              </div>
+              <button type="button" class="adjust-btn" data-adjust="outside">Cập nhật</button>
+            </div>
+          </div>
+          <div class="adjust-row">
+            <div class="adjust-label">
+              <span>TIP</span>
+              <span class="adjust-current">Hiện: <strong class="plus" id="adjust-cur-tip">0đ</strong></span>
+            </div>
+            <div class="input-row">
+              <div class="input-wrap">
+                <input type="number" id="adjust-tip" class="has-suffix money-input" min="0" step="1" placeholder="vd: 20" inputmode="decimal">
+                <span class="suffix">.000đ</span>
+              </div>
+              <button type="button" class="adjust-btn" data-adjust="tip">Cập nhật</button>
+            </div>
+          </div>
+          <div class="adjust-row">
+            <div class="adjust-label">
+              <span>Điểm Zoom</span>
+              <span class="adjust-current">Hiện: <strong class="minus" id="adjust-cur-zoom">0 điểm</strong></span>
+            </div>
+            <div class="input-row">
+              <div class="input-wrap">
+                <input type="number" id="adjust-zoom" class="has-suffix" min="0" step="0.5" placeholder="vd: 1" inputmode="decimal">
+                <span class="suffix">điểm</span>
+              </div>
+              <button type="button" class="adjust-btn" data-adjust="zoomPoints">Cập nhật</button>
+            </div>
+          </div>
+          <div class="adjust-row">
+            <div class="adjust-label">
+              <span>Cao tốc</span>
+              <span class="adjust-current">Hiện: <strong class="minus" id="adjust-cur-highway">0đ</strong></span>
+            </div>
+            <div class="input-row">
+              <div class="input-wrap">
+                <input type="number" id="adjust-highway" class="has-suffix money-input" min="0" step="1" placeholder="vd: 40" inputmode="decimal">
+                <span class="suffix">.000đ</span>
+              </div>
+              <button type="button" class="adjust-btn" data-adjust="highway">Cập nhật</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="collapse" id="collapse-entries">
       <button type="button" class="collapse-toggle" data-collapse="collapse-entries">
         <span>Lượt đã nhập hôm nay</span>
@@ -1264,11 +1402,11 @@
     let isSaving = false;
 
     const FIELD_MAP = {
-      app: { input: 'app-income', locked: 'locked-app', label: 'tiền app', preview: 'preview-app', money: true },
-      outside: { input: 'outside-income', locked: 'locked-outside', label: 'tiền ngoài', preview: 'preview-outside', money: true },
-      zoomPoints: { input: 'zoom-points', locked: 'locked-zoom', label: 'điểm Zoom', money: false, deduction: true },
-      highway: { input: 'highway-fee', locked: 'locked-highway', label: 'tiền cao tốc', preview: 'preview-highway', money: true, deduction: true },
-      tip: { input: 'tip-income', locked: 'locked-tip', label: 'TIP khách hàng', preview: 'preview-tip', money: true },
+      app: { input: 'app-income', locked: 'locked-app', label: 'tiền app', preview: 'preview-app', money: true, adjustInput: 'adjust-app', adjustCurrent: 'adjust-cur-app' },
+      outside: { input: 'outside-income', locked: 'locked-outside', label: 'tiền ngoài', preview: 'preview-outside', money: true, adjustInput: 'adjust-outside', adjustCurrent: 'adjust-cur-outside' },
+      zoomPoints: { input: 'zoom-points', locked: 'locked-zoom', label: 'điểm Zoom', money: false, deduction: true, adjustInput: 'adjust-zoom', adjustCurrent: 'adjust-cur-zoom' },
+      highway: { input: 'highway-fee', locked: 'locked-highway', label: 'tiền cao tốc', preview: 'preview-highway', money: true, deduction: true, adjustInput: 'adjust-highway', adjustCurrent: 'adjust-cur-highway' },
+      tip: { input: 'tip-income', locked: 'locked-tip', label: 'TIP khách hàng', preview: 'preview-tip', money: true, adjustInput: 'adjust-tip', adjustCurrent: 'adjust-cur-tip' },
     };
 
     const els = {
@@ -1829,17 +1967,29 @@
       els.entriesList.innerHTML = entries.map(entry => {
         const config = FIELD_MAP[entry.field] || { label: entry.field };
         const isZoom = entry.field === 'zoomPoints';
+        const isAdjust = !!entry.adjust;
+        const isDeduction = !!(config.deduction) && !isAdjust;
+        const absVal = Math.abs(entry.value);
+        let sign;
+        if (isAdjust) {
+          sign = entry.value >= 0 ? '+' : '−';
+        } else if (isDeduction) {
+          sign = '−';
+        } else {
+          sign = entry.value >= 0 ? '+' : '−';
+        }
         const valueText = isZoom
-          ? (entry.value >= 0 ? '+' : '') + formatPoints(entry.value) + ' điểm'
-          : (entry.value >= 0 ? '+' : '') + formatMoney(entry.value);
+          ? sign + formatPoints(absVal) + ' điểm'
+          : sign + formatMoney(absVal);
         const time = new Date(entry.at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        const cls = entry.value >= 0 ? 'plus' : 'minus';
+        const cls = (isAdjust ? entry.value < 0 : isDeduction || entry.value < 0) ? 'minus' : 'plus';
+        const meta = entry.note ? time + ' · ' + entry.note : time;
 
         return `
           <div class="entry-item" data-entry-id="${entry.id}">
             <div class="entry-info">
-              <div class="entry-field">${config.label}</div>
-              <div class="entry-meta">${time}</div>
+              <div class="entry-field">${config.label}${isAdjust ? ' (điều chỉnh)' : ''}</div>
+              <div class="entry-meta">${meta}</div>
             </div>
             <div class="entry-value ${cls}">${valueText}</div>
             <button type="button" class="entry-delete admin-only" data-delete-id="${entry.id}">Xóa</button>
@@ -1973,9 +2123,26 @@
     function updateLockedDisplay(today) {
       document.getElementById('locked-app').textContent = formatMoney(today.app);
       document.getElementById('locked-outside').textContent = formatMoney(today.outside);
-      document.getElementById('locked-zoom').textContent = formatPoints(today.zoomPoints) + ' điểm';
-      document.getElementById('locked-highway').textContent = formatMoney(today.highway);
+      document.getElementById('locked-zoom').textContent = (today.zoomPoints ? '−' : '') + formatPoints(today.zoomPoints) + ' điểm';
+      document.getElementById('locked-highway').textContent = (today.highway ? '−' : '') + formatMoney(today.highway);
       document.getElementById('locked-tip').textContent = formatMoney(today.tip);
+      updateAdjustCurrent(today);
+    }
+
+    function updateAdjustCurrent(today) {
+      Object.entries(FIELD_MAP).forEach(([field, config]) => {
+        if (!config.adjustCurrent) return;
+        const el = document.getElementById(config.adjustCurrent);
+        if (!el) return;
+        const val = today[field] || 0;
+        if (field === 'zoomPoints') {
+          el.textContent = (val ? '−' : '') + formatPoints(val) + ' điểm';
+        } else if (config.deduction) {
+          el.textContent = (val ? '−' : '') + formatMoney(val);
+        } else {
+          el.textContent = formatMoney(val);
+        }
+      });
     }
 
     function calculate() {
@@ -2074,6 +2241,62 @@
       showToast('Đã cộng ' + displayVal + ' · ' + config.label);
     }
 
+    async function adjustRevenue(field) {
+      if (!isAdmin()) {
+        showToast('Tài khoản theo dõi không thể sửa dữ liệu');
+        return;
+      }
+      const config = FIELD_MAP[field];
+      if (!config || !config.adjustInput) return;
+
+      await handleDayRollover(true);
+
+      const input = document.getElementById(config.adjustInput);
+      const raw = parseFloat(String(input.value).replace(',', '.'));
+      if (isNaN(raw) || raw < 0) {
+        showToast('Vui lòng nhập số hợp lệ (≥ 0)');
+        return;
+      }
+
+      const newTotal = config.money ? Math.round(raw * 1000) : raw;
+      const data = loadData();
+      const today = getTodayData(data);
+      const current = today[field] || 0;
+      const delta = newTotal - current;
+
+      if (delta === 0) {
+        showToast('Không thay đổi — đã đúng số hiện tại');
+        return;
+      }
+
+      const totalText = field === 'zoomPoints'
+        ? formatPoints(newTotal) + ' điểm'
+        : formatMoney(newTotal);
+
+      today.entries = today.entries || [];
+      today.entries.push({
+        id: createEntryId(),
+        field,
+        value: delta,
+        adjust: true,
+        note: 'đặt thành ' + totalText,
+        at: new Date().toISOString(),
+      });
+      today[field] = newTotal;
+
+      try {
+        await saveData(data);
+      } catch (err) {
+        showToast('Lỗi lưu: ' + err.message);
+        return;
+      }
+
+      input.value = '';
+      document.getElementById('collapse-entries').classList.add('open');
+      calculate();
+      showToast('Đã điều chỉnh ' + config.label + ' → ' + totalText);
+    }
+
     async function deleteEntry(entryId) {
       if (!isAdmin()) {
         showToast('Tài khoản theo dõi không thể xóa dữ liệu');
@@ -2087,10 +2310,13 @@
       const entry = today.entries[idx];
       const config = FIELD_MAP[entry.field];
       const label = config ? config.label : entry.field;
+      const absVal = Math.abs(entry.value);
+      const sign = entry.value < 0 ? '−' : '+';
       const display = entry.field === 'zoomPoints'
-        ? formatPoints(entry.value) + ' điểm'
-        : formatMoney(entry.value);
-      if (!confirm('Xóa lượt này?\n' + label + ': ' + display)) return;
+        ? sign + formatPoints(absVal) + ' điểm'
+        : sign + formatMoney(absVal);
+      const note = entry.adjust ? ' (điều chỉnh)' : '';
+      if (!confirm('Xóa lượt này?\n' + label + note + ': ' + display)) return;
 
       today.entries.splice(idx, 1);
       today[entry.field] = (today[entry.field] || 0) - entry.value;
@@ -2175,6 +2401,10 @@
       btn.addEventListener('click', () => clearField(btn.dataset.clear));
     });
 
+    document.querySelectorAll('.adjust-btn').forEach(btn => {
+      btn.addEventListener('click', () => adjustRevenue(btn.dataset.adjust));
+    });
+
     Object.entries(FIELD_MAP).forEach(([field, config]) => {
       const input = document.getElementById(config.input);
       input.addEventListener('keydown', (e) => {
@@ -2182,6 +2412,17 @@
       });
       if (config.money) {
         input.addEventListener('input', () => updateMoneyPreview(field));
+      }
+      if (config.adjustInput) {
+        const adjustInput = document.getElementById(config.adjustInput);
+        if (adjustInput) {
+          adjustInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              adjustRevenue(field);
+            }
+          });
+        }
       }
     });
 
