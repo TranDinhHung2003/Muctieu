@@ -945,15 +945,24 @@
       font-weight: 700;
     }
 
-    .viewer-banner {
-      background: #1e3a5f;
-      border: 1px solid #3b82f655;
-      color: #93c5fd;
+    .role-banner {
       border-radius: 10px;
       padding: 10px 12px;
       font-size: 0.82rem;
       text-align: center;
       margin-bottom: 14px;
+    }
+
+    .role-banner.admin {
+      background: #1e3a2f;
+      border: 1px solid #22c55e55;
+      color: #86efac;
+    }
+
+    .role-banner.viewer {
+      background: #1e3a5f;
+      border: 1px solid #3b82f655;
+      color: #93c5fd;
     }
 
     .role-badge {
@@ -1038,7 +1047,7 @@
       <div class="top-bar-spacer"></div>
     </div>
     <div class="sync-status" id="sync-status">✓ Dữ liệu đã lưu trên server</div>
-    <div class="viewer-banner hidden" id="viewer-banner">👁 Bạn đang xem với tài khoản theo dõi — không thể thêm hoặc sửa dữ liệu</div>
+    <div class="role-banner admin hidden" id="role-banner">👤 Bạn đang ở tài khoản admin</div>
 
     <div id="page-home" class="page active">
     <p class="section-title">Tổng doanh thu đã nhận</p>
@@ -1295,7 +1304,7 @@
       drawer: document.getElementById('drawer'),
       drawerOverlay: document.getElementById('drawer-overlay'),
       roleBadge: document.getElementById('role-badge'),
-      viewerBanner: document.getElementById('viewer-banner'),
+      roleBanner: document.getElementById('role-banner'),
       resetBtn: document.getElementById('reset-btn'),
       toast: document.getElementById('toast'),
     };
@@ -1312,11 +1321,12 @@
         els.roleBadge.textContent = currentRole === 'admin' ? 'admin' : 'theo dõi';
         els.roleBadge.className = 'role-badge ' + currentRole;
       }
-      if (els.viewerBanner) {
-        els.viewerBanner.classList.toggle('hidden', currentRole !== 'viewer');
-      }
-      if (els.resultSub && currentRole === 'viewer') {
-        // will be overwritten by calculate, but set fallback
+      if (els.roleBanner) {
+        els.roleBanner.classList.remove('hidden');
+        els.roleBanner.className = 'role-banner ' + currentRole;
+        els.roleBanner.textContent = currentRole === 'admin'
+          ? '👤 Bạn đang ở tài khoản admin'
+          : '👁 Bạn đang xem với tài khoản theo dõi — không thể thêm hoặc sửa dữ liệu';
       }
     }
 
@@ -1372,6 +1382,7 @@
       document.body.classList.remove('logged-in');
       document.body.classList.add('logged-out');
       closeDrawer();
+      if (els.roleBanner) els.roleBanner.classList.add('hidden');
       if (message) els.loginError.textContent = message;
       else els.loginError.textContent = '';
     }

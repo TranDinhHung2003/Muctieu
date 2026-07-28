@@ -183,7 +183,7 @@ app.post('/api/login', (req, res) => {
 
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return res.status(401).json({
-      error: 'Sai tên đăng nhập hoặc mật khẩu. Thử: admin / admin123 hoặc theodoi / xem123',
+      error: '( sai tên đăng nhập và mật khẩu )',
     });
   }
 
