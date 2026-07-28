@@ -481,64 +481,6 @@
       text-decoration: underline;
     }
 
-    .adjust-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .adjust-row {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-    }
-
-    .adjust-row .adjust-label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.82rem;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-
-    .adjust-row .adjust-current {
-      font-weight: 500;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .adjust-row .adjust-current strong.plus { color: var(--accent); }
-    .adjust-row .adjust-current strong.minus { color: var(--danger); }
-
-    .adjust-row .input-row {
-      gap: 8px;
-    }
-
-    .adjust-btn {
-      flex-shrink: 0;
-      padding: 0 14px;
-      background: var(--info);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .adjust-btn:hover {
-      filter: brightness(1.1);
-    }
-
-    .adjust-hint {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      padding: 4px 2px 0;
-    }
-
     .entries-list {
       display: flex;
       flex-direction: column;
@@ -1076,6 +1018,7 @@
     </div>
     <button type="button" class="drawer-item active" data-nav="home">🏠 Hôm nay</button>
     <button type="button" class="drawer-item" data-nav="history">📅 Doanh số các ngày</button>
+    <button type="button" class="drawer-item admin-only" id="goal-btn">🎯 Điều chỉnh mục tiêu ngày</button>
     <button type="button" class="drawer-item admin-only" id="backup-btn">💾 Sao lưu dữ liệu</button>
     <button type="button" class="drawer-item" id="password-btn">🔑 Đổi mật khẩu</button>
     <button type="button" class="drawer-item danger" id="logout-btn">Thoát đăng nhập</button>
@@ -1130,7 +1073,7 @@
 
     <div class="goal-card">
       <div class="goal-label">Mục tiêu hôm nay</div>
-      <div class="goal-amount">1.200.000đ</div>
+      <div class="goal-amount" id="goal-amount">1.200.000đ</div>
     </div>
 
     <div class="result-card" id="result-card">
@@ -1222,86 +1165,6 @@
     </div>
     </div>
 
-    <div class="collapse admin-only" id="collapse-adjust">
-      <button type="button" class="collapse-toggle" data-collapse="collapse-adjust">
-        <span>Điều chỉnh doanh thu</span>
-        <span>
-          <span class="meta">sửa số đúng</span>
-          <span class="chevron">▼</span>
-        </span>
-      </button>
-      <div class="collapse-body">
-        <p class="adjust-hint">Nhập số đúng muốn đặt cho hôm nay (tiền theo nghìn, Zoom theo điểm), rồi nhấn Cập nhật.</p>
-        <div class="adjust-list">
-          <div class="adjust-row">
-            <div class="adjust-label">
-              <span>Tiền app</span>
-              <span class="adjust-current">Hiện: <strong class="plus" id="adjust-cur-app">0đ</strong></span>
-            </div>
-            <div class="input-row">
-              <div class="input-wrap">
-                <input type="number" id="adjust-app" class="has-suffix money-input" min="0" step="1" placeholder="vd: 250" inputmode="decimal">
-                <span class="suffix">.000đ</span>
-              </div>
-              <button type="button" class="adjust-btn" data-adjust="app">Cập nhật</button>
-            </div>
-          </div>
-          <div class="adjust-row">
-            <div class="adjust-label">
-              <span>Tiền ngoài</span>
-              <span class="adjust-current">Hiện: <strong class="plus" id="adjust-cur-outside">0đ</strong></span>
-            </div>
-            <div class="input-row">
-              <div class="input-wrap">
-                <input type="number" id="adjust-outside" class="has-suffix money-input" min="0" step="1" placeholder="vd: 100" inputmode="decimal">
-                <span class="suffix">.000đ</span>
-              </div>
-              <button type="button" class="adjust-btn" data-adjust="outside">Cập nhật</button>
-            </div>
-          </div>
-          <div class="adjust-row">
-            <div class="adjust-label">
-              <span>TIP</span>
-              <span class="adjust-current">Hiện: <strong class="plus" id="adjust-cur-tip">0đ</strong></span>
-            </div>
-            <div class="input-row">
-              <div class="input-wrap">
-                <input type="number" id="adjust-tip" class="has-suffix money-input" min="0" step="1" placeholder="vd: 20" inputmode="decimal">
-                <span class="suffix">.000đ</span>
-              </div>
-              <button type="button" class="adjust-btn" data-adjust="tip">Cập nhật</button>
-            </div>
-          </div>
-          <div class="adjust-row">
-            <div class="adjust-label">
-              <span>Điểm Zoom</span>
-              <span class="adjust-current">Hiện: <strong class="minus" id="adjust-cur-zoom">0 điểm</strong></span>
-            </div>
-            <div class="input-row">
-              <div class="input-wrap">
-                <input type="number" id="adjust-zoom" class="has-suffix" min="0" step="0.5" placeholder="vd: 1" inputmode="decimal">
-                <span class="suffix">điểm</span>
-              </div>
-              <button type="button" class="adjust-btn" data-adjust="zoomPoints">Cập nhật</button>
-            </div>
-          </div>
-          <div class="adjust-row">
-            <div class="adjust-label">
-              <span>Cao tốc</span>
-              <span class="adjust-current">Hiện: <strong class="minus" id="adjust-cur-highway">0đ</strong></span>
-            </div>
-            <div class="input-row">
-              <div class="input-wrap">
-                <input type="number" id="adjust-highway" class="has-suffix money-input" min="0" step="1" placeholder="vd: 40" inputmode="decimal">
-                <span class="suffix">.000đ</span>
-              </div>
-              <button type="button" class="adjust-btn" data-adjust="highway">Cập nhật</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="collapse" id="collapse-entries">
       <button type="button" class="collapse-toggle" data-collapse="collapse-entries">
         <span>Lượt đã nhập hôm nay</span>
@@ -1364,7 +1227,7 @@
       <div class="history-list" id="history-list"></div>
     </div>
 
-    <footer>Mục tiêu: 1.200.000đ / ngày · Dữ liệu lưu trên server</footer>
+    <footer id="app-footer">Mục tiêu: 1.200.000đ / ngày · Dữ liệu lưu trên server</footer>
     </div>
   </div>
 
@@ -1385,14 +1248,32 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="goal-modal">
+    <div class="modal">
+      <h2>Điều chỉnh mục tiêu ngày</h2>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 14px">Nhập tổng doanh thu muốn đạt mỗi ngày (theo nghìn). Ví dụ: 1200 = 1.200.000đ</p>
+      <label for="goal-input">Mục tiêu hiện tại: <strong id="goal-modal-current">1.200.000đ</strong></label>
+      <div class="input-wrap" style="margin-top:8px;margin-bottom:8px">
+        <input type="number" id="goal-input" class="has-suffix" min="1" step="1" placeholder="vd: 1200" inputmode="decimal" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px 64px 12px 12px;color:var(--text);font-size:1rem">
+        <span class="suffix">.000đ</span>
+      </div>
+      <div class="input-preview" id="goal-preview" style="min-height:1.2em"></div>
+      <div class="login-error" id="goal-error"></div>
+      <div class="modal-actions">
+        <button type="button" id="goal-cancel">Hủy</button>
+        <button type="button" class="primary" id="goal-save">Lưu mục tiêu</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
-    const GOAL = 1200000;
+    const DEFAULT_GOAL = 1200000;
     const ZOOM_RATE = 80000;
     const STORAGE_KEY = 'muctieu-chay-xe-backup';
 
-    let appData = { days: {} };
+    let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
     let currentRole = 'admin';
     let currentDayKey = null;
@@ -1402,11 +1283,11 @@
     let isSaving = false;
 
     const FIELD_MAP = {
-      app: { input: 'app-income', locked: 'locked-app', label: 'tiền app', preview: 'preview-app', money: true, adjustInput: 'adjust-app', adjustCurrent: 'adjust-cur-app' },
-      outside: { input: 'outside-income', locked: 'locked-outside', label: 'tiền ngoài', preview: 'preview-outside', money: true, adjustInput: 'adjust-outside', adjustCurrent: 'adjust-cur-outside' },
-      zoomPoints: { input: 'zoom-points', locked: 'locked-zoom', label: 'điểm Zoom', money: false, deduction: true, adjustInput: 'adjust-zoom', adjustCurrent: 'adjust-cur-zoom' },
-      highway: { input: 'highway-fee', locked: 'locked-highway', label: 'tiền cao tốc', preview: 'preview-highway', money: true, deduction: true, adjustInput: 'adjust-highway', adjustCurrent: 'adjust-cur-highway' },
-      tip: { input: 'tip-income', locked: 'locked-tip', label: 'TIP khách hàng', preview: 'preview-tip', money: true, adjustInput: 'adjust-tip', adjustCurrent: 'adjust-cur-tip' },
+      app: { input: 'app-income', locked: 'locked-app', label: 'tiền app', preview: 'preview-app', money: true },
+      outside: { input: 'outside-income', locked: 'locked-outside', label: 'tiền ngoài', preview: 'preview-outside', money: true },
+      zoomPoints: { input: 'zoom-points', locked: 'locked-zoom', label: 'điểm Zoom', money: false, deduction: true },
+      highway: { input: 'highway-fee', locked: 'locked-highway', label: 'tiền cao tốc', preview: 'preview-highway', money: true, deduction: true },
+      tip: { input: 'tip-income', locked: 'locked-tip', label: 'TIP khách hàng', preview: 'preview-tip', money: true },
     };
 
     const els = {
@@ -1418,6 +1299,11 @@
       syncStatus: document.getElementById('sync-status'),
       logoutBtn: document.getElementById('logout-btn'),
       backupBtn: document.getElementById('backup-btn'),
+      goalBtn: document.getElementById('goal-btn'),
+      goalModal: document.getElementById('goal-modal'),
+      goalError: document.getElementById('goal-error'),
+      goalAmount: document.getElementById('goal-amount'),
+      appFooter: document.getElementById('app-footer'),
       passwordBtn: document.getElementById('password-btn'),
       passwordModal: document.getElementById('password-modal'),
       passwordError: document.getElementById('password-error'),
@@ -1547,18 +1433,24 @@
     function loadLocalBackup() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return { data: { days: {} }, updatedAt: null };
+        if (!raw) return { data: { days: {}, dailyGoal: DEFAULT_GOAL }, updatedAt: null };
         const parsed = JSON.parse(raw);
         // Hỗ trợ cả format cũ { days } và mới { data, updatedAt }
         if (parsed.days) {
-          return { data: { days: parsed.days }, updatedAt: parsed.updatedAt || null };
+          return {
+            data: { days: parsed.days, dailyGoal: normalizeGoal(parsed.dailyGoal) },
+            updatedAt: parsed.updatedAt || null,
+          };
         }
         return {
-          data: parsed.data || { days: {} },
+          data: {
+            days: (parsed.data && parsed.data.days) || {},
+            dailyGoal: normalizeGoal(parsed.data && parsed.data.dailyGoal),
+          },
           updatedAt: parsed.updatedAt || null,
         };
       } catch {
-        return { data: { days: {} }, updatedAt: null };
+        return { data: { days: {}, dailyGoal: DEFAULT_GOAL }, updatedAt: null };
       }
     }
 
@@ -1576,7 +1468,14 @@
     }
 
     function mergeData(serverData, localData) {
-      const merged = { days: { ...(serverData.days || {}) } };
+      const merged = {
+        days: { ...(serverData.days || {}) },
+        dailyGoal: normalizeGoal(
+          localData.dailyGoal && localData.dailyGoal !== DEFAULT_GOAL
+            ? localData.dailyGoal
+            : serverData.dailyGoal
+        ),
+      };
       for (const [key, day] of Object.entries(localData.days || {})) {
         const localDay = normalizeDay(day);
         if (isDayEmpty(localDay)) continue;
@@ -1845,6 +1744,22 @@
       return { app: 0, outside: 0, zoomPoints: 0, highway: 0, tip: 0, entries: [] };
     }
 
+    function normalizeGoal(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n) || n <= 0) return DEFAULT_GOAL;
+      return Math.round(n);
+    }
+
+    function getDailyGoal(data) {
+      return normalizeGoal((data || appData).dailyGoal);
+    }
+
+    function updateGoalDisplay(goal) {
+      const g = normalizeGoal(goal);
+      if (els.goalAmount) els.goalAmount.textContent = formatMoney(g);
+      if (els.appFooter) els.appFooter.textContent = 'Mục tiêu: ' + formatMoney(g) + ' / ngày · Dữ liệu lưu trên server';
+    }
+
     function normalizeDay(day) {
       return {
         app: day.app || 0,
@@ -1874,8 +1789,11 @@
     }
 
     function cleanDaysData(data) {
-      const cleaned = { days: {} };
-      for (const [key, day] of Object.entries(data.days || {})) {
+      const cleaned = {
+        days: {},
+        dailyGoal: normalizeGoal(data && data.dailyGoal),
+      };
+      for (const [key, day] of Object.entries((data && data.days) || {})) {
         cleaned.days[key] = normalizeDay(day);
       }
       return cleaned;
@@ -1917,7 +1835,7 @@
         }
         calculate();
         if (showMessage) {
-          showToast('Ngày mới · đã reset số tiền · mục tiêu 1.200.000đ');
+          showToast('Ngày mới · đã reset số tiền · mục tiêu ' + formatMoney(getDailyGoal()));
         }
       }
       currentDayKey = newKey;
@@ -2004,6 +1922,7 @@
 
     function renderHistory(data) {
       const todayKey = getTodayKey();
+      const goal = getDailyGoal(data);
       const entries = Object.entries(data.days)
         .filter(([, day]) => !isDayEmpty(day))
         .sort((a, b) => b[0].localeCompare(a[0]));
@@ -2016,13 +1935,13 @@
       els.historyList.innerHTML = entries.map(([dateKey, rawDay]) => {
         const day = normalizeDay(rawDay);
         const net = calcNet(day);
-        const achieved = net >= GOAL;
+        const achieved = net >= goal;
         const { weekday, date } = formatDateLabel(dateKey);
         const isToday = dateKey === todayKey;
-        const diff = net - GOAL;
+        const diff = net - goal;
         const statusText = achieved
           ? (diff > 0 ? 'Vượt ' + formatMoney(diff) : 'Đạt mục tiêu')
-          : 'Thiếu ' + formatMoney(GOAL - net);
+          : 'Thiếu ' + formatMoney(goal - net);
 
         return `
           <div class="history-item${isToday ? ' today' : ''}" data-date="${dateKey}">
@@ -2042,7 +1961,7 @@
               <div class="history-detail-row"><span>TIP khách hàng</span><span class="val">+${formatMoney(day.tip)}</span></div>
               <div class="history-detail-row"><span>Trừ Zoom (${formatPoints(day.zoomPoints)} điểm)</span><span class="val">−${formatMoney(day.zoomPoints * ZOOM_RATE)}</span></div>
               <div class="history-detail-row"><span>Cao tốc</span><span class="val">−${formatMoney(day.highway)}</span></div>
-              <div class="history-detail-row" style="margin-top:6px;font-weight:600"><span>Mục tiêu 1.200.000đ</span><span class="val" style="color:${achieved ? 'var(--accent)' : 'var(--warning)'}">${achieved ? '✓ Đạt' : '✗ Chưa đạt'}</span></div>
+              <div class="history-detail-row" style="margin-top:6px;font-weight:600"><span>Mục tiêu ${formatMoney(goal)}</span><span class="val" style="color:${achieved ? 'var(--accent)' : 'var(--warning)'}">${achieved ? '✓ Đạt' : '✗ Chưa đạt'}</span></div>
             </div>
           </div>
         `;
@@ -2126,33 +2045,18 @@
       document.getElementById('locked-zoom').textContent = (today.zoomPoints ? '−' : '') + formatPoints(today.zoomPoints) + ' điểm';
       document.getElementById('locked-highway').textContent = (today.highway ? '−' : '') + formatMoney(today.highway);
       document.getElementById('locked-tip').textContent = formatMoney(today.tip);
-      updateAdjustCurrent(today);
-    }
-
-    function updateAdjustCurrent(today) {
-      Object.entries(FIELD_MAP).forEach(([field, config]) => {
-        if (!config.adjustCurrent) return;
-        const el = document.getElementById(config.adjustCurrent);
-        if (!el) return;
-        const val = today[field] || 0;
-        if (field === 'zoomPoints') {
-          el.textContent = (val ? '−' : '') + formatPoints(val) + ' điểm';
-        } else if (config.deduction) {
-          el.textContent = (val ? '−' : '') + formatMoney(val);
-        } else {
-          el.textContent = formatMoney(val);
-        }
-      });
     }
 
     function calculate() {
       const data = loadData();
       const today = getTodayData(data);
+      const goal = getDailyGoal(data);
 
       const zoomDeduction = today.zoomPoints * ZOOM_RATE;
       const net = calcNet(today);
-      const remaining = GOAL - net;
+      const remaining = goal - net;
 
+      updateGoalDisplay(goal);
       updateLockedDisplay(today);
       updateStats(data);
 
@@ -2180,14 +2084,14 @@
         els.remaining.classList.add(surplus > 0 ? 'over' : 'zero');
         els.resultSub.textContent = surplus > 0
           ? 'Vượt mục tiêu ' + formatMoney(surplus)
-          : 'Chúc mừng! Bạn đã đạt đủ 1.200.000đ';
+          : 'Chúc mừng! Bạn đã đạt đủ ' + formatMoney(goal);
       } else {
         els.remaining.textContent = formatMoney(remaining);
         els.remaining.classList.add('positive');
         els.resultLabel.textContent = 'Còn phải chạy thêm';
-        const pct = Math.round((net / GOAL) * 100);
+        const pct = Math.round((net / goal) * 100);
         els.resultSub.textContent = isAdmin()
-          ? 'Đã đạt ' + pct + '% mục tiêu (' + formatMoney(net) + ' / 1.200.000đ)'
+          ? 'Đã đạt ' + pct + '% mục tiêu (' + formatMoney(net) + ' / ' + formatMoney(goal) + ')'
           : 'Đã đạt ' + pct + '% · chế độ theo dõi (chỉ xem)';
       }
     }
@@ -2241,60 +2145,64 @@
       showToast('Đã cộng ' + displayVal + ' · ' + config.label);
     }
 
-    async function adjustRevenue(field) {
+    function openGoalModal() {
       if (!isAdmin()) {
-        showToast('Tài khoản theo dõi không thể sửa dữ liệu');
+        showToast('Chỉ admin mới đổi được mục tiêu');
         return;
       }
-      const config = FIELD_MAP[field];
-      if (!config || !config.adjustInput) return;
+      const goal = getDailyGoal();
+      document.getElementById('goal-modal-current').textContent = formatMoney(goal);
+      document.getElementById('goal-input').value = String(Math.round(goal / 1000));
+      document.getElementById('goal-preview').textContent = '= ' + formatMoney(goal);
+      els.goalError.textContent = '';
+      els.goalModal.classList.add('show');
+    }
 
-      await handleDayRollover(true);
+    function updateGoalPreview() {
+      const raw = parseFloat(String(document.getElementById('goal-input').value).replace(',', '.'));
+      const preview = document.getElementById('goal-preview');
+      if (isNaN(raw) || raw <= 0) {
+        preview.textContent = '';
+        return;
+      }
+      preview.textContent = '= ' + formatMoney(Math.round(raw * 1000));
+    }
 
-      const input = document.getElementById(config.adjustInput);
-      const raw = parseFloat(String(input.value).replace(',', '.'));
-      if (isNaN(raw) || raw < 0) {
-        showToast('Vui lòng nhập số hợp lệ (≥ 0)');
+    async function saveDailyGoal() {
+      if (!isAdmin()) {
+        showToast('Chỉ admin mới đổi được mục tiêu');
+        return;
+      }
+      const raw = parseFloat(String(document.getElementById('goal-input').value).replace(',', '.'));
+      els.goalError.textContent = '';
+      if (isNaN(raw) || raw <= 0) {
+        els.goalError.textContent = 'Vui lòng nhập mục tiêu lớn hơn 0';
+        return;
+      }
+      const newGoal = Math.round(raw * 1000);
+      if (newGoal < 1000) {
+        els.goalError.textContent = 'Mục tiêu tối thiểu là 1.000đ';
         return;
       }
 
-      const newTotal = config.money ? Math.round(raw * 1000) : raw;
       const data = loadData();
-      const today = getTodayData(data);
-      const current = today[field] || 0;
-      const delta = newTotal - current;
-
-      if (delta === 0) {
-        showToast('Không thay đổi — đã đúng số hiện tại');
+      if (getDailyGoal(data) === newGoal) {
+        els.goalModal.classList.remove('show');
+        showToast('Mục tiêu không đổi');
         return;
       }
-
-      const totalText = field === 'zoomPoints'
-        ? formatPoints(newTotal) + ' điểm'
-        : formatMoney(newTotal);
-
-      today.entries = today.entries || [];
-      today.entries.push({
-        id: createEntryId(),
-        field,
-        value: delta,
-        adjust: true,
-        note: 'đặt thành ' + totalText,
-        at: new Date().toISOString(),
-      });
-      today[field] = newTotal;
+      data.dailyGoal = newGoal;
 
       try {
         await saveData(data);
       } catch (err) {
-        showToast('Lỗi lưu: ' + err.message);
+        els.goalError.textContent = 'Lỗi lưu: ' + err.message;
         return;
       }
 
-      input.value = '';
-      document.getElementById('collapse-entries').classList.add('open');
+      els.goalModal.classList.remove('show');
       calculate();
-      showToast('Đã điều chỉnh ' + config.label + ' → ' + totalText);
+      showToast('Đã đặt mục tiêu ngày: ' + formatMoney(newGoal));
     }
 
     async function deleteEntry(entryId) {
@@ -2384,7 +2292,7 @@
 
       clearInputFields();
       calculate();
-      showToast('Đã đặt lại · mục tiêu còn 1.200.000đ');
+      showToast('Đã đặt lại · mục tiêu còn ' + formatMoney(getDailyGoal()));
     }
 
     function setTodayDate() {
@@ -2401,10 +2309,6 @@
       btn.addEventListener('click', () => clearField(btn.dataset.clear));
     });
 
-    document.querySelectorAll('.adjust-btn').forEach(btn => {
-      btn.addEventListener('click', () => adjustRevenue(btn.dataset.adjust));
-    });
-
     Object.entries(FIELD_MAP).forEach(([field, config]) => {
       const input = document.getElementById(config.input);
       input.addEventListener('keydown', (e) => {
@@ -2413,26 +2317,25 @@
       if (config.money) {
         input.addEventListener('input', () => updateMoneyPreview(field));
       }
-      if (config.adjustInput) {
-        const adjustInput = document.getElementById(config.adjustInput);
-        if (adjustInput) {
-          adjustInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              adjustRevenue(field);
-            }
-          });
-        }
-      }
     });
 
     els.resetBtn.addEventListener('click', resetToday);
     els.loginForm.addEventListener('submit', handleLogin);
     els.logoutBtn.addEventListener('click', handleLogout);
     els.backupBtn.addEventListener('click', () => { closeDrawer(); handleBackup(); });
+    els.goalBtn.addEventListener('click', () => { closeDrawer(); openGoalModal(); });
     els.passwordBtn.addEventListener('click', () => { closeDrawer(); openPasswordModal(); });
     document.getElementById('password-cancel').addEventListener('click', () => els.passwordModal.classList.remove('show'));
     document.getElementById('password-save').addEventListener('click', savePassword);
+    document.getElementById('goal-cancel').addEventListener('click', () => els.goalModal.classList.remove('show'));
+    document.getElementById('goal-save').addEventListener('click', saveDailyGoal);
+    document.getElementById('goal-input').addEventListener('input', updateGoalPreview);
+    document.getElementById('goal-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveDailyGoal();
+      }
+    });
 
     els.menuBtn.addEventListener('click', openDrawer);
     els.drawerOverlay.addEventListener('click', closeDrawer);
