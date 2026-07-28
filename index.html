@@ -1235,7 +1235,7 @@
   <script>
     const GOAL = 1200000;
     const ZOOM_RATE = 80000;
-    const STORAGE_KEY = 'muctieu-chay-xe';
+    const STORAGE_KEY = 'muctieu-chay-xe-backup';
 
     let appData = { days: {} };
     let isLoggedIn = false;
@@ -1387,63 +1387,103 @@
       els.syncStatus.style.color = ok ? 'var(--accent)' : 'var(--warning)';
     }
 
-    function loadLocalData() {
+    function loadLocalBackup() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch (e) { /* ignore */ }
-      return { days: {} };
+        if (!raw) return { data: { days: {} }, updatedAt: null };
+        const parsed = JSON.parse(raw);
+        // Hỗ trợ cả format cũ { days } và mới { data, updatedAt }
+        if (parsed.days) {
+          return { data: { days: parsed.days }, updatedAt: parsed.updatedAt || null };
+        }
+        return {
+          data: parsed.data || { days: {} },
+          updatedAt: parsed.updatedAt || null,
+        };
+      } catch {
+        return { data: { days: {} }, updatedAt: null };
+      }
+    }
+
+    function saveLocalBackup(data, updatedAt) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          data: stripLogsFromData(data),
+          updatedAt: updatedAt || new Date().toISOString(),
+        }));
+      } catch { /* ignore quota */ }
     }
 
     function hasLocalData(data) {
-      return Object.values(data.days || {}).some(day => !isDayEmpty(day));
+      return Object.values((data && data.days) || {}).some(day => !isDayEmpty(day));
     }
 
     function mergeData(serverData, localData) {
-      const merged = { days: { ...serverData.days } };
+      const merged = { days: { ...(serverData.days || {}) } };
       for (const [key, day] of Object.entries(localData.days || {})) {
-        if (!isDayEmpty(day)) {
-          if (!merged.days[key] || isDayEmpty(merged.days[key])) {
-            merged.days[key] = normalizeDay(day);
-          }
+        const localDay = normalizeDay(day);
+        if (isDayEmpty(localDay)) continue;
+        if (!merged.days[key] || isDayEmpty(merged.days[key])) {
+          merged.days[key] = localDay;
+        } else {
+          // Gộp: lấy giá trị lớn hơn từng mục để không mất số đã nhập
+          const serverDay = normalizeDay(merged.days[key]);
+          merged.days[key] = {
+            app: Math.max(serverDay.app, localDay.app),
+            outside: Math.max(serverDay.outside, localDay.outside),
+            zoomPoints: Math.max(serverDay.zoomPoints, localDay.zoomPoints),
+            highway: Math.max(serverDay.highway, localDay.highway),
+            tip: Math.max(serverDay.tip, localDay.tip),
+          };
         }
       }
       return merged;
     }
 
+    function isNewer(a, b) {
+      if (!a) return false;
+      if (!b) return true;
+      return new Date(a).getTime() > new Date(b).getTime();
+    }
+
     async function loadFromServer(options = {}) {
       const result = await api('/data');
-      // Bỏ mọi log từng lượt cũ — chỉ giữ tổng theo ngày
-      appData = stripLogsFromData(result.data || { days: {} });
-      lastUpdatedAt = result.updatedAt || null;
+      let serverData = stripLogsFromData(result.data || { days: {} });
+      let serverUpdatedAt = result.updatedAt || null;
+      const local = loadLocalBackup();
+      const localData = stripLogsFromData(local.data || { days: {} });
 
-      if (!options.skipMigration) {
-        const local = loadLocalData();
-        if (isAdmin() && hasLocalData(local)) {
-          const serverEmpty = !hasLocalData(appData);
-          if (serverEmpty || confirm('Phát hiện dữ liệu cũ trên trình duyệt. Bạn có muốn nhập vào server không?')) {
-            appData = stripLogsFromData(mergeData(appData, local));
-            await saveToServer();
-            localStorage.removeItem(STORAGE_KEY);
-            showToast('Đã nhập dữ liệu cũ lên server');
-          }
-        } else if (!isAdmin()) {
-          setSyncStatus('👁 Theo dõi thời gian thực · đang đồng bộ');
+      if (isAdmin()) {
+        const serverEmpty = !hasLocalData(serverData);
+        const localHas = hasLocalData(localData);
+
+        if (localHas && (serverEmpty || isNewer(local.updatedAt, serverUpdatedAt))) {
+          // Khôi phục dữ liệu từ trình duyệt lên server (Render Free hay mất file khi sleep)
+          appData = serverEmpty ? localData : stripLogsFromData(mergeData(serverData, localData));
+          await saveToServer();
+          showToast(serverEmpty ? 'Đã khôi phục dữ liệu đã lưu trên máy' : 'Đã đồng bộ dữ liệu máy ↔ server');
+        } else {
+          appData = serverData;
+          lastUpdatedAt = serverUpdatedAt;
+          // Luôn giữ bản sao trên máy để không mất khi server reset
+          saveLocalBackup(appData, serverUpdatedAt || new Date().toISOString());
         }
+      } else {
+        appData = serverData;
+        lastUpdatedAt = serverUpdatedAt;
+        setSyncStatus('👁 Theo dõi thời gian thực · đang đồng bộ');
       }
 
-      // Dọn log cũ trên server (admin)
-      if (isAdmin() && result.data && JSON.stringify(result.data) !== JSON.stringify(appData)) {
-        try { await saveToServer(); } catch { /* ignore */ }
-      }
-
-      updateSyncTime(result.updatedAt);
+      updateSyncTime(lastUpdatedAt || serverUpdatedAt);
     }
 
     async function refreshFromServer(notify) {
       const result = await api('/data');
       appData = stripLogsFromData(result.data || { days: {} });
       lastUpdatedAt = result.updatedAt || null;
+      if (isAdmin()) {
+        saveLocalBackup(appData, lastUpdatedAt);
+      }
       calculate();
       updateSyncTime(result.updatedAt);
       if (notify) showToast('Có dữ liệu mới từ admin');
@@ -1501,9 +1541,13 @@
       try {
         const result = await api('/data', { method: 'PUT', body: { data: appData } });
         lastUpdatedAt = result.updatedAt || lastUpdatedAt;
+        // Luôn sao lưu trên máy — tránh mất khi Render sleep/restart
+        saveLocalBackup(appData, lastUpdatedAt);
         updateSyncTime(result.updatedAt);
       } catch (e) {
-        setSyncStatus('⚠ Lỗi lưu: ' + e.message, false);
+        // Dù server lỗi vẫn giữ bản trên máy
+        saveLocalBackup(appData, new Date().toISOString());
+        setSyncStatus('⚠ Lỗi lưu server · đã giữ bản trên máy', false);
         throw e;
       } finally {
         isSaving = false;
