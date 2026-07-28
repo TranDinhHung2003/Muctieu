@@ -37,7 +37,190 @@
     .container {
       max-width: 480px;
       margin: 0 auto;
-      padding: 24px 16px 40px;
+      padding: 16px 16px 40px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .menu-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .menu-btn span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--text);
+      border-radius: 2px;
+    }
+
+    .top-bar-title {
+      flex: 1;
+      text-align: center;
+      min-width: 0;
+    }
+
+    .top-bar-title h1 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .top-bar-title p {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin: 2px 0 0;
+    }
+
+    .top-bar-spacer {
+      width: 42px;
+      flex-shrink: 0;
+    }
+
+    .drawer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 300;
+    }
+
+    .drawer-overlay.show {
+      display: block;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: min(300px, 84vw);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      z-index: 310;
+      transform: translateX(-105%);
+      transition: transform 0.25s ease;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      padding: 8px 8px 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+
+    .drawer-header strong {
+      display: block;
+      font-size: 1rem;
+    }
+
+    .drawer-header span {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .drawer-item {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      padding: 14px 12px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .drawer-item:hover,
+    .drawer-item.active {
+      background: var(--surface-2);
+    }
+
+    .drawer-item.danger {
+      color: var(--danger);
+      margin-top: auto;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .collapse {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .collapse-toggle {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .collapse-toggle .meta {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .collapse-toggle .chevron {
+      color: var(--text-muted);
+      transition: transform 0.2s;
+      font-size: 0.75rem;
+    }
+
+    .collapse.open .collapse-toggle .chevron {
+      transform: rotate(180deg);
+    }
+
+    .collapse-body {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding: 8px;
+    }
+
+    .collapse.open .collapse-body {
+      display: block;
     }
 
     header {
@@ -238,7 +421,11 @@
     }
 
     input.has-suffix {
-      padding-right: 52px;
+      padding-right: 64px;
+    }
+
+    input.money-input.has-suffix {
+      padding-right: 72px;
     }
 
     .add-btn {
@@ -293,40 +480,44 @@
     .entries-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-top: 8px;
+      gap: 6px;
     }
 
     .entry-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      background: var(--surface);
+      gap: 8px;
+      background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 0.85rem;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.82rem;
     }
 
     .entry-item .entry-info {
       min-width: 0;
+      flex: 1;
     }
 
     .entry-item .entry-field {
       font-weight: 600;
-      margin-bottom: 2px;
+      margin-bottom: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .entry-item .entry-meta {
       color: var(--text-muted);
-      font-size: 0.75rem;
+      font-size: 0.7rem;
     }
 
     .entry-item .entry-value {
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       flex-shrink: 0;
+      font-size: 0.82rem;
     }
 
     .entry-item .entry-value.plus { color: var(--accent); }
@@ -336,9 +527,9 @@
       background: transparent;
       border: 1px solid var(--border);
       color: var(--danger);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 0.75rem;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.7rem;
       cursor: pointer;
       flex-shrink: 0;
     }
@@ -349,24 +540,30 @@
     }
 
     .summary {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      margin-top: 8px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      overflow: visible;
+      margin-top: 0;
     }
 
     .summary-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 18px;
-      font-size: 0.9rem;
+      padding: 8px 10px;
+      font-size: 0.82rem;
       border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .summary-row:first-child {
+      border-radius: 8px 8px 0 0;
     }
 
     .summary-row:last-child {
       border-bottom: none;
+      border-radius: 0 0 8px 8px;
     }
 
     .summary-row .label {
@@ -387,7 +584,21 @@
 
     .summary-row.total .value {
       color: var(--text);
-      font-size: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .history-page-header {
+      margin-bottom: 16px;
+    }
+
+    .history-page-header h2 {
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+    }
+
+    .history-page-header p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
     }
 
     .reset-btn {
@@ -760,22 +971,33 @@
   </div>
 
   <div id="app-screen" class="hidden">
+  <div class="drawer-overlay" id="drawer-overlay"></div>
+  <nav class="drawer" id="drawer">
+    <div class="drawer-header">
+      <strong>Menu</strong>
+      <span>👤 <span id="admin-name">admin</span></span>
+    </div>
+    <button type="button" class="drawer-item active" data-nav="home">🏠 Hôm nay</button>
+    <button type="button" class="drawer-item" data-nav="history">📅 Doanh số các ngày</button>
+    <button type="button" class="drawer-item" id="backup-btn">💾 Sao lưu dữ liệu</button>
+    <button type="button" class="drawer-item" id="password-btn">🔑 Đổi mật khẩu</button>
+    <button type="button" class="drawer-item danger" id="logout-btn">Thoát đăng nhập</button>
+  </nav>
+
   <div class="container">
-    <div class="admin-bar">
-      <div class="admin-user">👤 <strong id="admin-name">admin</strong></div>
-      <div class="admin-actions">
-        <button class="admin-btn" id="backup-btn" type="button">💾 Sao lưu</button>
-        <button class="admin-btn" id="password-btn" type="button">🔑 Đổi MK</button>
-        <button class="admin-btn danger" id="logout-btn" type="button">Thoát</button>
+    <div class="top-bar">
+      <button type="button" class="menu-btn" id="menu-btn" aria-label="Mở menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="top-bar-title">
+        <h1 id="page-title">Mục tiêu chạy xe</h1>
+        <p id="today-date"></p>
       </div>
+      <div class="top-bar-spacer"></div>
     </div>
     <div class="sync-status" id="sync-status">✓ Dữ liệu đã lưu trên server</div>
 
-    <header>
-      <h1>🚗 Mục tiêu chạy xe</h1>
-      <p id="today-date"></p>
-    </header>
-
+    <div id="page-home" class="page active">
     <p class="section-title">Tổng doanh thu đã nhận</p>
     <div class="stats-card">
       <div class="stat-item">
@@ -884,42 +1106,67 @@
       <div class="input-preview" id="preview-tip"></div>
     </div>
 
-    <p class="section-title" style="margin-top: 24px;">Lượt đã nhập hôm nay</p>
-    <div class="entries-list" id="entries-list"></div>
-
-    <p class="section-title" style="margin-top: 24px;">Chi tiết tính toán hôm nay</p>
-
-    <div class="summary">
-      <div class="summary-row">
-        <span class="label">Tiền chạy trên app</span>
-        <span class="value plus" id="sum-app">+0đ</span>
-      </div>
-      <div class="summary-row">
-        <span class="label">Tiền chạy ngoài</span>
-        <span class="value plus" id="sum-outside">+0đ</span>
-      </div>
-      <div class="summary-row">
-        <span class="label">Trừ điểm Zoom</span>
-        <span class="value minus" id="sum-zoom">−0đ</span>
-      </div>
-      <div class="summary-row">
-        <span class="label">Tiền cao tốc</span>
-        <span class="value minus" id="sum-highway">−0đ</span>
-      </div>
-      <div class="summary-row">
-        <span class="label">TIP khách hàng</span>
-        <span class="value plus" id="sum-tip">+0đ</span>
-      </div>
-      <div class="summary-row total">
-        <span class="label">Thực nhận hôm nay</span>
-        <span class="value" id="sum-net">0đ</span>
+    <div class="collapse" id="collapse-entries">
+      <button type="button" class="collapse-toggle" data-collapse="collapse-entries">
+        <span>Lượt đã nhập hôm nay</span>
+        <span>
+          <span class="meta" id="entries-count">0 lượt</span>
+          <span class="chevron">▼</span>
+        </span>
+      </button>
+      <div class="collapse-body">
+        <div class="entries-list" id="entries-list"></div>
       </div>
     </div>
 
-    <p class="section-title" style="margin-top: 28px;">Xem lại doanh số các ngày</p>
-    <div class="history-list" id="history-list"></div>
+    <div class="collapse" id="collapse-summary">
+      <button type="button" class="collapse-toggle" data-collapse="collapse-summary">
+        <span>Chi tiết hôm nay</span>
+        <span>
+          <span class="meta" id="summary-net-meta">0đ</span>
+          <span class="chevron">▼</span>
+        </span>
+      </button>
+      <div class="collapse-body">
+        <div class="summary">
+          <div class="summary-row">
+            <span class="label">Tiền app</span>
+            <span class="value plus" id="sum-app">+0đ</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Tiền ngoài</span>
+            <span class="value plus" id="sum-outside">+0đ</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Trừ Zoom</span>
+            <span class="value minus" id="sum-zoom">−0đ</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Cao tốc</span>
+            <span class="value minus" id="sum-highway">−0đ</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">TIP</span>
+            <span class="value plus" id="sum-tip">+0đ</span>
+          </div>
+          <div class="summary-row total">
+            <span class="label">Thực nhận</span>
+            <span class="value" id="sum-net">0đ</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <button class="reset-btn" id="reset-btn">Đặt lại dữ liệu hôm nay</button>
+    </div>
+
+    <div id="page-history" class="page">
+      <div class="history-page-header">
+        <h2>Doanh số các ngày</h2>
+        <p>Nhấn vào từng ngày để xem chi tiết đạt mục tiêu</p>
+      </div>
+      <div class="history-list" id="history-list"></div>
+    </div>
 
     <footer>Mục tiêu: 1.200.000đ / ngày · Dữ liệu lưu trên server</footer>
   </div>
@@ -990,9 +1237,40 @@
       sumNet: document.getElementById('sum-net'),
       historyList: document.getElementById('history-list'),
       entriesList: document.getElementById('entries-list'),
+      entriesCount: document.getElementById('entries-count'),
+      summaryNetMeta: document.getElementById('summary-net-meta'),
+      pageTitle: document.getElementById('page-title'),
+      pageHome: document.getElementById('page-home'),
+      pageHistory: document.getElementById('page-history'),
+      menuBtn: document.getElementById('menu-btn'),
+      drawer: document.getElementById('drawer'),
+      drawerOverlay: document.getElementById('drawer-overlay'),
       resetBtn: document.getElementById('reset-btn'),
       toast: document.getElementById('toast'),
     };
+
+    function openDrawer() {
+      els.drawer.classList.add('open');
+      els.drawerOverlay.classList.add('show');
+    }
+
+    function closeDrawer() {
+      els.drawer.classList.remove('open');
+      els.drawerOverlay.classList.remove('show');
+    }
+
+    function navigateTo(page) {
+      const isHistory = page === 'history';
+      els.pageHome.classList.toggle('active', !isHistory);
+      els.pageHistory.classList.toggle('active', isHistory);
+      els.pageTitle.textContent = isHistory ? 'Doanh số các ngày' : 'Mục tiêu chạy xe';
+      document.querySelectorAll('.drawer-item[data-nav]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.nav === page);
+      });
+      closeDrawer();
+      if (isHistory) renderHistory(loadData());
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     async function api(url, options = {}) {
       const res = await fetch('/api' + url, {
@@ -1008,6 +1286,7 @@
 
     function showLogin() {
       isLoggedIn = false;
+      closeDrawer();
       els.loginScreen.classList.remove('hidden');
       els.appScreen.classList.add('hidden');
     }
@@ -1285,9 +1564,12 @@
       const entries = [...(today.entries || [])].reverse();
 
       if (entries.length === 0) {
-        els.entriesList.innerHTML = '<div class="history-empty">Chưa có lượt nào hôm nay.<br>Nhập sai? Dùng Xóa bên cạnh lượt hoặc Xóa mục này.</div>';
+        els.entriesList.innerHTML = '<div class="history-empty" style="padding:14px;font-size:0.82rem">Chưa có lượt nào. Nhập sai? Dùng Xóa.</div>';
+        if (els.entriesCount) els.entriesCount.textContent = '0 lượt';
         return;
       }
+
+      if (els.entriesCount) els.entriesCount.textContent = entries.length + ' lượt';
 
       els.entriesList.innerHTML = entries.map(entry => {
         const config = FIELD_MAP[entry.field] || { label: entry.field };
@@ -1458,9 +1740,12 @@
       els.sumHighway.textContent = '−' + formatMoney(today.highway);
       els.sumTip.textContent = '+' + formatMoney(today.tip);
       els.sumNet.textContent = formatMoney(net);
+      if (els.summaryNetMeta) els.summaryNetMeta.textContent = formatMoney(net);
 
-      renderHistory(data);
       renderEntries(data);
+      if (els.pageHistory.classList.contains('active')) {
+        renderHistory(data);
+      }
 
       els.resultCard.classList.remove('done');
       els.remaining.classList.remove('positive', 'zero', 'over');
@@ -1634,10 +1919,21 @@
     els.resetBtn.addEventListener('click', resetToday);
     els.loginForm.addEventListener('submit', handleLogin);
     els.logoutBtn.addEventListener('click', handleLogout);
-    els.backupBtn.addEventListener('click', handleBackup);
-    els.passwordBtn.addEventListener('click', openPasswordModal);
+    els.backupBtn.addEventListener('click', () => { closeDrawer(); handleBackup(); });
+    els.passwordBtn.addEventListener('click', () => { closeDrawer(); openPasswordModal(); });
     document.getElementById('password-cancel').addEventListener('click', () => els.passwordModal.classList.remove('show'));
     document.getElementById('password-save').addEventListener('click', savePassword);
+
+    els.menuBtn.addEventListener('click', openDrawer);
+    els.drawerOverlay.addEventListener('click', closeDrawer);
+    document.querySelectorAll('.drawer-item[data-nav]').forEach(btn => {
+      btn.addEventListener('click', () => navigateTo(btn.dataset.nav));
+    });
+    document.querySelectorAll('.collapse-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById(btn.dataset.collapse).classList.toggle('open');
+      });
+    });
 
     initApp();
   </script>
