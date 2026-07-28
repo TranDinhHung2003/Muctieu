@@ -6,6 +6,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const storage = require('./storage');
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -15,13 +16,8 @@ const VIEWER_USERNAME = process.env.VIEWER_USERNAME || 'theodoi';
 const VIEWER_PASSWORD = process.env.VIEWER_PASSWORD || 'xem123';
 const COOKIE_NAME = 'muctieu_token';
 const IS_PROD = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
-const DATA_DIR = process.env.DATA_DIR
-  ? path.resolve(process.env.DATA_DIR)
-  : path.join(__dirname, 'data');
-
+const DATA_DIR = storage.DATA_DIR;
 const USERS_PATH = path.join(DATA_DIR, 'users.json');
-const APP_DATA_PATH = path.join(DATA_DIR, 'app-data.json');
-const BACKUP_PATH = path.join(DATA_DIR, 'backup-latest.json');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -54,27 +50,6 @@ function saveUsersStore(store) {
   writeJson(USERS_PATH, store);
 }
 
-function loadAppStore() {
-  const store = readJson(APP_DATA_PATH, null);
-  if (store && store.data) return store;
-
-  // Migrate from older backup file if present
-  const backup = readJson(BACKUP_PATH, null);
-  if (backup && backup.days) {
-    return { data: backup, updatedAt: nowIso() };
-  }
-  if (backup && backup.data && backup.data.days) {
-    return { data: backup.data, updatedAt: backup.updatedAt || nowIso() };
-  }
-
-  return { data: { days: {} }, updatedAt: nowIso() };
-}
-
-function saveAppStore(store) {
-  writeJson(APP_DATA_PATH, store);
-  writeJson(BACKUP_PATH, store.data);
-}
-
 function ensureUser(store, username, password, role) {
   const exists = store.users.find((u) => u.username.toLowerCase() === username.toLowerCase());
   if (exists) return false;
@@ -88,7 +63,7 @@ function ensureUser(store, username, password, role) {
   return true;
 }
 
-function initStore() {
+function initUsers() {
   const usersStore = loadUsersStore();
   let changed = false;
   if (ensureUser(usersStore, ADMIN_USERNAME, ADMIN_PASSWORD, 'admin')) {
@@ -100,13 +75,7 @@ function initStore() {
     changed = true;
   }
   if (changed) saveUsersStore(usersStore);
-
-  if (!fs.existsSync(APP_DATA_PATH)) {
-    saveAppStore(loadAppStore());
-  }
 }
-
-initStore();
 
 const app = express();
 app.set('trust proxy', 1);
@@ -114,7 +83,11 @@ app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, time: nowIso() });
+  res.json({
+    ok: true,
+    time: nowIso(),
+    durable: !!storage.GITHUB_TOKEN,
+  });
 });
 
 function createToken(user) {
@@ -148,16 +121,6 @@ function adminOnly(req, res, next) {
 function findUserByUsername(username) {
   const store = loadUsersStore();
   return store.users.find((u) => u.username.toLowerCase() === String(username || '').toLowerCase()) || null;
-}
-
-function getStoredData() {
-  return loadAppStore().data || { days: {} };
-}
-
-function saveStoredData(data) {
-  const updatedAt = nowIso();
-  saveAppStore({ data, updatedAt });
-  return updatedAt;
 }
 
 function cookieOptions(extra = {}) {
@@ -224,22 +187,26 @@ app.get('/api/me', (req, res) => {
 });
 
 app.get('/api/data', authMiddleware, (_req, res) => {
-  const store = loadAppStore();
+  const store = storage.getAppStore();
   res.json({ data: store.data || { days: {} }, updatedAt: store.updatedAt });
 });
 
 app.get('/api/data/sync', authMiddleware, (_req, res) => {
-  const store = loadAppStore();
+  const store = storage.getAppStore();
   res.json({ updatedAt: store.updatedAt });
 });
 
-app.put('/api/data', authMiddleware, adminOnly, (req, res) => {
+app.put('/api/data', authMiddleware, adminOnly, async (req, res) => {
   const { data } = req.body || {};
   if (!data || typeof data !== 'object' || !data.days || typeof data.days !== 'object') {
     return res.status(400).json({ error: 'Dữ liệu không hợp lệ' });
   }
-  const updatedAt = saveStoredData(data);
-  res.json({ ok: true, updatedAt });
+  try {
+    const updatedAt = await storage.setAppStore(data);
+    res.json({ ok: true, updatedAt });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi lưu dữ liệu: ' + err.message });
+  }
 });
 
 app.post('/api/change-password', authMiddleware, (req, res) => {
@@ -264,7 +231,7 @@ app.post('/api/change-password', authMiddleware, (req, res) => {
 });
 
 app.get('/api/backup', authMiddleware, adminOnly, (_req, res) => {
-  const store = loadAppStore();
+  const store = storage.getAppStore();
   const filename = 'muctieu-backup-' + new Date().toISOString().slice(0, 10) + '.json';
   res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
   res.json({
@@ -274,13 +241,13 @@ app.get('/api/backup', authMiddleware, adminOnly, (_req, res) => {
   });
 });
 
-app.post('/api/restore', authMiddleware, adminOnly, (req, res) => {
+app.post('/api/restore', authMiddleware, adminOnly, async (req, res) => {
   const { data } = req.body || {};
   if (!data || typeof data !== 'object' || !data.days) {
     return res.status(400).json({ error: 'File sao lưu không hợp lệ' });
   }
-  saveStoredData(data);
-  res.json({ ok: true });
+  const updatedAt = await storage.setAppStore(data);
+  res.json({ ok: true, updatedAt });
 });
 
 app.use(express.static(__dirname));
@@ -289,8 +256,23 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('Server chạy tại http://0.0.0.0:' + PORT);
-  console.log('Data dir:', DATA_DIR);
-  console.log('Admin:', ADMIN_USERNAME, '| Theo dõi:', VIEWER_USERNAME);
+async function start() {
+  initUsers();
+  await storage.initAppStore();
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log('Server chạy tại http://0.0.0.0:' + PORT);
+    console.log('Data dir:', DATA_DIR);
+    console.log('Admin:', ADMIN_USERNAME, '| Theo dõi:', VIEWER_USERNAME);
+    if (storage.GITHUB_TOKEN) {
+      console.log('Lưu bền GitHub: bật · repo', storage.GITHUB_REPO, '· branch', storage.GITHUB_BRANCH);
+    } else {
+      console.warn('Chưa có GITHUB_TOKEN — dữ liệu có thể mất khi Render sleep. Thêm GITHUB_TOKEN trên Render.');
+    }
+  });
+}
+
+start().catch((err) => {
+  console.error('Không khởi động được server:', err);
+  process.exit(1);
 });
