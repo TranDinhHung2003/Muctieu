@@ -1,0 +1,28 @@
+{
+  "data": {
+    "days": {
+      "2026-07-28": {
+        "app": 0,
+        "outside": 0,
+        "zoomPoints": 1,
+        "highway": 40000,
+        "tip": 0,
+        "entries": [
+          {
+            "id": "ms49dh770vqh2e",
+            "field": "highway",
+            "value": 40000,
+            "at": "2026-07-28T06:12:05.587Z"
+          },
+          {
+            "id": "ms49dserz6c6nq",
+            "field": "zoomPoints",
+            "value": 1,
+            "at": "2026-07-28T06:12:20.115Z"
+          }
+        ]
+      }
+    }
+  },
+  "updatedAt": "2026-07-28T06:25:58.979Z"
+}
