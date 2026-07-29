@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms66tnxgdibssd",
-      "from": "admin",
-      "role": "admin",
-      "text": "9",
-      "at": "2026-07-29T14:36:14.308Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T14:36:15.463Z",
-      "readAt": "2026-07-29T14:36:57.645Z"
-    },
-    {
       "id": "ms6717zpimn6xt",
       "from": "admin",
       "role": "admin",
@@ -79,5 +69,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:05:47.727Z"
+  "updatedAt": "2026-07-29T15:06:14.594Z"
 }
