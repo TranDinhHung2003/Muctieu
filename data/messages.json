@@ -156,9 +156,24 @@
       "role": "admin",
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T14:23:44.564Z",
-      "status": "sent",
+      "status": "read",
       "kind": "call",
       "callEvent": "cancelled",
+      "callMode": "audio",
+      "durationSec": 0,
+      "callId": "cms66dhnsnumqj",
+      "deliveredAt": "2026-07-29T14:23:44.837Z",
+      "readAt": "2026-07-29T14:23:45.120Z"
+    },
+    {
+      "id": "ms66dq7fzjsi21",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "Cuộc gọi thoại · Đã từ chối",
+      "at": "2026-07-29T14:23:50.763Z",
+      "status": "sent",
+      "kind": "call",
+      "callEvent": "rejected",
       "callMode": "audio",
       "durationSec": 0,
       "callId": "cms66dhnsnumqj"
@@ -168,5 +183,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:23:44.564Z"
+  "updatedAt": "2026-07-29T14:23:50.763Z"
 }
