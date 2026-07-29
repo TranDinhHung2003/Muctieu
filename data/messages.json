@@ -66,8 +66,9 @@
       "role": "admin",
       "text": "Bú",
       "at": "2026-07-29T12:12:48.929Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T12:12:50.714Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T12:12:50.714Z",
+      "readAt": "2026-07-29T12:16:54.688Z"
     },
     {
       "id": "ms61tqec7suw6b",
@@ -75,8 +76,9 @@
       "role": "admin",
       "text": "9",
       "at": "2026-07-29T12:16:19.428Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T12:16:21.786Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T12:16:21.786Z",
+      "readAt": "2026-07-29T12:16:54.688Z"
     },
     {
       "id": "ms61uhjrgu3fsr",
@@ -84,8 +86,18 @@
       "role": "admin",
       "text": "8",
       "at": "2026-07-29T12:16:54.615Z",
+      "status": "read",
+      "deliveredAt": "2026-07-29T12:16:54.688Z",
+      "readAt": "2026-07-29T12:16:54.688Z"
+    },
+    {
+      "id": "ms61ulxokzse7r",
+      "from": "admin",
+      "role": "admin",
+      "text": "8",
+      "at": "2026-07-29T12:17:00.300Z",
       "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T12:16:54.615Z"
+  "updatedAt": "2026-07-29T12:17:00.300Z"
 }
