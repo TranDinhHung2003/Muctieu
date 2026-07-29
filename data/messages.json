@@ -19,7 +19,15 @@
       "status": "read",
       "deliveredAt": "2026-07-29T10:15:29.108Z",
       "readAt": "2026-07-29T10:18:48.394Z"
+    },
+    {
+      "id": "ms5xnrebdfkdad",
+      "from": "admin",
+      "role": "admin",
+      "text": "Ô",
+      "at": "2026-07-29T10:19:42.323Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T10:18:48.394Z"
+  "updatedAt": "2026-07-29T10:19:42.323Z"
 }
