@@ -106,9 +106,18 @@
       "role": "viewer",
       "text": "R",
       "at": "2026-07-29T12:19:41.762Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T12:19:44.385Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T12:19:44.385Z",
+      "readAt": "2026-07-29T12:19:44.627Z"
+    },
+    {
+      "id": "ms61y7epmcjc6m",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "Ru",
+      "at": "2026-07-29T12:19:48.097Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T12:19:44.385Z"
+  "updatedAt": "2026-07-29T12:19:48.097Z"
 }
