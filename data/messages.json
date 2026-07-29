@@ -36,8 +36,9 @@
       "role": "viewer",
       "text": "Guhg",
       "at": "2026-07-29T11:22:14.534Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T11:22:15.697Z"
     }
   ],
-  "updatedAt": "2026-07-29T11:22:14.534Z"
+  "updatedAt": "2026-07-29T11:22:15.697Z"
 }
