@@ -51,17 +51,18 @@
       "role": "admin",
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T13:56:59.460Z",
-      "status": "sent",
+      "status": "delivered",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms65f3kz257bh"
+      "callId": "cms65f3kz257bh",
+      "deliveredAt": "2026-07-29T13:57:00.649Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T13:56:59.461Z"
+  "updatedAt": "2026-07-29T13:57:00.649Z"
 }
