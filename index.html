@@ -1412,6 +1412,10 @@
     .chat-messages {
       flex: 1;
       overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
       padding: 14px 12px;
       display: flex;
       flex-direction: column;
@@ -2450,7 +2454,8 @@
           setWeatherEnabled(false, { toast: false });
         }
         markChatRead();
-        renderChatMessages();
+        chatPinnedToBottom = true;
+        renderChatMessages({ forceBottom: true });
         refreshMessages(false);
         setTimeout(() => {
           if (els.chatInput) els.chatInput.focus();
@@ -2489,6 +2494,8 @@
       chatMessages = [];
       goalMetToday = false;
       pendingChatImage = null;
+      lastChatRenderKey = '';
+      chatPinnedToBottom = true;
       closeCelebrate();
       closeChatLightbox();
       clearPendingChatImage();
@@ -3334,9 +3341,33 @@
       }
     }
 
+    let chatPinnedToBottom = true;
+    let lastChatRenderKey = '';
+
     function scrollChatToBottom() {
       if (!els.chatMessages) return;
       els.chatMessages.scrollTop = els.chatMessages.scrollHeight;
+      chatPinnedToBottom = true;
+    }
+
+    function isChatNearBottom(threshold = 96) {
+      if (!els.chatMessages) return true;
+      const el = els.chatMessages;
+      return el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+    }
+
+    function updateChatPinnedFromScroll() {
+      chatPinnedToBottom = isChatNearBottom();
+    }
+
+    function chatListKey(list) {
+      return (list || []).map((m) => [
+        m.id,
+        m.from || '',
+        m.text || '',
+        m.imageId || '',
+        m.at || '',
+      ].join(':')).join('|');
     }
 
     function escapeHtml(str) {
@@ -3442,10 +3473,23 @@
       if (els.chatLightboxImg) els.chatLightboxImg.removeAttribute('src');
     }
 
-    function renderChatMessages() {
+    function renderChatMessages(options = {}) {
       if (!els.chatMessages) return;
+      const forceBottom = !!options.forceBottom;
+      const nextKey = chatListKey(chatMessages);
+      // Poll không đổi nội dung → không vẽ lại (tránh cắt ngang thao tác lướt)
+      if (!forceBottom && nextKey === lastChatRenderKey && els.chatMessages.childElementCount) {
+        return;
+      }
+
+      const stickToBottom = forceBottom || chatPinnedToBottom || isChatNearBottom();
+      const prevTop = els.chatMessages.scrollTop;
+      const prevHeight = els.chatMessages.scrollHeight;
+
       if (!chatMessages.length) {
         els.chatMessages.innerHTML = '<div class="chat-empty">Chưa có tin nhắn.<br>Gửi chữ hoặc ảnh — tự xóa sau 30 phút.</div>';
+        lastChatRenderKey = nextKey;
+        chatPinnedToBottom = true;
         return;
       }
       els.chatMessages.innerHTML = chatMessages.map((m) => {
@@ -3477,7 +3521,15 @@
       els.chatMessages.querySelectorAll('.chat-image').forEach((img) => {
         img.addEventListener('click', () => openChatLightbox(img.src));
       });
-      scrollChatToBottom();
+      lastChatRenderKey = nextKey;
+
+      if (stickToBottom) {
+        scrollChatToBottom();
+      } else {
+        // Giữ nguyên vị trí đang xem — không kéo xuống đáy khi đang lướt tin cũ
+        els.chatMessages.scrollTop = prevTop;
+        chatPinnedToBottom = false;
+      }
     }
 
     async function refreshMessages(notify) {
@@ -3487,11 +3539,15 @@
         const result = await api('/messages');
         const list = Array.isArray(result.messages) ? result.messages : [];
         const prevLatest = chatMessages.length ? chatMessages[chatMessages.length - 1].id : null;
+        const prevKey = chatListKey(chatMessages);
+        const nextKey = chatListKey(list);
         chatMessages = list;
         lastMessagesAt = result.updatedAt || lastMessagesAt;
         const onChat = els.pageChat && els.pageChat.classList.contains('active');
         if (onChat) {
-          renderChatMessages();
+          if (prevKey !== nextKey) {
+            renderChatMessages({ forceBottom: false });
+          }
           markChatRead();
         } else {
           updateChatBadge();
@@ -3528,12 +3584,13 @@
           lastMessagesAt = result.updatedAt || lastMessagesAt;
           if (els.chatInput) els.chatInput.value = '';
           clearPendingChatImage();
-          renderChatMessages();
+          renderChatMessages({ forceBottom: true });
           markChatRead();
         } else {
           await refreshMessages(false);
           clearPendingChatImage();
           if (els.chatInput) els.chatInput.value = '';
+          scrollChatToBottom();
         }
       } catch (err) {
         showToast(err.message || 'Không gửi được tin nhắn');
@@ -3867,6 +3924,9 @@
     els.resetBtn.addEventListener('click', resetToday);
     els.loginForm.addEventListener('submit', handleLogin);
     if (els.chatForm) els.chatForm.addEventListener('submit', sendChatMessage);
+    if (els.chatMessages) {
+      els.chatMessages.addEventListener('scroll', updateChatPinnedFromScroll, { passive: true });
+    }
     if (els.chatAttachBtn && els.chatImageInput) {
       els.chatAttachBtn.addEventListener('click', () => els.chatImageInput.click());
       els.chatImageInput.addEventListener('change', handleChatImagePick);
