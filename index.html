@@ -279,7 +279,7 @@
       display: inline-flex;
     }
 
-    /* Chế độ trang tin nhắn: chỉ đồng hồ + khung chat */
+    /* Chế độ trang tin nhắn: full màn hình, trang không cuộn, chỉ khung tin cuộn */
     body.chat-mode .sync-status,
     body.chat-mode .role-banner,
     body.chat-mode #app-footer,
@@ -288,23 +288,42 @@
     body.chat-mode #page-history,
     body.chat-mode .top-bar-title h1,
     body.chat-mode #today-date,
-    body.chat-mode .chat-page-header {
+    body.chat-mode .chat-page-header,
+    body.chat-mode .scroll-end-spacer {
       display: none !important;
+    }
+
+    body.chat-mode .app-scroll-clip {
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: var(--keyboard-inset, 0px);
+      height: auto;
+      inset: auto;
+      width: 100%;
     }
 
     body.chat-mode .app-scroll {
       overflow: hidden !important;
+      touch-action: none;
+      overscroll-behavior: none;
     }
 
     body.chat-mode .container {
       height: 100%;
+      max-width: none;
+      width: 100%;
       display: flex;
       flex-direction: column;
-      padding-bottom: max(10px, calc(var(--sab) + 8px));
+      padding: 0;
+      padding-top: max(6px, var(--sat));
+      padding-bottom: 0;
+      margin: 0;
     }
 
     body.chat-mode .top-bar {
-      margin-bottom: 8px;
+      margin: 0;
+      padding: 4px 10px 6px;
       flex-shrink: 0;
     }
 
@@ -320,17 +339,33 @@
       flex-direction: column;
       flex: 1;
       min-height: 0;
+      margin: 0;
     }
 
     body.chat-mode .chat-box {
       flex: 1;
       min-height: 0;
-      max-height: none;
-      height: 100%;
+      max-height: none !important;
+      height: auto !important;
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+      border-bottom: none;
+      box-shadow: none;
+      background: rgba(8, 30, 48, 0.96);
+    }
+
+    body.chat-mode .chat-messages {
+      touch-action: pan-y;
+      overscroll-behavior: contain;
+    }
+
+    body.chat-mode .chat-compose-wrap {
+      padding-bottom: max(6px, var(--sab));
     }
 
     body.chat-mode .app-notify-stack {
-      bottom: max(78px, calc(env(safe-area-inset-bottom, 0px) + 72px));
+      bottom: max(78px, calc(env(safe-area-inset-bottom, 0px) + 72px + var(--keyboard-inset, 0px)));
     }
 
     .chat-status {
@@ -2973,7 +3008,7 @@
       <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
-    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.5.2</span></footer>
+    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.5.3</span></footer>
     <div class="scroll-end-spacer" aria-hidden="true"></div>
     </div>
   </div>
@@ -3090,7 +3125,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.5.2';
+    const APP_VERSION = '1.5.3';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -6095,6 +6130,55 @@
       return;
     }
 
+    function syncChatKeyboardInset() {
+      try {
+        if (!document.body.classList.contains('chat-mode')) {
+          document.documentElement.style.setProperty('--keyboard-inset', '0px');
+          return;
+        }
+        const vv = window.visualViewport;
+        if (!vv) {
+          document.documentElement.style.setProperty('--keyboard-inset', '0px');
+          return;
+        }
+        // Phần bị bàn phím che = layout height - vùng nhìn thấy
+        const covered = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+        document.documentElement.style.setProperty('--keyboard-inset', covered + 'px');
+        // Giữ tin mới trong tầm nhìn khi bàn phím mở
+        if (covered > 40 && typeof scrollChatToBottom === 'function' && chatPinnedToBottom) {
+          scrollChatToBottom();
+        }
+      } catch {
+        document.documentElement.style.setProperty('--keyboard-inset', '0px');
+      }
+    }
+
+    function setupChatKeyboardAvoid() {
+      const sync = () => syncChatKeyboardInset();
+      window.addEventListener('resize', sync, { passive: true });
+      window.addEventListener('orientationchange', () => {
+        window.setTimeout(sync, 80);
+        window.setTimeout(sync, 300);
+      }, { passive: true });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', sync, { passive: true });
+        window.visualViewport.addEventListener('scroll', sync, { passive: true });
+      }
+      window.addEventListener('focusin', (e) => {
+        const t = e.target;
+        if (!t || (t.id !== 'chat-input' && !(t.closest && t.closest('#chat-form')))) return;
+        window.setTimeout(sync, 50);
+        window.setTimeout(sync, 280);
+      });
+      window.addEventListener('focusout', () => {
+        window.setTimeout(() => {
+          const active = document.activeElement;
+          if (active && (active.id === 'chat-input' || (active.closest && active.closest('#chat-form')))) return;
+          document.documentElement.style.setProperty('--keyboard-inset', '0px');
+        }, 120);
+      });
+    }
+
     function setupStandaloneAppMode() {
       const standalone = isStandaloneApp();
       document.documentElement.classList.toggle('standalone-app', standalone);
@@ -6133,6 +6217,7 @@
     startLiveClock();
     setupStandaloneAppMode();
     setupEdgeRubberBand();
+    setupChatKeyboardAvoid();
     // Hiện phiên bản ngay khi mở (kể cả màn đăng nhập)
     try {
       if (els.appFooter) {
