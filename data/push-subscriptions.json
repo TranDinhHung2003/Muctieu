@@ -42,16 +42,8 @@
           "auth": "7HKqWprjEx6VGBPJAAhdQw"
         },
         "updatedAt": "2026-07-29T09:13:36.501Z"
-      },
-      {
-        "endpoint": "https://web.push.apple.com/QDteGoLOI7mFcaco6Onc6Jk-Dnyzh3H6XHsdT4mFAN6NUIYCsO9wc27KAFqG5RRzpaxMb18yEDWZY2Lp50_xI4GCTOuRkpdfw15yD8Y9uey66eU0oO4TnG1QPLfBfn0Yqjfcp_OPJCE0mE6E4gW7gxQIea4xpU2qw1Zf4e5FDx4",
-        "keys": {
-          "p256dh": "BNdCmdWMAAkLNvosx7SFB235mqHwmK57CSZqX5QqLSJkY3eaKndUH6eWYdjESOr6l7LVrvKxM7AlwZjPF4U9fF0",
-          "auth": "rZJ1Zey7HWlAMxBr6M1YCg"
-        },
-        "updatedAt": "2026-07-29T10:18:54.231Z"
       }
     ]
   },
-  "updatedAt": "2026-07-29T10:19:39.200Z"
+  "updatedAt": "2026-07-29T10:20:08.418Z"
 }
