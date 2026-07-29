@@ -111,17 +111,18 @@
       "role": "admin",
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T14:22:43.929Z",
-      "status": "sent",
+      "status": "delivered",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms66c84l5qbls"
+      "callId": "cms66c84l5qbls",
+      "deliveredAt": "2026-07-29T14:22:45.417Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:22:43.929Z"
+  "updatedAt": "2026-07-29T14:22:45.417Z"
 }
