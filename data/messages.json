@@ -1,21 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms66sl6u0gph9u",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "Cuộc gọi thoại · Đã từ chối",
-      "at": "2026-07-29T14:35:24.102Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T14:35:24.852Z",
-      "readAt": "2026-07-29T14:35:25.108Z",
-      "kind": "call",
-      "callEvent": "rejected",
-      "callMode": "audio",
-      "durationSec": 0,
-      "callId": "cms66sfl4kvde0"
-    },
-    {
       "id": "ms66t38hafpx9a",
       "from": "theodoi",
       "role": "viewer",
@@ -99,5 +84,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:05:20.682Z"
+  "updatedAt": "2026-07-29T15:05:26.595Z"
 }
