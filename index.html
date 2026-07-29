@@ -2222,13 +2222,58 @@
     .chat-bubble .chat-image {
       display: block;
       width: 100%;
-      max-width: 240px;
-      max-height: 280px;
+      max-width: 260px;
+      max-height: 320px;
       object-fit: cover;
-      border-radius: 10px;
+      border-radius: 18px;
       margin-top: 6px;
       cursor: zoom-in;
-      background: rgba(0, 0, 0, 0.25);
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+
+    .chat-bubble.image-only {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
+      padding: 2px 0;
+      max-width: 78%;
+    }
+
+    .chat-bubble.image-only.mine {
+      background: transparent;
+      border: none;
+    }
+
+    .chat-bubble.image-only .chat-name {
+      margin: 0 2px 4px;
+    }
+
+    .chat-bubble.image-only .chat-meta {
+      margin: 0 2px 4px;
+      color: #94a3b8;
+    }
+
+    .chat-bubble.image-only.mine .chat-meta {
+      color: #86efac;
+    }
+
+    .chat-bubble.image-only .chat-image {
+      margin-top: 0;
+      border-radius: 20px;
+    }
+
+    .chat-bubble.image-only .chat-status {
+      margin: 4px 4px 0;
+    }
+
+    .chat-bubble .chat-image.broken {
+      min-height: 120px;
+      background: rgba(15, 23, 42, 0.55);
+      display: grid;
+      place-items: center;
     }
 
     .chat-bubble .chat-text + .chat-image {
@@ -3078,7 +3123,7 @@
       <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
-    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.7.1</span></footer>
+    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.7.2</span></footer>
     <div class="scroll-end-spacer" aria-hidden="true"></div>
     </div>
   </div>
@@ -3198,7 +3243,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.7.1';
+    const APP_VERSION = '1.7.2';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -4696,10 +4741,12 @@
         const textHtml = m.text
           ? `<div class="chat-text">${escapeHtml(m.text)}</div>`
           : '';
-        const imageHtml = m.imageId
-          ? `<img class="chat-image" src="/api/messages/media/${encodeURIComponent(m.imageId)}" alt="Ảnh đính kèm" loading="lazy">`
-          : (m.localImage
-            ? `<img class="chat-image" src="${m.localImage}" alt="Ảnh đính kèm">`
+        const hasImage = !!(m.imageId || m.localImage);
+        const imageOnly = hasImage && !m.text;
+        const imageHtml = m.localImage
+          ? `<img class="chat-image" src="${m.localImage}" alt="Ảnh đính kèm">`
+          : (m.imageId
+            ? `<img class="chat-image" data-image-id="${escapeHtml(m.imageId)}" src="/api/messages/media/${encodeURIComponent(m.imageId)}" alt="Ảnh đính kèm" loading="lazy">`
             : '');
         const status = m.status || 'sent';
         const statusClass = status === 'read'
@@ -4708,7 +4755,7 @@
         const statusHtml = mine
           ? `<div class="chat-status${statusClass}">${escapeHtml(messageStatusLabel(status))}</div>`
           : '';
-        const bubbleClass = `chat-bubble${mine ? ' mine' : ''}${m.pending ? ' pending' : ''}${status === 'failed' ? ' failed' : ''}`;
+        const bubbleClass = `chat-bubble${mine ? ' mine' : ''}${m.pending ? ' pending' : ''}${status === 'failed' ? ' failed' : ''}${imageOnly ? ' image-only' : ''}`;
         return `
           <div class="${bubbleClass}" data-id="${escapeHtml(m.id)}"${m.localId ? ` data-local-id="${escapeHtml(m.localId)}"` : ''}>
             <div class="chat-name">${escapeHtml(nick)}</div>
@@ -4722,7 +4769,39 @@
         `;
       }).join('');
       els.chatMessages.querySelectorAll('.chat-image').forEach((img) => {
-        img.addEventListener('click', () => openChatLightbox(img.src));
+        img.addEventListener('click', () => {
+          if (img.classList.contains('broken')) return;
+          openChatLightbox(img.src);
+        });
+        img.addEventListener('error', () => {
+          // Thử tải lại bằng fetch (cookie) rồi gắn blob — tránh icon vỡ khi cache/đĩa tạm
+          const imageId = img.getAttribute('data-image-id');
+          if (!imageId || img.dataset.retry === '1') {
+            img.classList.add('broken');
+            img.removeAttribute('src');
+            img.alt = 'Không tải được ảnh';
+            return;
+          }
+          img.dataset.retry = '1';
+          fetch('/api/messages/media/' + encodeURIComponent(imageId), { credentials: 'same-origin' })
+            .then((res) => {
+              if (!res.ok) throw new Error('missing');
+              return res.blob();
+            })
+            .then((blob) => {
+              const url = URL.createObjectURL(blob);
+              img.onload = () => {
+                try { URL.revokeObjectURL(url); } catch { /* ignore */ }
+              };
+              img.src = url;
+              img.classList.remove('broken');
+            })
+            .catch(() => {
+              img.classList.add('broken');
+              img.removeAttribute('src');
+              img.alt = 'Không tải được ảnh';
+            });
+        });
       });
       lastChatRenderKey = nextKey;
 
@@ -4846,7 +4925,11 @@
           chatMessages = syncChatMessagesList(
             chatMessages
               .filter((m) => m.localId !== localId && m.id !== serverMsg.id)
-              .concat([serverMsg])
+              .concat([{
+                ...serverMsg,
+                // Giữ bản xem trước local đến khi media API sẵn sàng
+                localImage: image || null,
+              }])
           );
           lastMessagesAt = result.updatedAt || lastMessagesAt;
           renderChatMessages({ forceBottom: true });
@@ -5110,7 +5193,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=18', {
+        const reg = await navigator.serviceWorker.register('/sw.js?v=19', {
           scope: '/',
           updateViaCache: 'none',
         });

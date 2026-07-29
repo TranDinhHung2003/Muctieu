@@ -531,11 +531,12 @@ app.post('/api/restore', authMiddleware, adminOnly, async (req, res) => {
 
 app.get('/api/messages', authMiddleware, (req, res) => {
   // Người nhận đang online / đồng bộ → đánh dấu đã nhận
-  const store = storage.markMessagesDelivered(req.user.username);
+  storage.markMessagesDelivered(req.user.username);
+  const pub = storage.publicMessagesStore();
   res.json({
-    messages: store.messages || [],
+    messages: pub.messages || [],
     nicknames: getDisplayNamesForViewer(req.user.username),
-    updatedAt: store.updatedAt,
+    updatedAt: pub.updatedAt,
     ttlMinutes: 30,
   });
 });
@@ -546,23 +547,28 @@ app.get('/api/messages/sync', authMiddleware, (_req, res) => {
 });
 
 app.post('/api/messages/read', authMiddleware, (req, res) => {
-  const store = storage.markMessagesRead(req.user.username);
+  storage.markMessagesRead(req.user.username);
+  const pub = storage.publicMessagesStore();
   res.json({
     ok: true,
-    messages: store.messages || [],
+    messages: pub.messages || [],
     nicknames: getDisplayNamesForViewer(req.user.username),
-    updatedAt: store.updatedAt,
+    updatedAt: pub.updatedAt,
   });
 });
 
-app.get('/api/messages/media/:id', authMiddleware, (req, res) => {
-  const image = storage.readChatImage(req.params.id);
-  if (!image || !image.buffer || !image.buffer.length) {
-    return res.status(404).json({ error: 'Không tìm thấy ảnh' });
+app.get('/api/messages/media/:id', authMiddleware, async (req, res) => {
+  try {
+    const image = await storage.resolveChatImage(req.params.id);
+    if (!image || !image.buffer || !image.buffer.length) {
+      return res.status(404).json({ error: 'Không tìm thấy ảnh' });
+    }
+    res.setHeader('Content-Type', image.mime || 'image/jpeg');
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.send(image.buffer);
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Không đọc được ảnh' });
   }
-  res.setHeader('Content-Type', image.mime || 'image/jpeg');
-  res.setHeader('Cache-Control', 'private, max-age=60');
-  res.send(image.buffer);
 });
 
 app.post('/api/messages', authMiddleware, async (req, res) => {

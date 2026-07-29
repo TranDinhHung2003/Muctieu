@@ -1,5 +1,5 @@
-/* Service worker v18: Web Push tin nhắn / cập nhật */
-const SW_VERSION = 'muctieu-sw-v18';
+/* Service worker v19: Web Push tin nhắn / cập nhật */
+const SW_VERSION = 'muctieu-sw-v19';
 const FOREGROUND_CACHE = 'muctieu-runtime-v1';
 const FOREGROUND_URL = '/__muctieu_foreground';
 const FOREGROUND_TTL_MS = 25000;

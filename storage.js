@@ -15,6 +15,7 @@ const GITHUB_REPO = process.env.GITHUB_REPO || 'TranDinhHung2003/Muctieu';
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'cursor/muc-tieu-chay-xe-becf';
 const GITHUB_DATA_PATH = process.env.GITHUB_DATA_PATH || 'data/app-data.json';
 const GITHUB_MESSAGES_PATH = process.env.GITHUB_MESSAGES_PATH || 'data/messages.json';
+const GITHUB_CHAT_IMAGES_PATH = process.env.GITHUB_CHAT_IMAGES_PATH || 'data/chat-images';
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -239,14 +240,154 @@ function isFreshMessage(m, now = Date.now()) {
   return now - t <= MESSAGE_TTL_MS;
 }
 
+function chatImageLocalPath(imageId) {
+  const safe = String(imageId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!safe) return null;
+  return path.join(CHAT_IMAGES_DIR, safe + '.img');
+}
+
+function githubChatImagePath(imageId) {
+  const safe = String(imageId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!safe) return null;
+  return GITHUB_CHAT_IMAGES_PATH.replace(/\/+$/, '') + '/' + safe + '.img';
+}
+
 function deleteChatImageFile(imageId) {
-  if (!imageId) return;
-  const safe = String(imageId).replace(/[^a-zA-Z0-9_-]/g, '');
-  if (!safe) return;
-  const filePath = path.join(CHAT_IMAGES_DIR, safe + '.img');
+  const filePath = chatImageLocalPath(imageId);
+  if (!filePath) return;
   try {
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   } catch { /* ignore */ }
+  deleteChatImageFromGitHub(imageId).catch(() => {});
+}
+
+function parseChatImagePayload(raw) {
+  if (!raw || !raw.length) return null;
+  const idx = raw.indexOf(0x0a); // \n
+  if (idx < 0) return null;
+  let meta = {};
+  try { meta = JSON.parse(raw.slice(0, idx).toString('utf8')); } catch { meta = {}; }
+  const buffer = raw.slice(idx + 1);
+  if (!buffer.length) return null;
+  return {
+    mime: meta.mime || 'image/jpeg',
+    buffer,
+  };
+}
+
+function readChatImage(imageId) {
+  const filePath = chatImageLocalPath(imageId);
+  if (!filePath || !fs.existsSync(filePath)) return null;
+  try {
+    return parseChatImagePayload(fs.readFileSync(filePath));
+  } catch {
+    return null;
+  }
+}
+
+async function saveChatImageToGitHub(imageId, payloadBuffer) {
+  if (!GITHUB_TOKEN || !payloadBuffer || !payloadBuffer.length) return false;
+  const relPath = githubChatImagePath(imageId);
+  if (!relPath) return false;
+  try {
+    const encPath = relPath.split('/').map(encodeURIComponent).join('/');
+    let sha = null;
+    const existing = await githubRequest(
+      '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
+    );
+    if (existing && !existing.notFound && existing.sha) sha = existing.sha;
+    const body = {
+      message: 'chore: lưu ảnh chat ' + imageId,
+      content: Buffer.from(payloadBuffer).toString('base64'),
+      branch: GITHUB_BRANCH,
+    };
+    if (sha) body.sha = sha;
+    await githubRequest(
+      '/repos/' + GITHUB_REPO + '/contents/' + encPath,
+      { method: 'PUT', body: JSON.stringify(body) }
+    );
+    return true;
+  } catch (err) {
+    console.warn('Không lưu được ảnh chat lên GitHub:', err && err.message ? err.message : err);
+    return false;
+  }
+}
+
+async function deleteChatImageFromGitHub(imageId) {
+  if (!GITHUB_TOKEN) return false;
+  const relPath = githubChatImagePath(imageId);
+  if (!relPath) return false;
+  try {
+    const encPath = relPath.split('/').map(encodeURIComponent).join('/');
+    const existing = await githubRequest(
+      '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
+    );
+    if (!existing || existing.notFound || !existing.sha) return false;
+    await githubRequest(
+      '/repos/' + GITHUB_REPO + '/contents/' + encPath,
+      {
+        method: 'DELETE',
+        body: JSON.stringify({
+          message: 'chore: xóa ảnh chat hết hạn ' + imageId,
+          sha: existing.sha,
+          branch: GITHUB_BRANCH,
+        }),
+      }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function loadChatImageFromGitHub(imageId) {
+  if (!GITHUB_TOKEN) return null;
+  const relPath = githubChatImagePath(imageId);
+  const filePath = chatImageLocalPath(imageId);
+  if (!relPath || !filePath) return null;
+  try {
+    const encPath = relPath.split('/').map(encodeURIComponent).join('/');
+    const info = await githubRequest(
+      '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
+    );
+    if (!info || info.notFound || !info.content) return null;
+    const raw = Buffer.from(info.content, 'base64');
+    const parsed = parseChatImagePayload(raw);
+    if (!parsed) return null;
+    fs.writeFileSync(filePath, raw);
+    return parsed;
+  } catch (err) {
+    console.warn('Không tải được ảnh chat từ GitHub:', err && err.message ? err.message : err);
+    return null;
+  }
+}
+
+/** Đọc ảnh local; nếu mất thì khôi phục từ store bền / GitHub */
+async function resolveChatImage(imageId) {
+  const local = readChatImage(imageId);
+  if (local && local.buffer && local.buffer.length) return local;
+
+  // Thử khôi phục từ imageBin trong messages store (đã sync GitHub)
+  try {
+    const store = memoryMessages || loadMessagesFromDisk();
+    const msg = (store.messages || []).find((m) => m && m.imageId === String(imageId || '').replace(/[^a-zA-Z0-9_-]/g, '') && m.imageBin);
+    if (msg && msg.imageBin) {
+      const buf = Buffer.from(String(msg.imageBin).replace(/\s+/g, ''), 'base64');
+      if (buf.length) {
+        const meta = JSON.stringify({ mime: msg.imageMime || 'image/jpeg', at: msg.at || nowIso() });
+        const payload = Buffer.concat([
+          Buffer.from(meta, 'utf8'),
+          Buffer.from('\n', 'utf8'),
+          buf,
+        ]);
+        const filePath = chatImageLocalPath(imageId);
+        if (filePath) fs.writeFileSync(filePath, payload);
+        return parseChatImagePayload(payload);
+      }
+    }
+  } catch { /* ignore */ }
+
+  return loadChatImageFromGitHub(imageId);
 }
 
 function normalizeMessagesStore(raw) {
@@ -264,7 +405,28 @@ function normalizeMessagesStore(raw) {
     const imageId = m.imageId ? String(m.imageId).replace(/[^a-zA-Z0-9_-]/g, '') : '';
     const callFields = normalizeCallFields(m);
     if (!text && !imageId && callFields.kind !== 'call') continue;
-    kept.push({
+    const imageMime = m.imageMime ? String(m.imageMime).slice(0, 64) : '';
+    const imageBin = typeof m.imageBin === 'string' && m.imageBin.length
+      ? String(m.imageBin).replace(/\s+/g, '')
+      : '';
+    // Khôi phục file ảnh local từ bản bền (GitHub/messages.json) nếu đĩa tạm đã mất
+    if (imageId && imageBin) {
+      const localPath = chatImageLocalPath(imageId);
+      if (localPath && !fs.existsSync(localPath)) {
+        try {
+          const buf = Buffer.from(imageBin, 'base64');
+          if (buf.length) {
+            const meta = JSON.stringify({ mime: imageMime || 'image/jpeg', at: m.at || nowIso() });
+            fs.writeFileSync(localPath, Buffer.concat([
+              Buffer.from(meta, 'utf8'),
+              Buffer.from('\n', 'utf8'),
+              buf,
+            ]));
+          }
+        } catch { /* ignore */ }
+      }
+    }
+    const entry = {
       id: String(m.id),
       from: String(m.from),
       role: m.role === 'viewer' ? 'viewer' : 'admin',
@@ -277,20 +439,26 @@ function normalizeMessagesStore(raw) {
       deliveredAt: m.deliveredAt || undefined,
       readAt: m.readAt || undefined,
       ...callFields,
-    });
-  }
-    kept.sort((a, b) => {
-      const ta = new Date(a.at).getTime() || 0;
-      const tb = new Date(b.at).getTime() || 0;
-      if (ta !== tb) return ta - tb;
-      return String(a.id).localeCompare(String(b.id));
-    });
-    return {
-      messages: kept.slice(-MAX_MESSAGES),
-      nicknames: normalizeNicknamesMap(raw.nicknames),
-      updatedAt: raw.updatedAt || nowIso(),
     };
+    // Giữ bản bền trong store (không trả ra client)
+    if (imageId && imageBin) {
+      entry.imageBin = imageBin;
+      entry.imageMime = imageMime || 'image/jpeg';
+    }
+    kept.push(entry);
   }
+  kept.sort((a, b) => {
+    const ta = new Date(a.at).getTime() || 0;
+    const tb = new Date(b.at).getTime() || 0;
+    if (ta !== tb) return ta - tb;
+    return String(a.id).localeCompare(String(b.id));
+  });
+  return {
+    messages: kept.slice(-MAX_MESSAGES),
+    nicknames: normalizeNicknamesMap(raw.nicknames),
+    updatedAt: raw.updatedAt || nowIso(),
+  };
+}
 
 function normalizeMessageStatus(status) {
   if (status === 'delivered' || status === 'read' || status === 'sent') return status;
@@ -343,6 +511,23 @@ async function setPeerNickname(username, nickname) {
   return { nicknames: store.nicknames, updatedAt: store.updatedAt };
 }
 
+function publicMessage(m) {
+  if (!m || typeof m !== 'object') return m;
+  const out = Object.assign({}, m);
+  delete out.imageBin;
+  delete out.imageMime;
+  return out;
+}
+
+function publicMessagesStore(store) {
+  const s = store || getMessagesStore();
+  return {
+    messages: (s.messages || []).map(publicMessage),
+    nicknames: s.nicknames || {},
+    updatedAt: s.updatedAt,
+  };
+}
+
 function getMessagesStore() {
   return pruneExpiredMessages(true);
 }
@@ -370,24 +555,9 @@ function saveChatImageFromDataUrl(messageId, dataUrl) {
     Buffer.from('\n', 'utf8'),
     buf,
   ]);
-  fs.writeFileSync(path.join(CHAT_IMAGES_DIR, imageId + '.img'), payload);
-  return { imageId, mime, size: buf.length };
-}
-
-function readChatImage(imageId) {
-  const safe = String(imageId || '').replace(/[^a-zA-Z0-9_-]/g, '');
-  if (!safe) return null;
-  const filePath = path.join(CHAT_IMAGES_DIR, safe + '.img');
-  if (!fs.existsSync(filePath)) return null;
-  const raw = fs.readFileSync(filePath);
-  const idx = raw.indexOf(0x0a); // \n
-  if (idx < 0) return null;
-  let meta = {};
-  try { meta = JSON.parse(raw.slice(0, idx).toString('utf8')); } catch { meta = {}; }
-  return {
-    mime: meta.mime || 'image/jpeg',
-    buffer: raw.slice(idx + 1),
-  };
+  const filePath = chatImageLocalPath(imageId);
+  fs.writeFileSync(filePath, payload);
+  return { imageId, mime, size: buf.length, payload };
 }
 
 async function loadMessagesFromGitHub() {
@@ -505,9 +675,17 @@ async function addMessage({ from, role, text, imageDataUrl, kind, callEvent, cal
 
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   let imageId;
+  let imagePayload = null;
+  let imageMime = null;
+  let imageBin = null;
   if (hasImage) {
     const saved = saveChatImageFromDataUrl(id, imageDataUrl);
     imageId = saved.imageId;
+    imagePayload = saved.payload || null;
+    imageMime = saved.mime || 'image/jpeg';
+    // Lưu base64 trong messages store để sống sót qua Render restart / sync GitHub
+    const match = String(imageDataUrl).match(/^data:image\/[^;]+;base64,([A-Za-z0-9+/=\s]+)$/i);
+    imageBin = match ? match[1].replace(/\s+/g, '') : null;
   }
   const msg = {
     id,
@@ -517,6 +695,8 @@ async function addMessage({ from, role, text, imageDataUrl, kind, callEvent, cal
       ? buildCallMessageText(callFields.callEvent, callFields.callMode, callFields.durationSec)
       : clean,
     imageId,
+    imageMime: imageMime || undefined,
+    imageBin: imageBin || undefined,
     at: nowIso(),
     status: 'sent',
     ...callFields,
@@ -532,8 +712,15 @@ async function addMessage({ from, role, text, imageDataUrl, kind, callEvent, cal
   store.updatedAt = nowIso();
   memoryMessages = store;
   saveMessagesToDisk(store);
+  if (imageId && imagePayload) {
+    await saveChatImageToGitHub(imageId, imagePayload);
+  }
   await saveMessagesToGitHub(store);
-  return { message: msg, updatedAt: store.updatedAt };
+  // Không trả imageBin ra client
+  const publicMessage = Object.assign({}, msg);
+  delete publicMessage.imageBin;
+  delete publicMessage.imageMime;
+  return { message: publicMessage, updatedAt: store.updatedAt };
 }
 
 function markMessagesDelivered(viewerUsername) {
@@ -603,4 +790,7 @@ module.exports = {
   markMessagesRead,
   pruneExpiredMessages,
   readChatImage,
+  resolveChatImage,
+  publicMessagesStore,
+  publicMessage,
 };
