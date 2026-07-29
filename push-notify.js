@@ -276,27 +276,66 @@ function listOtherUsernames(allUsernames, exceptUsername) {
 
 async function sendToSubscription(sub, payload) {
   try {
-      const isApple = sub && String(sub.endpoint || '').includes('web.push.apple.com');
-    await webpush.sendNotification(sub, JSON.stringify(payload), {
-      // Apple giữ thông báo lâu hơn khi máy/PWA bị kill
-      TTL: isApple ? 60 * 60 * 24 : 60 * 60 * 12,
-      urgency: 'high',
-      headers: isApple ? { Urgency: 'high', TTL: String(60 * 60 * 24) } : undefined,
-    });
+    if (!vapid) await init();
+    // Luôn gắn lại subject hợp lệ trước khi gửi (tránh BadJwtToken trên Apple)
+    webpush.setVapidDetails(
+      normalizeVapidSubject(vapid.subject),
+      vapid.publicKey,
+      vapid.privateKey
+    );
+    const isApple = sub && String(sub.endpoint || '').includes('web.push.apple.com');
+    await webpush.sendNotification(
+      {
+        endpoint: sub.endpoint,
+        keys: {
+          p256dh: sub.keys.p256dh,
+          auth: sub.keys.auth,
+        },
+      },
+      JSON.stringify(payload),
+      {
+        TTL: isApple ? 60 * 60 * 24 : 60 * 60 * 12,
+        urgency: 'high',
+      }
+    );
     return { ok: true };
   } catch (err) {
     const status = err && (err.statusCode || err.status);
     const body = err && err.body ? String(err.body).slice(0, 180) : '';
     console.warn('Push lỗi', status || '', body || (err && err.message) || '');
-    return { ok: false, status, endpoint: sub && sub.endpoint };
+    return { ok: false, status, endpoint: sub && sub.endpoint, error: body || (err && err.message) || '' };
   }
+}
+
+function reloadSubsFromDisk() {
+  const fromDisk = readJson(SUBS_PATH, null);
+  if (fromDisk && fromDisk.users && typeof fromDisk.users === 'object') {
+    memorySubs = fromDisk;
+  }
+  return getSubsStore();
+}
+
+let lastPushTest = null;
+
+function getLastPushTest() {
+  return lastPushTest;
+}
+
+function setLastPushTest(info) {
+  lastPushTest = Object.assign({ at: nowIso() }, info || {});
+  try {
+    writeJson(path.join(DATA_DIR, 'push-last-test.json'), lastPushTest);
+  } catch { /* ignore */ }
+  return lastPushTest;
 }
 
 async function sendPushToUsernames(usernames, payload) {
   if (!vapid) await init();
+  reloadSubsFromDisk();
   const store = getSubsStore();
   const targets = Array.from(new Set((usernames || []).map((u) => String(u || '').trim()).filter(Boolean)));
   const dead = [];
+  const errors = [];
   const jobs = [];
   let attempted = 0;
 
@@ -307,8 +346,11 @@ async function sendPushToUsernames(usernames, payload) {
       attempted += 1;
       jobs.push(
         sendToSubscription(sub, payload).then((result) => {
-          if (!result.ok && (result.status === 404 || result.status === 410)) {
-            dead.push({ username, endpoint: result.endpoint });
+          if (!result.ok) {
+            errors.push({ username, status: result.status, error: result.error || '' });
+            if (result.status === 404 || result.status === 410) {
+              dead.push({ username, endpoint: result.endpoint });
+            }
           }
           return result.ok;
         })
@@ -318,7 +360,7 @@ async function sendPushToUsernames(usernames, payload) {
 
   if (!attempted) {
     console.warn('Push: không có subscription cho', targets.join(', ') || '(trống)');
-    return { attempted: 0, sent: 0 };
+    return { attempted: 0, sent: 0, errors: [{ error: 'no-subscription' }] };
   }
 
   const results = await Promise.all(jobs);
@@ -334,7 +376,7 @@ async function sendPushToUsernames(usernames, payload) {
   }
 
   console.log('Push gửi', sent + '/' + attempted, '·', payload && payload.type ? payload.type : 'notify');
-  return { attempted, sent };
+  return { attempted, sent, errors };
 }
 
 function getPublicKey() {
@@ -363,4 +405,7 @@ module.exports = {
   sendPushToUsernames,
   listOtherUsernames,
   getStats,
+  getLastPushTest,
+  setLastPushTest,
+  reloadSubsFromDisk,
 };

@@ -310,40 +310,87 @@ app.post('/api/push/unsubscribe', authMiddleware, (req, res) => {
 });
 
 app.post('/api/push/test', authMiddleware, async (req, res) => {
+  const username = String(req.user.username || '');
   const title = String((req.body || {}).title || 'Mục tiêu chạy xe').trim() || 'Mục tiêu chạy xe';
-  const body = String((req.body || {}).body || 'Đây là thông báo thử — tắt app vẫn nhận được').trim();
+  const body = String((req.body || {}).body || 'Thông báo thử').trim();
   const delaySec = Math.max(0, Math.min(60, Number((req.body || {}).delaySec) || 0));
 
-  const send = async () => pushNotify.sendPushToUsernames([req.user.username], {
+  const sendOne = async (payload) => {
+    pushNotify.reloadSubsFromDisk();
+    return pushNotify.sendPushToUsernames([username], payload);
+  };
+
+  // Tin 1: gửi ngay (xác nhận đăng ký còn sống)
+  const immediate = await sendOne({
     title,
-    body,
-    tag: 'muctieu-test',
+    body: 'Tin 1/2: Đăng ký OK. Hãy VUỐT TẮT app ngay — tin 2 sẽ tới sau ' + (delaySec || 12) + 's',
+    tag: 'muctieu-test-1',
     page: 'home',
     type: 'test',
   });
 
-  if (delaySec > 0) {
-    // Cho phép bấm thử → vuốt tắt app → vẫn nhận sau vài giây
+  pushNotify.setLastPushTest({
+    username,
+    phase: 'immediate',
+    attempted: immediate.attempted || 0,
+    sent: immediate.sent || 0,
+    errors: immediate.errors || [],
+  });
+
+  const wait = delaySec > 0 ? delaySec : 0;
+  if (wait > 0) {
     res.json({
       ok: true,
       delayed: true,
-      delaySec,
-      message: 'Sẽ gửi sau ' + delaySec + ' giây — hãy vuốt tắt app ngay',
+      delaySec: wait,
+      immediate,
+      message: 'Đã gửi tin 1. Vuốt tắt app — tin 2 sau ' + wait + 's',
       stats: pushNotify.getStats(),
     });
-    setTimeout(() => {
-      send().catch((err) => {
-        console.warn('Push test delay lỗi:', err && err.message ? err.message : err);
-      });
-    }, delaySec * 1000);
+
+    const payload2 = {
+      title,
+      body: body || ('Tin 2/2: Máy nhận được khi app đã vuốt tắt (' + username + ')'),
+      tag: 'muctieu-test-2',
+      page: 'home',
+      type: 'test',
+    };
+
+    // Gửi 2 lần (wait và wait+5s) để tăng tỉ lệ khi iOS vừa kill app
+    const delays = [wait, wait + 5];
+    delays.forEach((sec, idx) => {
+      setTimeout(() => {
+        sendOne(Object.assign({}, payload2, {
+          body: payload2.body + (idx ? ' · nhắc lại' : ''),
+          tag: 'muctieu-test-2' + (idx ? '-b' : ''),
+        })).then((result) => {
+          pushNotify.setLastPushTest({
+            username,
+            phase: 'delayed-' + (idx + 1),
+            delaySec: sec,
+            attempted: result.attempted || 0,
+            sent: result.sent || 0,
+            errors: result.errors || [],
+          });
+          console.log('Push test delayed', sec + 's', username, result.sent + '/' + result.attempted);
+        }).catch((err) => {
+          pushNotify.setLastPushTest({
+            username,
+            phase: 'delayed-error',
+            error: err && err.message ? err.message : String(err),
+          });
+          console.warn('Push test delay lỗi:', err && err.message ? err.message : err);
+        });
+      }, sec * 1000);
+    });
     return;
   }
 
-  const result = await send();
   res.json({
     ok: true,
-    attempted: result.attempted || 0,
-    sent: result.sent || 0,
+    attempted: immediate.attempted || 0,
+    sent: immediate.sent || 0,
+    errors: immediate.errors || [],
     stats: pushNotify.getStats(),
   });
 });
@@ -355,6 +402,7 @@ app.get('/api/push/status', authMiddleware, (req, res) => {
     publicKey: pushNotify.getPublicKey(),
     stats: storeUsers,
     username: req.user.username,
+    lastTest: pushNotify.getLastPushTest(),
   });
 });
 
