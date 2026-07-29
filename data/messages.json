@@ -20,7 +20,14 @@
       "role": "admin",
       "text": "Haha",
       "at": "2026-07-29T05:44:40.741Z"
+    },
+    {
+      "id": "ms5nuoxwy2akfw",
+      "from": "admin",
+      "role": "admin",
+      "text": "30 phút tự xóa tin nhắn",
+      "at": "2026-07-29T05:45:09.572Z"
     }
   ],
-  "updatedAt": "2026-07-29T05:44:40.741Z"
+  "updatedAt": "2026-07-29T05:45:09.572Z"
 }
