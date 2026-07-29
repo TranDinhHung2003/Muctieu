@@ -1,13 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5nlnxjf8x0lv",
-      "from": "admin",
-      "role": "admin",
-      "text": "Alo",
-      "at": "2026-07-29T05:38:08.359Z"
-    },
-    {
       "id": "ms5nttz8inetav",
       "from": "theodoi",
       "role": "viewer",
@@ -65,5 +58,5 @@
       "at": "2026-07-29T05:58:05.801Z"
     }
   ],
-  "updatedAt": "2026-07-29T05:58:05.801Z"
+  "updatedAt": "2026-07-29T06:08:36.550Z"
 }
