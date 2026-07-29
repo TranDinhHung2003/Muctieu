@@ -104,8 +104,9 @@
       "role": "viewer",
       "text": "Rtu",
       "at": "2026-07-29T11:35:55.725Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T11:36:01.756Z"
     }
   ],
-  "updatedAt": "2026-07-29T11:35:55.725Z"
+  "updatedAt": "2026-07-29T11:36:01.756Z"
 }
