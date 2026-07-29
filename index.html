@@ -282,6 +282,11 @@
       display: none !important;
     }
 
+    /* Phiên bản luôn hiện để kiểm tra đã cập nhật */
+    body.chat-mode #app-build {
+      bottom: max(62px, calc(env(safe-area-inset-bottom, 0px) + 54px));
+    }
+
     body.chat-mode .app-scroll {
       overflow: hidden !important;
     }
@@ -1721,6 +1726,31 @@
       margin-top: 32px;
       font-size: 0.75rem;
       color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    #app-build {
+      position: fixed;
+      left: max(10px, env(safe-area-inset-left, 0px));
+      bottom: max(8px, calc(env(safe-area-inset-bottom, 0px) + 4px));
+      z-index: 60;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: rgba(148, 163, 184, 0.9);
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 999px;
+      padding: 3px 9px;
+      pointer-events: none;
+      backdrop-filter: blur(6px);
+    }
+
+    .app-build-inline {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 0.7rem;
+      color: rgba(148, 163, 184, 0.95);
     }
 
     .drawer-item .nav-badge {
@@ -2953,11 +2983,13 @@
       <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
-    <footer id="app-footer">© bản quyền thuộc về TranDinhHung</footer>
+    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 12.20260729e</span></footer>
     </div>
   </div>
   </div>
   </div>
+
+  <div id="app-build" aria-hidden="true">v12.20260729e</div>
 
   <div class="modal-overlay" id="nickname-modal">
     <div class="modal">
@@ -3069,6 +3101,12 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
+    const APP_VERSION = '12.20260729e';
+    const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
+    const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
+    const FOREGROUND_CACHE = 'muctieu-runtime-v1';
+    const FOREGROUND_URL = '/__muctieu_foreground';
+
     let currentRole = 'admin';
     let currentUsername = '';
     let currentDayKey = null;
@@ -3841,7 +3879,11 @@
     function updateGoalDisplay(goal) {
       const g = normalizeGoal(goal);
       if (els.goalAmount) els.goalAmount.textContent = formatMoney(g);
-      if (els.appFooter) els.appFooter.textContent = '© bản quyền thuộc về TranDinhHung';
+      if (els.appFooter) {
+        els.appFooter.innerHTML = COPYRIGHT_TEXT + '<br><span class="app-build-inline">' + APP_VERSION_LABEL + '</span>';
+      }
+      const buildEl = document.getElementById('app-build');
+      if (buildEl) buildEl.textContent = 'v' + APP_VERSION;
     }
 
     function normalizeDay(day) {
@@ -4870,6 +4912,16 @@
       try {
         await reg.update();
       } catch { /* ignore */ }
+      try {
+        if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        if (reg.installing) {
+          reg.installing.addEventListener('statechange', () => {
+            if (reg.waiting) {
+              try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch { /* ignore */ }
+            }
+          });
+        }
+      } catch { /* ignore */ }
       await navigator.serviceWorker.ready;
       if (navigator.serviceWorker.controller) return reg;
       // iOS PWA lần đầu: SW đã active nhưng chưa control trang → chờ claim
@@ -4885,7 +4937,6 @@
           clearTimeout(timer);
           finish();
         }, { once: true });
-        // Ép activate lại nếu cần
         if (reg.waiting) {
           try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch { /* ignore */ }
         }
@@ -4896,7 +4947,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=11', {
+        const reg = await navigator.serviceWorker.register('/sw.js?v=12', {
           scope: '/',
           updateViaCache: 'none',
         });
@@ -5088,7 +5139,7 @@
       refreshPushStatusHint();
     }
 
-    // Báo service worker: đang trong app hay đã ra ngoài — để không bắn OS notify khi đang dùng
+    // Báo service worker + Cache: đang trong app hay đã ra ngoài (iOS tin cậy hơn postMessage)
     let appForegroundHeartbeat = 0;
 
     function postToServiceWorker(message) {
@@ -5105,8 +5156,38 @@
       }).catch(() => {});
     }
 
+    async function writeForegroundCache(active) {
+      if (!('caches' in window)) return;
+      try {
+        const cache = await caches.open(FOREGROUND_CACHE);
+        if (active) {
+          await cache.put(
+            FOREGROUND_URL,
+            new Response(String(Date.now()), {
+              headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' },
+            })
+          );
+        } else {
+          await cache.delete(FOREGROUND_URL);
+        }
+      } catch { /* ignore */ }
+    }
+
     function setAppForegroundState(active) {
       postToServiceWorker({ type: active ? 'APP_FOREGROUND' : 'APP_BACKGROUND' });
+      writeForegroundCache(!!active);
+    }
+
+    async function dismissSystemNotifications() {
+      if (!('serviceWorker' in navigator)) return;
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if (!reg || typeof reg.getNotifications !== 'function') return;
+        const notes = await reg.getNotifications();
+        notes.forEach((n) => {
+          try { n.close(); } catch { /* ignore */ }
+        });
+      } catch { /* ignore */ }
     }
 
     function startAppForegroundHeartbeat() {
@@ -5115,16 +5196,21 @@
       appForegroundHeartbeat = window.setInterval(() => {
         if (document.visibilityState === 'visible') {
           postToServiceWorker({ type: 'APP_HEARTBEAT' });
+          writeForegroundCache(true);
         }
-      }, 8000);
+      }, 4000);
     }
 
     document.addEventListener('visibilitychange', () => {
-      setAppForegroundState(document.visibilityState === 'visible');
+      const visible = document.visibilityState === 'visible';
+      setAppForegroundState(visible);
+      if (visible) dismissSystemNotifications();
     });
-    window.addEventListener('focus', () => setAppForegroundState(true));
+    window.addEventListener('focus', () => {
+      setAppForegroundState(true);
+      dismissSystemNotifications();
+    });
     window.addEventListener('blur', () => {
-      // blur chưa chắc đã ra ngoài (bàn phím iOS) — chỉ đánh dấu nền khi tab hidden
       if (document.visibilityState !== 'visible') setAppForegroundState(false);
     });
     window.addEventListener('pagehide', () => setAppForegroundState(false));
@@ -5149,14 +5235,15 @@
         }
         if (data.type === 'PUSH_NOTIFY' && isLoggedIn) {
           const payload = data.payload || {};
-          // Trong app: chỉ banner nội bộ + cập nhật chat — không tạo Notification hệ thống
-          if (!document.hidden && isDeviceNotifyEnabled()) {
-            showAppNotifyBanner(payload.title || 'Mục tiêu chạy xe', payload.body || '');
+          // Trong app: banner nội bộ + chat — đóng luôn OS notify nếu lỡ hiện
+          if (!document.hidden) {
+            dismissSystemNotifications();
+            if (isDeviceNotifyEnabled()) {
+              showAppNotifyBanner(payload.title || 'Mục tiêu chạy xe', payload.body || '');
+            }
           }
           if (payload.type === 'chat' || payload.page === 'chat' || payload.messageId) {
             syncChatAfterPush(payload);
-          } else if (payload.type === 'money' || payload.page === 'home') {
-            checkForUpdates();
           } else {
             checkForUpdates();
           }
@@ -6159,6 +6246,14 @@
     startLiveClock();
     setupStandaloneAppMode();
     setupEdgeRubberBand();
+    // Hiện phiên bản ngay khi mở (kể cả màn đăng nhập)
+    try {
+      const buildEl = document.getElementById('app-build');
+      if (buildEl) buildEl.textContent = 'v' + APP_VERSION;
+      if (els.appFooter) {
+        els.appFooter.innerHTML = COPYRIGHT_TEXT + '<br><span class="app-build-inline">' + APP_VERSION_LABEL + '</span>';
+      }
+    } catch { /* ignore */ }
     initApp();
   </script>
 </body>

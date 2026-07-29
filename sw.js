@@ -1,9 +1,11 @@
-/* Service worker v11: Push hệ thống chỉ khi app ở nền / đã tắt */
-const SW_VERSION = 'muctieu-sw-v11';
+/* Service worker v12: Push hệ thống chỉ khi app ở nền/tắt — dùng Cache flag (iOS) */
+const SW_VERSION = 'muctieu-sw-v12';
+const FOREGROUND_CACHE = 'muctieu-runtime-v1';
+const FOREGROUND_URL = '/__muctieu_foreground';
+const FOREGROUND_TTL_MS = 25000;
 
-/** clientId → last foreground ping (ms) */
+/** clientId → last ping (bổ sung cho Cache) */
 const foregroundClients = new Map();
-const FOREGROUND_TTL_MS = 20000;
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -19,18 +21,20 @@ self.addEventListener('message', (event) => {
     return;
   }
 
-  if (data.type === 'APP_FOREGROUND' && clientId) {
-    foregroundClients.set(clientId, Date.now());
+  if (data.type === 'APP_FOREGROUND' || data.type === 'APP_HEARTBEAT') {
+    if (clientId) foregroundClients.set(clientId, Date.now());
+    event.waitUntil(writeForegroundFlag(true));
     return;
   }
 
-  if (data.type === 'APP_BACKGROUND' && clientId) {
-    foregroundClients.delete(clientId);
-    return;
-  }
-
-  if (data.type === 'APP_HEARTBEAT' && clientId) {
-    foregroundClients.set(clientId, Date.now());
+  if (data.type === 'APP_BACKGROUND') {
+    if (clientId) foregroundClients.delete(clientId);
+    event.waitUntil((async () => {
+      // Chỉ xóa flag nếu không còn client nào đang foreground
+      pruneForegroundMap();
+      const still = await hasLiveForegroundClient();
+      if (!still) await writeForegroundFlag(false);
+    })());
   }
 });
 
@@ -84,25 +88,52 @@ function pruneForegroundMap() {
   });
 }
 
-async function isAppInForeground() {
+async function writeForegroundFlag(active) {
+  try {
+    const cache = await caches.open(FOREGROUND_CACHE);
+    if (active) {
+      await cache.put(
+        FOREGROUND_URL,
+        new Response(String(Date.now()), {
+          headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' },
+        })
+      );
+    } else {
+      await cache.delete(FOREGROUND_URL);
+    }
+  } catch { /* ignore */ }
+}
+
+async function readForegroundFlag() {
+  try {
+    const cache = await caches.open(FOREGROUND_CACHE);
+    const res = await cache.match(FOREGROUND_URL);
+    if (!res) return false;
+    const ts = Number(await res.text());
+    if (!Number.isFinite(ts)) return false;
+    return Date.now() - ts <= FOREGROUND_TTL_MS;
+  } catch {
+    return false;
+  }
+}
+
+async function hasLiveForegroundClient() {
   pruneForegroundMap();
   try {
     const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    // Không còn cửa sổ nào → app đã tắt
-    if (!allClients.length) return false;
-
     for (const client of allClients) {
       if (!client) continue;
-      // Tab/app đang hiện hoặc đang focus
       if (client.visibilityState === 'visible' || client.focused) return true;
-      // Client vừa báo đang dùng app (heartbeat) — tin cậy hơn trên iOS
       const ping = foregroundClients.get(client.id);
       if (ping && Date.now() - ping <= FOREGROUND_TTL_MS) return true;
     }
   } catch { /* ignore */ }
-
-  // Heartbeat còn sống dù matchAll lỗi
   return foregroundClients.size > 0;
+}
+
+async function isAppInForeground() {
+  if (await readForegroundFlag()) return true;
+  return hasLiveForegroundClient();
 }
 
 async function notifyClients(payload) {
@@ -116,14 +147,27 @@ async function notifyClients(payload) {
   } catch { /* ignore */ }
 }
 
+async function clearNotificationsWithTag(tag) {
+  try {
+    const list = await self.registration.getNotifications(tag ? { tag } : {});
+    list.forEach((n) => {
+      try { n.close(); } catch { /* ignore */ }
+    });
+  } catch { /* ignore */ }
+}
+
 async function showPushNotification(data) {
   const payload = buildPushPayload(data);
 
-  // Luôn đồng bộ khung chat trong app (nếu còn sống)
+  // Đồng bộ khung chat nếu app còn sống
   await notifyClients(payload);
 
   // Đang trong app → KHÔNG hiện thông báo đẩy lên máy
-  if (await isAppInForeground()) return;
+  if (await isAppInForeground()) {
+    // Phòng trường hợp OS đã queue sẵn — đóng tag này nếu có
+    await clearNotificationsWithTag(payload.tag);
+    return;
+  }
 
   // Ngoài màn hình chính / đã vuốt tắt → hiện 1 thông báo hệ thống
   await self.registration.showNotification(payload.title, {
@@ -160,8 +204,7 @@ self.addEventListener('push', (event) => {
 
     try {
       await showPushNotification(data);
-    } catch (err) {
-      // Chỉ fallback OS khi chắc chắn không đang trong app
+    } catch {
       try {
         if (!(await isAppInForeground())) {
           await self.registration.showNotification('Mục tiêu chạy xe', {
@@ -171,9 +214,7 @@ self.addEventListener('push', (event) => {
             silent: false,
           });
         }
-      } catch {
-        /* ignore */
-      }
+      } catch { /* ignore */ }
     }
   })());
 });
@@ -196,9 +237,7 @@ self.addEventListener('pushsubscriptionchange', (event) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subscription: sub.toJSON() }),
       });
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
   })());
 });
 
