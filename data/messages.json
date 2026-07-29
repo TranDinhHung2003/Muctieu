@@ -157,13 +157,13 @@
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T14:23:44.564Z",
       "status": "read",
+      "deliveredAt": "2026-07-29T14:23:44.837Z",
+      "readAt": "2026-07-29T14:23:45.120Z",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms66dhnsnumqj",
-      "deliveredAt": "2026-07-29T14:23:44.837Z",
-      "readAt": "2026-07-29T14:23:45.120Z"
+      "callId": "cms66dhnsnumqj"
     },
     {
       "id": "ms66dq7fzjsi21",
@@ -171,18 +171,19 @@
       "role": "viewer",
       "text": "Cuộc gọi thoại · Đã từ chối",
       "at": "2026-07-29T14:23:50.763Z",
-      "status": "delivered",
+      "status": "read",
+      "deliveredAt": "2026-07-29T14:23:51.779Z",
+      "readAt": "2026-07-29T14:24:16.066Z",
       "kind": "call",
       "callEvent": "rejected",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms66dhnsnumqj",
-      "deliveredAt": "2026-07-29T14:23:51.779Z"
+      "callId": "cms66dhnsnumqj"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:23:51.779Z"
+  "updatedAt": "2026-07-29T14:24:16.066Z"
 }
