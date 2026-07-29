@@ -146,11 +146,12 @@
       "role": "admin",
       "text": "Mẹ cá vào lưu biệt danh đi",
       "at": "2026-07-29T12:31:48.171Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T12:31:51.902Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬"
   },
-  "updatedAt": "2026-07-29T12:31:48.171Z"
+  "updatedAt": "2026-07-29T12:31:51.902Z"
 }
