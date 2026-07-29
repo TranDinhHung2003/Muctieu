@@ -26,20 +26,20 @@
         "updatedAt": "2026-07-29T13:57:49.296Z"
       },
       {
-        "endpoint": "https://web.push.apple.com/QExVxIgA36s-SBFN8LmJWnJGX7Z8zwi0_lX5gSb4zuotRZN0fcsSvGap0rXqdvkv4V-wRqq_t6LhA-ftE6_djOgec1COJftbnC0onY3fWfLcF9mCtEJola0P6phvWOxfKgAZLsPpqbkq3K-L-s1nMdwsgtXdAl8QZVNWpY9lr6Q",
-        "keys": {
-          "p256dh": "BBbZxKvT1ZVnUnDVLtc5nKWqK9QGWuaBom_QrgRW7zRsbXWpuneRnozM9BXUeXwsha0oBKMuUDCrfQfAitSMZEw",
-          "auth": "_5Xdtan3d_TPBugW46vNfw"
-        },
-        "updatedAt": "2026-07-29T15:31:50.818Z"
-      },
-      {
         "endpoint": "https://fcm.googleapis.com/fcm/send/cbsO9JUTTPE:APA91bHdquIsf0hRsWY6zDUEesia8QYm_znzmrFZ9V-3txnQcvXvgSWE08nbC29laTA4ivyFaxiD1lfN8meqUMEIG5O0-gspH1CfUGcI4pfJhRcjL3c3deoLIIJ79sht3ofsVkL_HaC9",
         "keys": {
           "p256dh": "BPises0m5QWqdUXc-crlK8Qu0xEf8TXDeswLzX34Xb1r9SOgiDP-kCAX8vZ3eSrrXGxRkhlXv8yo0-hyuBaSEBI",
           "auth": "uUNw4bSIhfPT5XtwIT3lQw"
         },
         "updatedAt": "2026-07-29T15:35:19.906Z"
+      },
+      {
+        "endpoint": "https://web.push.apple.com/QExVxIgA36s-SBFN8LmJWnJGX7Z8zwi0_lX5gSb4zuotRZN0fcsSvGap0rXqdvkv4V-wRqq_t6LhA-ftE6_djOgec1COJftbnC0onY3fWfLcF9mCtEJola0P6phvWOxfKgAZLsPpqbkq3K-L-s1nMdwsgtXdAl8QZVNWpY9lr6Q",
+        "keys": {
+          "p256dh": "BBbZxKvT1ZVnUnDVLtc5nKWqK9QGWuaBom_QrgRW7zRsbXWpuneRnozM9BXUeXwsha0oBKMuUDCrfQfAitSMZEw",
+          "auth": "_5Xdtan3d_TPBugW46vNfw"
+        },
+        "updatedAt": "2026-07-29T15:41:46.555Z"
       }
     ],
     "theodoi": [
@@ -93,5 +93,5 @@
       }
     ]
   },
-  "updatedAt": "2026-07-29T15:35:19.906Z"
+  "updatedAt": "2026-07-29T15:41:46.555Z"
 }
