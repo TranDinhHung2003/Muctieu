@@ -201,12 +201,13 @@
       "role": "admin",
       "text": "9",
       "at": "2026-07-29T14:36:14.308Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T14:36:15.463Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:36:14.308Z"
+  "updatedAt": "2026-07-29T14:36:15.463Z"
 }
