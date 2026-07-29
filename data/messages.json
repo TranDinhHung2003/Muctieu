@@ -96,8 +96,9 @@
       "role": "admin",
       "text": "8",
       "at": "2026-07-29T12:17:00.300Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T12:17:02.181Z"
     }
   ],
-  "updatedAt": "2026-07-29T12:17:00.300Z"
+  "updatedAt": "2026-07-29T12:17:02.181Z"
 }
