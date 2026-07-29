@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms61fdbw302cxf",
-      "from": "admin",
-      "role": "admin",
-      "text": "Y",
-      "at": "2026-07-29T12:05:09.308Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T12:05:11.151Z",
-      "readAt": "2026-07-29T12:05:11.741Z"
-    },
-    {
       "id": "ms61fjh34xtndz",
       "from": "admin",
       "role": "admin",
@@ -134,5 +124,5 @@
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬"
   },
-  "updatedAt": "2026-07-29T12:34:20.782Z"
+  "updatedAt": "2026-07-29T12:35:10.517Z"
 }
