@@ -1,6 +1,15 @@
 {
   "users": {
-    "admin": [],
+    "admin": [
+      {
+        "endpoint": "https://web.push.apple.com/QFWhCuBInVcNJNxbjeypJp8-D9VuB0B9QrFoJ3pJnF9mmLSQUAsLq9VwmmjcfgBFUxNH0fcySJbSwUdi8JLif65VnAO70Kk_icMVTPPQ0T5iv2kTB9uLJc5dz8MCDrjTu3pq49sKdtlXaBAbuudQ7kf6da8iQInyqUQ6MYzoAEg",
+        "keys": {
+          "p256dh": "BKNFM9R3H2jRtWUYk1BtdWPeyFWmFvQmcQcD8K9h_Cxe6DtOhlLDZvx_ztHaBxDA0nSTzdByW2Jb4aSb41uiN8w",
+          "auth": "Q-7LjHCF6DE250_QuLRp4g"
+        },
+        "updatedAt": "2026-07-29T08:18:35.567Z"
+      }
+    ],
     "theodoi": [
       {
         "endpoint": "https://web.push.apple.com/QOwDdtWE16RZVXYBr3LHiMxoNE6S7P2beHEA0MhFoYcoJ_O8m4xJDhqa7IpQsuPWJCioTQu_nfa_eAhfcRwHXeuFql-9OjLU4WIuj6OfPK-8BxzanDwSZhVL9hu4CXb4kl7cQ461Z8HGCRNLDTKijpFsePb5sR3yQNMgdsQgpr0",
@@ -8,9 +17,9 @@
           "p256dh": "BFc9h2ZPTGf4DWLHGSI_LTLTyBslUiaW2KpdSbnHcwz8zvcJjhQ8Ut_hxyqKVXWKSEmxrxa-EuYg_VkP9AZeBhA",
           "auth": "FbtenqL43You3p6NKjhZrg"
         },
-        "updatedAt": "2026-07-29T08:07:44.067Z"
+        "updatedAt": "2026-07-29T08:18:53.779Z"
       }
     ]
   },
-  "updatedAt": "2026-07-29T08:18:34.874Z"
+  "updatedAt": "2026-07-29T08:18:53.779Z"
 }
