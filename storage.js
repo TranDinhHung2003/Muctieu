@@ -214,7 +214,7 @@ function normalizeCallFields(m) {
 }
 
 function emptyMessagesStore() {
-  return { messages: [], nicknames: {}, updatedAt: nowIso() };
+  return { messages: [], nicknames: {}, receipts: {}, updatedAt: nowIso() };
 }
 
 function normalizeNicknamesMap(raw) {
@@ -231,6 +231,120 @@ function normalizeNicknamesMap(raw) {
     if (val) out[username] = val;
   });
   return out;
+}
+
+function normalizeReceiptsMap(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  Object.keys(raw).forEach((key) => {
+    const username = String(key || '').trim().slice(0, 32);
+    if (!username) return;
+    const row = raw[key] || {};
+    const lastDeliveredAt = row.lastDeliveredAt && !Number.isNaN(new Date(row.lastDeliveredAt).getTime())
+      ? new Date(row.lastDeliveredAt).toISOString()
+      : undefined;
+    const lastReadAt = row.lastReadAt && !Number.isNaN(new Date(row.lastReadAt).getTime())
+      ? new Date(row.lastReadAt).toISOString()
+      : undefined;
+    if (lastDeliveredAt || lastReadAt) {
+      out[username] = {};
+      if (lastDeliveredAt) out[username].lastDeliveredAt = lastDeliveredAt;
+      if (lastReadAt) out[username].lastReadAt = lastReadAt;
+    }
+  });
+  return out;
+}
+
+function listKnownUsernames(store) {
+  const users = new Set();
+  Object.keys((store && store.nicknames) || {}).forEach((u) => users.add(u));
+  Object.keys((store && store.receipts) || {}).forEach((u) => users.add(u));
+  ((store && store.messages) || []).forEach((m) => {
+    if (m && m.from) users.add(String(m.from));
+  });
+  return users;
+}
+
+function findPeerUsername(store, viewerUsername) {
+  const viewer = String(viewerUsername || '');
+  if (viewer === 'admin') return 'theodoi';
+  if (viewer === 'theodoi') return 'admin';
+  const users = listKnownUsernames(store);
+  users.delete(viewer);
+  if (users.has('theodoi')) return 'theodoi';
+  if (users.has('admin')) return 'admin';
+  const first = Array.from(users)[0];
+  return first || '';
+}
+
+function ensureReceipts(store) {
+  if (!store.receipts || typeof store.receipts !== 'object' || Array.isArray(store.receipts)) {
+    store.receipts = {};
+  }
+  return store.receipts;
+}
+
+function bumpReceipt(store, username, field, atIso) {
+  const user = String(username || '').trim();
+  if (!user || (field !== 'lastDeliveredAt' && field !== 'lastReadAt')) return false;
+  const receipts = ensureReceipts(store);
+  const atMs = new Date(atIso || nowIso()).getTime();
+  if (!Number.isFinite(atMs)) return false;
+  const cur = Object.assign({}, receipts[user] || {});
+  let changed = false;
+  const prevField = cur[field] ? new Date(cur[field]).getTime() : 0;
+  if (!prevField || atMs > prevField) {
+    cur[field] = new Date(atMs).toISOString();
+    changed = true;
+  }
+  if (field === 'lastReadAt' && cur.lastReadAt) {
+    const readMs = new Date(cur.lastReadAt).getTime();
+    const dPrev = cur.lastDeliveredAt ? new Date(cur.lastDeliveredAt).getTime() : 0;
+    if (Number.isFinite(readMs) && readMs >= dPrev) {
+      if (!cur.lastDeliveredAt || readMs > dPrev) {
+        cur.lastDeliveredAt = cur.lastReadAt;
+        changed = true;
+      }
+    }
+  }
+  if (!changed) return false;
+  receipts[user] = cur;
+  store.receipts = receipts;
+  return true;
+}
+
+function statusForOutgoing(messageAt, peerReceipt) {
+  const at = new Date(messageAt).getTime();
+  if (!Number.isFinite(at)) return 'sent';
+  const readAt = peerReceipt && peerReceipt.lastReadAt
+    ? new Date(peerReceipt.lastReadAt).getTime()
+    : 0;
+  const delAt = peerReceipt && peerReceipt.lastDeliveredAt
+    ? new Date(peerReceipt.lastDeliveredAt).getTime()
+    : 0;
+  if (Number.isFinite(readAt) && readAt >= at) return 'read';
+  if (Number.isFinite(delAt) && delAt >= at) return 'delivered';
+  return 'sent';
+}
+
+/** Migrate status cũ trên từng tin → receipts theo từng tài khoản */
+function seedReceiptsFromLegacyStatuses(store) {
+  const receipts = ensureReceipts(store);
+  let changed = false;
+  for (const m of store.messages || []) {
+    if (!m || !m.from || !m.at) continue;
+    if (m.status !== 'delivered' && m.status !== 'read') continue;
+    const peer = findPeerUsername(store, m.from);
+    if (!peer) continue;
+    if (m.status === 'delivered' || m.status === 'read') {
+      if (bumpReceipt(store, peer, 'lastDeliveredAt', m.deliveredAt || m.at)) changed = true;
+    }
+    if (m.status === 'read') {
+      if (bumpReceipt(store, peer, 'lastReadAt', m.readAt || m.at)) changed = true;
+    }
+  }
+  store.receipts = receipts;
+  return changed;
 }
 
 function isFreshMessage(m, now = Date.now()) {
@@ -453,11 +567,14 @@ function normalizeMessagesStore(raw) {
     if (ta !== tb) return ta - tb;
     return String(a.id).localeCompare(String(b.id));
   });
-  return {
+  const store = {
     messages: kept.slice(-MAX_MESSAGES),
     nicknames: normalizeNicknamesMap(raw.nicknames),
+    receipts: normalizeReceiptsMap(raw.receipts),
     updatedAt: raw.updatedAt || nowIso(),
   };
+  seedReceiptsFromLegacyStatuses(store);
+  return store;
 }
 
 function normalizeMessageStatus(status) {
@@ -519,11 +636,38 @@ function publicMessage(m) {
   return out;
 }
 
-function publicMessagesStore(store) {
+function publicMessagesForViewer(store, viewerUsername) {
+  const s = store || getMessagesStore();
+  const viewer = String(viewerUsername || '');
+  const receipts = normalizeReceiptsMap(s.receipts);
+  const peer = findPeerUsername(s, viewer);
+  const peerReceipt = (peer && receipts[peer]) || {};
+  const messages = (s.messages || []).map((m) => {
+    const pub = publicMessage(m);
+    if (!pub) return pub;
+    if (pub.from === viewer) {
+      return Object.assign({}, pub, {
+        status: statusForOutgoing(pub.at, peerReceipt),
+      });
+    }
+    // Tin đến: không hiện trạng thái gửi của mình
+    return Object.assign({}, pub, { status: 'sent' });
+  });
+  return {
+    messages,
+    nicknames: s.nicknames || {},
+    receipts,
+    updatedAt: s.updatedAt,
+  };
+}
+
+function publicMessagesStore(store, viewerUsername) {
+  if (viewerUsername) return publicMessagesForViewer(store, viewerUsername);
   const s = store || getMessagesStore();
   return {
     messages: (s.messages || []).map(publicMessage),
     nicknames: s.nicknames || {},
+    receipts: normalizeReceiptsMap(s.receipts),
     updatedAt: s.updatedAt,
   };
 }
@@ -723,74 +867,50 @@ async function addMessage({ from, role, text, imageDataUrl, kind, callEvent, cal
   return { message: publicMessage, updatedAt: store.updatedAt };
 }
 
-function markMessageDeliveredById(messageId) {
+function markMessageDeliveredById(messageId, recipientUsername) {
   const id = String(messageId || '').trim();
   if (!id) return getMessagesStore();
   const store = getMessagesStore();
-  let changed = false;
+  const msg = (store.messages || []).find((m) => m && m.id === id);
+  if (!msg) return store;
+  const recipient = String(recipientUsername || '').trim() || findPeerUsername(store, msg.from);
+  if (!recipient || recipient === msg.from) return store;
   const now = nowIso();
-  store.messages = (store.messages || []).map((m) => {
-    if (!m || m.id !== id) return m;
-    if (m.status === 'delivered' || m.status === 'read') return m;
-    changed = true;
-    return Object.assign({}, m, {
-      status: 'delivered',
-      deliveredAt: m.deliveredAt || now,
-    });
-  });
-  if (changed) {
-    store.updatedAt = now;
-    memoryMessages = store;
-    saveMessagesToDisk(store);
-    saveMessagesToGitHub(store).catch(() => {});
-  }
+  if (!bumpReceipt(store, recipient, 'lastDeliveredAt', now)) return store;
+  store.updatedAt = now;
+  memoryMessages = store;
+  saveMessagesToDisk(store);
+  saveMessagesToGitHub(store).catch(() => {});
   return store;
 }
 
+/** viewerUsername = tài khoản ĐÃ NHẬN tin trên máy */
 function markMessagesDelivered(viewerUsername) {
   const store = getMessagesStore();
-  const user = String(viewerUsername || '');
-  let changed = false;
+  const user = String(viewerUsername || '').trim();
+  if (!user) return store;
   const now = nowIso();
-  store.messages = (store.messages || []).map((m) => {
-    if (!m || m.from === user) return m;
-    if (m.status === 'delivered' || m.status === 'read') return m;
-    changed = true;
-    return Object.assign({}, m, {
-      status: 'delivered',
-      deliveredAt: m.deliveredAt || now,
-    });
-  });
-  if (changed) {
-    store.updatedAt = now;
-    memoryMessages = store;
-    saveMessagesToDisk(store);
-    saveMessagesToGitHub(store).catch(() => {});
-  }
+  if (!bumpReceipt(store, user, 'lastDeliveredAt', now)) return store;
+  store.updatedAt = now;
+  memoryMessages = store;
+  saveMessagesToDisk(store);
+  saveMessagesToGitHub(store).catch(() => {});
   return store;
 }
 
+/** viewerUsername = tài khoản ĐANG MỞ mục tin nhắn để đọc */
 function markMessagesRead(viewerUsername) {
   const store = getMessagesStore();
-  const user = String(viewerUsername || '');
-  let changed = false;
+  const user = String(viewerUsername || '').trim();
+  if (!user) return store;
   const now = nowIso();
-  store.messages = (store.messages || []).map((m) => {
-    if (!m || m.from === user) return m;
-    if (m.status === 'read') return m;
-    changed = true;
-    return Object.assign({}, m, {
-      status: 'read',
-      deliveredAt: m.deliveredAt || now,
-      readAt: now,
-    });
-  });
-  if (changed) {
-    store.updatedAt = now;
-    memoryMessages = store;
-    saveMessagesToDisk(store);
-    saveMessagesToGitHub(store).catch(() => {});
-  }
+  const changedDelivered = bumpReceipt(store, user, 'lastDeliveredAt', now);
+  const changedRead = bumpReceipt(store, user, 'lastReadAt', now);
+  if (!changedDelivered && !changedRead) return store;
+  store.updatedAt = now;
+  memoryMessages = store;
+  saveMessagesToDisk(store);
+  saveMessagesToGitHub(store).catch(() => {});
   return store;
 }
 
@@ -817,5 +937,6 @@ module.exports = {
   readChatImage,
   resolveChatImage,
   publicMessagesStore,
+  publicMessagesForViewer,
   publicMessage,
 };
