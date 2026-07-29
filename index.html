@@ -41,8 +41,6 @@
 
     html {
       height: 100%;
-      height: 100dvh;
-      height: -webkit-fill-available;
       overflow: hidden;
       scrollbar-width: none;
       -ms-overflow-style: none;
@@ -70,23 +68,17 @@
       background: var(--bg);
       color: var(--text);
       height: 100%;
-      height: 100dvh;
-      height: -webkit-fill-available;
       overflow: hidden;
       line-height: 1.5;
     }
 
-    /* Vùng cuộn full-screen — phủ hết màn (kể cả safe-area iPhone) */
+    /* Vùng cuộn full-screen — dùng --app-height (iOS visualViewport) */
     .app-scroll-clip {
       position: fixed;
       top: 0;
-      right: 0;
-      bottom: 0;
       left: 0;
       width: 100%;
-      height: 100%;
-      height: 100dvh;
-      max-height: -webkit-fill-available;
+      height: var(--app-height, 100dvh);
       z-index: 1;
       overflow: hidden;
       background: var(--bg);
@@ -95,22 +87,18 @@
     .app-scroll {
       position: absolute;
       top: 0;
-      right: 0;
-      bottom: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      max-height: -webkit-fill-available;
       overflow-x: hidden;
-      overflow-y: scroll;
+      overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: contain;
+      overscroll-behavior-y: auto;
       overscroll-behavior-x: none;
+      touch-action: pan-y;
       scrollbar-width: none;
       -ms-overflow-style: none;
       box-sizing: border-box;
-      /* Chừa đáy home indicator để cuộn thấy hết nội dung */
-      padding-bottom: max(28px, var(--sab));
     }
 
     .app-scroll::-webkit-scrollbar {
@@ -132,7 +120,6 @@
     html.standalone-app,
     html.standalone-app body {
       background: var(--bg);
-      touch-action: pan-x pan-y;
     }
 
     html.standalone-app body {
@@ -140,23 +127,31 @@
       overflow: hidden;
     }
 
+    html.standalone-app .app-scroll {
+      touch-action: pan-y;
+    }
+
     html.is-browser body {
       touch-action: auto;
     }
 
     .container {
-      will-change: transform;
       max-width: 480px;
       width: 100%;
       margin: 0 auto;
-      padding: 16px 16px 40px;
       padding-top: max(16px, calc(var(--sat) + 10px));
       padding-left: max(16px, var(--sal));
       padding-right: max(16px, var(--sar));
-      /* Đủ chỗ cuộn tới hết footer + home indicator iPhone */
-      padding-bottom: max(120px, calc(var(--sab) + 96px));
+      /* Đáy đủ dài để cuộn thấy hết form + bản quyền trên iPhone */
+      padding-bottom: calc(var(--sab) + 160px);
       box-sizing: border-box;
-      min-height: 100%;
+    }
+
+    .scroll-end-spacer {
+      width: 100%;
+      height: 48px;
+      flex-shrink: 0;
+      pointer-events: none;
     }
 
     * {
@@ -2980,7 +2975,8 @@
       <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
-    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.5.0</span></footer>
+    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.5.1</span></footer>
+    <div class="scroll-end-spacer" aria-hidden="true"></div>
     </div>
   </div>
   </div>
@@ -3096,7 +3092,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.5.0';
+    const APP_VERSION = '1.5.1';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -6097,108 +6093,31 @@
     }
 
     function setupEdgeRubberBand() {
-      const scroller = document.getElementById('app-scroll');
-      const target = document.querySelector('.container');
-      if (!scroller || !target) return;
+      // Tắt kéo cao su — trên iPhone dễ làm kẹt cuộn / cắt đáy màn hình
+      return;
+    }
 
-      let startY = 0;
-      let lastY = 0;
-      let lastT = 0;
-      let velocity = 0;
-      let offset = 0;
-      let pulling = false;
-      let raf = 0;
-      const MAX = 96;
-
-      const resist = (dy) => {
-        const sign = dy < 0 ? -1 : 1;
-        const d = Math.abs(dy);
-        // Càng kéo càng nặng — cảm giác cao su mượt
-        return sign * Math.min(MAX, (d * 0.42) / (1 + d / 220));
-      };
-
-      const apply = (y) => {
-        offset = y;
-        target.style.transform = y ? 'translate3d(0,' + y.toFixed(2) + 'px,0)' : '';
-      };
-
-      const springBack = () => {
-        if (raf) cancelAnimationFrame(raf);
-        if (!offset) return;
-        const from = offset;
-        const start = performance.now();
-        // Thêm quán tính nhẹ theo hướng kéo rồi về 0
-        const kick = Math.max(-18, Math.min(18, velocity * 12));
-        const peak = from + kick * 0.35;
-        const dur = 480;
-
-        const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-
-        const frame = (now) => {
-          const t = Math.min(1, (now - start) / dur);
-          let y;
-          if (t < 0.18) {
-            // nhún nhẹ theo quán tính
-            const u = easeOutCubic(t / 0.18);
-            y = from + (peak - from) * u;
-          } else {
-            const u = easeOutCubic((t - 0.18) / 0.82);
-            y = peak * (1 - u);
-          }
-          apply(Math.abs(y) < 0.4 ? 0 : y);
-          if (t < 1) raf = requestAnimationFrame(frame);
-          else {
-            apply(0);
-            raf = 0;
-          }
-        };
-        raf = requestAnimationFrame(frame);
-      };
-
-      scroller.addEventListener('touchstart', (e) => {
-        if (e.touches.length !== 1) return;
-        if (document.body.classList.contains('chat-mode')) return;
-        if (document.body.classList.contains('drawer-open')) return;
-        if (document.querySelector('.modal-overlay.show')) return;
-        if (raf) {
-          cancelAnimationFrame(raf);
-          raf = 0;
+    function syncAppViewportHeight() {
+      try {
+        const vv = window.visualViewport;
+        const h = Math.round((vv && vv.height) || window.innerHeight || document.documentElement.clientHeight || 0);
+        if (h > 0) {
+          document.documentElement.style.setProperty('--app-height', h + 'px');
         }
-        startY = lastY = e.touches[0].clientY;
-        lastT = performance.now();
-        velocity = 0;
-        pulling = true;
+      } catch { /* ignore */ }
+    }
+
+    function setupAppViewportHeight() {
+      syncAppViewportHeight();
+      window.addEventListener('resize', syncAppViewportHeight, { passive: true });
+      window.addEventListener('orientationchange', () => {
+        window.setTimeout(syncAppViewportHeight, 80);
+        window.setTimeout(syncAppViewportHeight, 320);
       }, { passive: true });
-
-      scroller.addEventListener('touchmove', (e) => {
-        if (!pulling || e.touches.length !== 1) return;
-        const y = e.touches[0].clientY;
-        const now = performance.now();
-        const dt = Math.max(8, now - lastT);
-        velocity = (y - lastY) / dt;
-        lastY = y;
-        lastT = now;
-
-        const dy = y - startY;
-        const top = scroller.scrollTop;
-        const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
-        let next = 0;
-        if (top <= 0 && dy > 0) next = resist(dy);
-        else if (top >= maxScroll - 1 && dy < 0) next = resist(dy);
-        else {
-          if (offset) apply(0);
-          return;
-        }
-        apply(next);
-      }, { passive: true });
-
-      const endPull = () => {
-        if (!pulling) return;
-        pulling = false;
-        springBack();
-      };
-      scroller.addEventListener('touchend', endPull, { passive: true });
-      scroller.addEventListener('touchcancel', endPull, { passive: true });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', syncAppViewportHeight, { passive: true });
+        window.visualViewport.addEventListener('scroll', syncAppViewportHeight, { passive: true });
+      }
     }
 
     function setupStandaloneAppMode() {
@@ -6237,6 +6156,7 @@
     }
 
     startLiveClock();
+    setupAppViewportHeight();
     setupStandaloneAppMode();
     setupEdgeRubberBand();
     // Hiện phiên bản ngay khi mở (kể cả màn đăng nhập)
