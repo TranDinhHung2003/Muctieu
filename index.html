@@ -3532,18 +3532,12 @@
         const deltaField = detectMoneyFieldDelta(beforeDay, afterDay);
         if (deltaField) {
           const moneyNotify = buildMoneyEntryNotify(deltaField.field, deltaField.value, totalNet);
-          showToast(moneyNotify.toast);
-          showDeviceNotify(moneyNotify.title, moneyNotify.body, {
-            tag: 'muctieu-money',
-            renotify: true,
-            data: { page: 'home' },
-          });
+          notifyMoneyInApp(moneyNotify);
         } else {
-          showToast('Có dữ liệu mới từ admin · Tổng đã chạy được: ' + formatMoney(totalNet));
-          showDeviceNotify('Cập nhật doanh thu', 'Tổng đã chạy được: ' + formatMoney(totalNet), {
-            tag: 'muctieu-money',
-            renotify: true,
-            data: { page: 'home' },
+          notifyMoneyInApp({
+            toast: 'Có dữ liệu mới từ admin · Tổng đã chạy được: ' + formatMoney(totalNet),
+            title: 'Cập nhật doanh thu',
+            body: 'Tổng đã chạy được: ' + formatMoney(totalNet),
           });
         }
       }
@@ -4557,13 +4551,16 @@
         if (notify && latest && latest.id !== prevLatest && latest.from !== currentUsername) {
           const preview = (latest.text && String(latest.text).trim())
             || (latest.imageId ? '[Ảnh]' : 'Tin nhắn mới');
-          if (!onChat) showToast('💬 Tin nhắn mới từ ' + displayNameFor(latest.from));
-          // Luôn đẩy lên thanh thông báo hệ thống cho đối phương
-          showDeviceNotify(
-            '💬 Tin nhắn mới',
-            displayNameFor(latest.from) + ': ' + preview.slice(0, 120),
-            { tag: 'muctieu-chat', renotify: true, data: { page: 'chat' } }
-          );
+          // Chỉ banner trong app (+ hệ thống) — không thêm toast giữa màn hình
+          if (isDeviceNotifyEnabled()) {
+            showDeviceNotify(
+              '💬 Tin nhắn mới',
+              displayNameFor(latest.from) + ': ' + preview.slice(0, 120),
+              { tag: 'muctieu-chat', renotify: true, data: { page: 'chat' } }
+            );
+          } else if (!onChat) {
+            showToast('💬 Tin nhắn mới từ ' + displayNameFor(latest.from));
+          }
         }
       } catch {
         // ignore
@@ -4636,7 +4633,7 @@
         { tag: 'muctieu-goal', renotify: true, data: { page: 'home' }, vibrate: [80, 40, 80, 40, 120] }
       );
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        showToast('🎉 Chúc mừng! Đã hoàn thành mục tiêu');
+        if (!isDeviceNotifyEnabled()) showToast('🎉 Chúc mừng! Đã hoàn thành mục tiêu');
         return;
       }
       const overlay = document.getElementById('celebrate-overlay');
@@ -4656,7 +4653,7 @@
         overlay.setAttribute('aria-hidden', 'false');
       }
       if (!celebrateRaf) celebrateRaf = requestAnimationFrame(drawCelebrateFrame);
-      showToast('🎉 Chúc mừng bạn đã hoàn thành mục tiêu!');
+      if (!isDeviceNotifyEnabled()) showToast('🎉 Chúc mừng bạn đã hoàn thành mục tiêu!');
     }
 
     function closeCelebrate() {
@@ -5155,12 +5152,20 @@
       document.getElementById('collapse-entries').classList.add('open');
       calculate();
       pulseResultCard();
-      showToast(moneyNotify.toast);
-      showDeviceNotify(moneyNotify.title, moneyNotify.body, {
-        tag: 'muctieu-money',
-        renotify: true,
-        data: { page: 'home' },
-      });
+      notifyMoneyInApp(moneyNotify);
+    }
+
+    function notifyMoneyInApp(moneyNotify) {
+      // Chỉ 1 thanh thông báo trong app (banner góc trái) — không chồng toast giữa màn
+      if (isDeviceNotifyEnabled()) {
+        showDeviceNotify(moneyNotify.title, moneyNotify.body, {
+          tag: 'muctieu-money',
+          renotify: true,
+          data: { page: 'home' },
+        });
+        return;
+      }
+      showToast(moneyNotify.toast || moneyNotify.title);
     }
 
     function buildMoneyEntryNotify(field, value, totalNet) {
