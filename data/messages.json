@@ -83,11 +83,19 @@
       "status": "read",
       "deliveredAt": "2026-07-29T15:17:20.175Z",
       "readAt": "2026-07-29T15:17:48.380Z"
+    },
+    {
+      "id": "ms68ba6me79lq8",
+      "from": "admin",
+      "role": "admin",
+      "text": "U",
+      "at": "2026-07-29T15:17:55.918Z",
+      "status": "sent"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:17:48.380Z"
+  "updatedAt": "2026-07-29T15:17:55.918Z"
 }
