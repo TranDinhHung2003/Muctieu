@@ -56,7 +56,9 @@
       "role": "admin",
       "text": "Bấm gửi",
       "at": "2026-07-29T10:48:58.653Z",
-      "status": "sent"
+      "status": "read",
+      "deliveredAt": "2026-07-29T10:49:02.074Z",
+      "readAt": "2026-07-29T10:49:02.074Z"
     },
     {
       "id": "ms5ypg5wgq5mga",
@@ -67,5 +69,5 @@
       "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T10:49:00.692Z"
+  "updatedAt": "2026-07-29T10:49:02.074Z"
 }
