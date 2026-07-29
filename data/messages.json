@@ -26,8 +26,9 @@
       "role": "viewer",
       "text": "U",
       "at": "2026-07-29T07:42:21.596Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T07:42:38.018Z"
     }
   ],
-  "updatedAt": "2026-07-29T07:42:21.596Z"
+  "updatedAt": "2026-07-29T07:42:38.018Z"
 }
