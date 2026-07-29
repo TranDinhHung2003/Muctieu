@@ -226,17 +226,19 @@
       "role": "viewer",
       "text": "Cuộc gọi thoại · Đã từ chối",
       "at": "2026-07-29T14:42:10.348Z",
-      "status": "sent",
+      "status": "read",
       "kind": "call",
       "callEvent": "rejected",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms6713jtss4ge"
+      "callId": "cms6713jtss4ge",
+      "deliveredAt": "2026-07-29T14:42:11.124Z",
+      "readAt": "2026-07-29T14:42:11.388Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:42:10.348Z"
+  "updatedAt": "2026-07-29T14:42:11.388Z"
 }
