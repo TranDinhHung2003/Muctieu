@@ -1,26 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5s1evwvl86r5",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "U",
-      "at": "2026-07-29T07:42:21.596Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T07:42:38.018Z",
-      "readAt": "2026-07-29T07:42:49.474Z"
-    },
-    {
-      "id": "ms5s234rea9wo0",
-      "from": "admin",
-      "role": "admin",
-      "text": "8",
-      "at": "2026-07-29T07:42:53.019Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T07:51:50.727Z",
-      "readAt": "2026-07-29T07:51:51.806Z"
-    },
-    {
       "id": "ms5sedlfjfdizv",
       "from": "admin",
       "role": "admin",
@@ -80,5 +60,5 @@
       "deliveredAt": "2026-07-29T08:10:14.144Z"
     }
   ],
-  "updatedAt": "2026-07-29T08:12:09.149Z"
+  "updatedAt": "2026-07-29T08:13:41.546Z"
 }
