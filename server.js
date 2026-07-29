@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const storage = require('./storage');
+const pushNotify = require('./push-notify');
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -252,6 +253,35 @@ app.post('/api/nickname', authMiddleware, (req, res) => {
   });
 });
 
+function getAllUsernames() {
+  const store = loadUsersStore();
+  return (store.users || []).map((u) => u && u.username).filter(Boolean);
+}
+
+function pushToOthers(exceptUsername, payload) {
+  const others = pushNotify.listOtherUsernames(getAllUsernames(), exceptUsername);
+  return pushNotify.sendPushToUsernames(others, payload).catch((err) => {
+    console.warn('Push thất bại:', err && err.message ? err.message : err);
+  });
+}
+
+app.get('/api/push/vapid-public-key', authMiddleware, (_req, res) => {
+  res.json({ publicKey: pushNotify.getPublicKey() });
+});
+
+app.post('/api/push/subscribe', authMiddleware, (req, res) => {
+  const ok = pushNotify.saveSubscription(req.user.username, (req.body || {}).subscription);
+  if (!ok) {
+    return res.status(400).json({ error: 'Subscription không hợp lệ' });
+  }
+  res.json({ ok: true });
+});
+
+app.post('/api/push/unsubscribe', authMiddleware, (req, res) => {
+  pushNotify.removeSubscription(req.user.username, (req.body || {}).endpoint);
+  res.json({ ok: true });
+});
+
 app.get('/api/data', authMiddleware, (_req, res) => {
   const store = storage.getAppStore();
   res.json({ data: store.data || { days: {} }, updatedAt: store.updatedAt });
@@ -263,12 +293,23 @@ app.get('/api/data/sync', authMiddleware, (_req, res) => {
 });
 
 app.put('/api/data', authMiddleware, adminOnly, async (req, res) => {
-  const { data } = req.body || {};
+  const { data, pushNotify: pushPayload } = req.body || {};
   if (!data || typeof data !== 'object' || !data.days || typeof data.days !== 'object') {
     return res.status(400).json({ error: 'Dữ liệu không hợp lệ' });
   }
   try {
     const updatedAt = await storage.setAppStore(data);
+    if (pushPayload && typeof pushPayload === 'object') {
+      const title = String(pushPayload.title || 'Cập nhật doanh thu').trim() || 'Cập nhật doanh thu';
+      const body = String(pushPayload.body || 'Có cập nhật số tiền mới').trim() || 'Có cập nhật số tiền mới';
+      pushToOthers(req.user.username, {
+        title,
+        body,
+        tag: 'muctieu-money',
+        page: 'home',
+        type: 'money',
+      });
+    }
     res.json({ ok: true, updatedAt });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi lưu dữ liệu: ' + err.message });
@@ -368,10 +409,23 @@ app.post('/api/messages', authMiddleware, async (req, res) => {
       text,
       imageDataUrl,
     });
+    const nicknames = getNicknamesMap();
+    const fromName = nicknames[req.user.username]
+      || defaultNickname(req.user.username, req.user.role);
+    const preview = text
+      ? String(text).slice(0, 120)
+      : (imageDataUrl ? '[Ảnh]' : 'Tin nhắn mới');
+    pushToOthers(req.user.username, {
+      title: '💬 Tin nhắn mới',
+      body: fromName + ': ' + preview,
+      tag: 'muctieu-chat',
+      page: 'chat',
+      type: 'chat',
+    });
     res.json({
       ok: true,
       message: result.message,
-      nicknames: getNicknamesMap(),
+      nicknames,
       updatedAt: result.updatedAt,
     });
   } catch (err) {

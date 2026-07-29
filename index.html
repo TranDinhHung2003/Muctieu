@@ -3593,17 +3593,25 @@
       if (isLoggedIn) checkForUpdates();
     }
 
+    let pendingServerPushNotify = null;
+
     async function saveToServer() {
       if (!isAdmin()) return;
       isSaving = true;
       setSyncStatus('⏳ Đang lưu...', false);
       try {
-        const result = await api('/data', { method: 'PUT', body: { data: appData } });
+        const body = { data: appData };
+        if (pendingServerPushNotify) {
+          body.pushNotify = pendingServerPushNotify;
+          pendingServerPushNotify = null;
+        }
+        const result = await api('/data', { method: 'PUT', body });
         lastUpdatedAt = result.updatedAt || lastUpdatedAt;
         // Luôn sao lưu trên máy — tránh mất khi Render sleep/restart
         saveLocalBackup(appData, lastUpdatedAt);
         updateSyncTime(result.updatedAt);
       } catch (e) {
+        pendingServerPushNotify = null;
         // Dù server lỗi vẫn giữ bản trên máy
         saveLocalBackup(appData, new Date().toISOString());
         setSyncStatus('⚠ Lỗi lưu server · đã giữ bản trên máy', false);
@@ -3646,6 +3654,13 @@
         startWeatherEffects();
         refreshMessages(false);
         initDeviceNotifications();
+        try {
+          const openPage = new URLSearchParams(window.location.search).get('open');
+          if (openPage === 'chat') {
+            navigateTo('chat');
+            history.replaceState({}, '', window.location.pathname);
+          }
+        } catch { /* ignore */ }
       } catch (err) {
         showLogin(err.message);
         startLiveClock();
@@ -4477,14 +4492,12 @@
           const preview = (latest.text && String(latest.text).trim())
             || (latest.imageId ? '[Ảnh]' : 'Tin nhắn mới');
           if (!onChat) showToast('💬 Tin nhắn mới từ ' + displayNameFor(latest.from));
-          // Thông báo máy khi không đang xem chat, hoặc app đang ẩn
-          if (!onChat || document.hidden) {
-            showDeviceNotify(
-              '💬 Tin nhắn mới',
-              displayNameFor(latest.from) + ': ' + preview.slice(0, 120),
-              { tag: 'muctieu-chat', renotify: true, data: { page: 'chat' } }
-            );
-          }
+          // Luôn đẩy lên thanh thông báo hệ thống cho đối phương
+          showDeviceNotify(
+            '💬 Tin nhắn mới',
+            displayNameFor(latest.from) + ': ' + preview.slice(0, 120),
+            { tag: 'muctieu-chat', renotify: true, data: { page: 'chat' } }
+          );
         }
       } catch {
         // ignore
@@ -4647,6 +4660,10 @@
       if (next) {
         const ok = await ensureNotifyPermission(true);
         updateNotifyToggleUI();
+        if (ok) {
+          const reg = await registerNotifyServiceWorker();
+          await subscribeWebPush(reg);
+        }
         if (opts.toast !== false) {
           if (ok) showToast('Đã bật thông báo trên máy');
           else if (!supportsDeviceNotify()) showToast('Trình duyệt không hỗ trợ thông báo');
@@ -4655,6 +4672,7 @@
         }
         return ok;
       }
+      await unsubscribeWebPush();
       updateNotifyToggleUI();
       if (opts.toast !== false) showToast('Đã tắt thông báo trên máy');
       return false;
@@ -4669,47 +4687,42 @@
         .filter((line) => line && !/^from\s+/i.test(line) && !/dasborad|dashboard/i.test(line))
         .join('\n');
 
-      // Banner trong app: không có dòng "from …"
-      showAppNotifyBanner(notifyTitle, notifyBody);
+      // Banner trong app khi đang mở
+      if (!document.hidden) {
+        showAppNotifyBanner(notifyTitle, notifyBody);
+      }
 
       if (!supportsDeviceNotify() || Notification.permission !== 'granted') return null;
 
       const payload = {
         body: notifyBody,
-        tag: 'muctieu-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-        renotify: false,
+        tag: options.tag || ('muctieu-' + Date.now()),
+        renotify: options.renotify !== false,
         requireInteraction: true,
-        // App đang mở: im lặng trên hệ thống để tránh heads-up hiện "from …"
-        silent: !document.hidden,
+        // Luôn hiện trên thanh thông báo hệ thống
+        silent: false,
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-96.png',
         data: Object.assign({}, options.data || {}),
+        vibrate: options.vibrate || [40, 30, 40],
       };
 
-      const vibrate = () => {
-        if (document.hidden && navigator.vibrate) {
-          try { navigator.vibrate(options.vibrate || [40, 30, 40]); } catch { /* ignore */ }
-        }
-      };
+      if (navigator.vibrate) {
+        try { navigator.vibrate(payload.vibrate); } catch { /* ignore */ }
+      }
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then((reg) => {
           if (reg && typeof reg.showNotification === 'function') {
             return reg.showNotification(notifyTitle, payload);
           }
-          if (document.hidden) return createPageNotification(notifyTitle, payload, options);
-          return null;
+          return createPageNotification(notifyTitle, payload, options);
         }).catch(() => {
-          if (document.hidden) createPageNotification(notifyTitle, payload, options);
+          createPageNotification(notifyTitle, payload, options);
         });
-        vibrate();
         return true;
       }
-      if (document.hidden) {
-        vibrate();
-        return createPageNotification(notifyTitle, payload, options);
-      }
-      return true;
+      return createPageNotification(notifyTitle, payload, options);
     }
 
     function showAppNotifyBanner(title, body) {
@@ -4748,10 +4761,19 @@
       }
     }
 
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const raw = atob(base64);
+      const output = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i);
+      return output;
+    }
+
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=5', { scope: '/' });
+        const reg = await navigator.serviceWorker.register('/sw.js?v=6', { scope: '/' });
         await navigator.serviceWorker.ready;
         return reg;
       } catch {
@@ -4759,12 +4781,57 @@
       }
     }
 
+    async function subscribeWebPush(reg) {
+      if (!reg || !('PushManager' in window)) return false;
+      if (!supportsDeviceNotify() || Notification.permission !== 'granted') return false;
+      if (!isDeviceNotifyEnabled()) return false;
+      try {
+        const keyRes = await api('/push/vapid-public-key');
+        const publicKey = keyRes && keyRes.publicKey;
+        if (!publicKey) return false;
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
+          });
+        }
+        await api('/push/subscribe', {
+          method: 'POST',
+          body: { subscription: sub.toJSON() },
+        });
+        return true;
+      } catch (err) {
+        console.warn('Không đăng ký Web Push:', err);
+        return false;
+      }
+    }
+
+    async function unsubscribeWebPush() {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (!reg) return;
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub) return;
+        const endpoint = sub.endpoint;
+        try {
+          await api('/push/unsubscribe', { method: 'POST', body: { endpoint } });
+        } catch { /* ignore */ }
+        await sub.unsubscribe();
+      } catch { /* ignore */ }
+    }
+
     async function initDeviceNotifications() {
       updateNotifyToggleUI();
-      await registerNotifyServiceWorker();
+      const reg = await registerNotifyServiceWorker();
       if (!isDeviceNotifyEnabled() || !supportsDeviceNotify()) return;
       if (Notification.permission === 'default') {
-        await ensureNotifyPermission(true);
+        const ok = await ensureNotifyPermission(true);
+        if (ok) await subscribeWebPush(reg);
+      } else if (Notification.permission === 'granted') {
+        updateNotifyToggleUI();
+        await subscribeWebPush(reg);
       } else {
         updateNotifyToggleUI();
       }
@@ -4821,9 +4888,16 @@
       });
       today[field] = (today[field] || 0) + value;
 
+      const totalNet = calcNet(today);
+      const moneyNotify = buildMoneyEntryNotify(field, value, totalNet);
+      pendingServerPushNotify = {
+        title: moneyNotify.title,
+        body: moneyNotify.body,
+      };
       try {
         await saveData(data);
       } catch (err) {
+        pendingServerPushNotify = null;
         showToast('Lỗi lưu: ' + err.message);
         return;
       }
@@ -4833,12 +4907,6 @@
       document.getElementById('collapse-entries').classList.add('open');
       calculate();
       pulseResultCard();
-
-      const displayVal = field === 'zoomPoints'
-        ? formatPoints(value) + ' điểm'
-        : formatMoney(value);
-      const totalNet = calcNet(today);
-      const moneyNotify = buildMoneyEntryNotify(field, value, totalNet);
       showToast(moneyNotify.toast);
       showDeviceNotify(moneyNotify.title, moneyNotify.body, {
         tag: 'muctieu-money',
