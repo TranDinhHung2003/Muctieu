@@ -1,8 +1,22 @@
 {
-  "messages": [],
+  "messages": [
+    {
+      "id": "ms64uiyp3hq6gw",
+      "from": "admin",
+      "role": "admin",
+      "text": "Cuộc gọi video · Đã hủy",
+      "at": "2026-07-29T13:40:55.297Z",
+      "status": "sent",
+      "kind": "call",
+      "callEvent": "cancelled",
+      "callMode": "video",
+      "durationSec": 0,
+      "callId": "cms64uhhbhh3f4"
+    }
+  ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T13:37:34.254Z"
+  "updatedAt": "2026-07-29T13:40:55.297Z"
 }
