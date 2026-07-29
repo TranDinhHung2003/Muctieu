@@ -6,8 +6,9 @@
       "role": "viewer",
       "text": "O",
       "at": "2026-07-29T08:52:34.874Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T08:53:22.114Z"
     }
   ],
-  "updatedAt": "2026-07-29T08:52:34.874Z"
+  "updatedAt": "2026-07-29T08:53:22.114Z"
 }
