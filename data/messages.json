@@ -15,7 +15,7 @@
   },
   "receipts": {
     "admin": {
-      "lastDeliveredAt": "2026-07-29T15:46:33.648Z",
+      "lastDeliveredAt": "2026-07-29T16:41:44.678Z",
       "lastReadAt": "2026-07-29T15:46:33.648Z"
     },
     "theodoi": {
@@ -23,5 +23,5 @@
       "lastReadAt": "2026-07-29T16:41:41.189Z"
     }
   },
-  "updatedAt": "2026-07-29T16:41:43.732Z"
+  "updatedAt": "2026-07-29T16:41:44.678Z"
 }
