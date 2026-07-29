@@ -70,8 +70,9 @@
       "role": "viewer",
       "text": "O",
       "at": "2026-07-29T15:16:53.831Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T15:16:55.234Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T15:16:55.234Z",
+      "readAt": "2026-07-29T15:17:48.380Z"
     },
     {
       "id": "ms68ah9svty31t",
@@ -79,13 +80,14 @@
       "role": "viewer",
       "text": "T",
       "at": "2026-07-29T15:17:18.448Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T15:17:20.175Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T15:17:20.175Z",
+      "readAt": "2026-07-29T15:17:48.380Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:17:20.175Z"
+  "updatedAt": "2026-07-29T15:17:48.380Z"
 }
