@@ -70,12 +70,13 @@
       "role": "viewer",
       "text": "O",
       "at": "2026-07-29T15:16:53.831Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T15:16:55.234Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:16:53.831Z"
+  "updatedAt": "2026-07-29T15:16:55.234Z"
 }
