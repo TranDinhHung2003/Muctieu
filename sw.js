@@ -1,5 +1,5 @@
-/* Service worker v8: Web Push khi app bị vuốt tắt (iOS/Android) */
-const SW_VERSION = 'muctieu-sw-v8';
+/* Service worker v9: Web Push — app đang mở không hiện OS notify trùng */
+const SW_VERSION = 'muctieu-sw-v9';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -39,20 +39,40 @@ async function showPushNotification(data) {
   const body = String((data && data.body) || 'Có cập nhật mới').trim() || 'Có cập nhật mới';
   const tag = String((data && data.tag) || 'muctieu-push');
   const page = (data && data.page) || ((data && data.type) === 'chat' ? 'chat' : 'home');
+  const payload = {
+    title,
+    body,
+    tag,
+    page,
+    type: (data && data.type) || 'general',
+  };
 
-  // BẮT BUỘC hiện notification trong push event — iOS hủy subscription nếu coi là silent push
+  // App đang mở (tab visible) → chỉ gửi banner trong app, không hiện OS lần nữa
+  try {
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const visibleClients = allClients.filter((c) => c && c.visibilityState === 'visible');
+    if (visibleClients.length) {
+      visibleClients.forEach((client) => {
+        try {
+          client.postMessage({ type: 'PUSH_NOTIFY', payload });
+        } catch { /* ignore */ }
+      });
+      return;
+    }
+  } catch { /* fall through → hiện OS */ }
+
+  // App đã vuốt tắt / ở nền → hiện thông báo hệ thống (1 lần)
   await self.registration.showNotification(title, {
     body,
     tag,
     renotify: true,
-    // false: tương thích tốt hơn khi PWA bị vuốt tắt trên iOS
     requireInteraction: false,
     silent: false,
     icon: absUrl('/icons/icon-192.png'),
     badge: absUrl('/icons/icon-96.png'),
     data: {
       page,
-      type: (data && data.type) || 'general',
+      type: payload.type,
       sw: SW_VERSION,
     },
   });

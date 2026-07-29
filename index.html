@@ -4746,47 +4746,27 @@
         .filter((line) => line && !/^from\s+/i.test(line) && !/dasborad|dashboard/i.test(line))
         .join('\n');
 
-      // Banner trong app khi đang mở
+      // App đang mở → chỉ banner trong app.
+      // Thông báo hệ thống chỉ do Web Push (sw.js) khi app tắt/ở nền — tránh hiện 2 lần.
       if (!document.hidden) {
         showAppNotifyBanner(notifyTitle, notifyBody);
       }
-
-      if (!supportsDeviceNotify() || Notification.permission !== 'granted') return null;
-
-      const payload = {
-        body: notifyBody,
-        tag: options.tag || ('muctieu-' + Date.now()),
-        renotify: options.renotify !== false,
-        requireInteraction: true,
-        // Luôn hiện trên thanh thông báo hệ thống
-        silent: false,
-        icon: '/icons/icon-192.png',
-        badge: '/icons/icon-96.png',
-        data: Object.assign({}, options.data || {}),
-        vibrate: options.vibrate || [40, 30, 40],
-      };
-
-      if (navigator.vibrate) {
-        try { navigator.vibrate(payload.vibrate); } catch { /* ignore */ }
-      }
-
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistration().then((reg) => {
-          if (reg && typeof reg.showNotification === 'function') {
-            return reg.showNotification(notifyTitle, payload);
-          }
-          return createPageNotification(notifyTitle, payload, options);
-        }).catch(() => {
-          createPageNotification(notifyTitle, payload, options);
-        });
-        return true;
-      }
-      return createPageNotification(notifyTitle, payload, options);
+      return true;
     }
+
+    let lastAppNotifyKey = '';
+    let lastAppNotifyAt = 0;
 
     function showAppNotifyBanner(title, body) {
       const stack = document.getElementById('app-notify-stack');
       if (!stack) return;
+      const key = String(title || '') + '\n' + String(body || '');
+      const now = Date.now();
+      // Poll + push cùng lúc → chỉ hiện 1 banner
+      if (key === lastAppNotifyKey && now - lastAppNotifyAt < 4500) return;
+      lastAppNotifyKey = key;
+      lastAppNotifyAt = now;
+
       const el = document.createElement('div');
       el.className = 'app-notify';
       el.innerHTML =
@@ -4860,7 +4840,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=8', {
+        const reg = await navigator.serviceWorker.register('/sw.js?v=9', {
           scope: '/',
           updateViaCache: 'none',
         });
@@ -5065,6 +5045,12 @@
         const data = event.data || {};
         if (data.type === 'muctieu-notify-open' && data.page && isLoggedIn) {
           try { navigateTo(data.page); } catch { /* ignore */ }
+        }
+        if (data.type === 'PUSH_NOTIFY' && isLoggedIn && isDeviceNotifyEnabled()) {
+          const payload = data.payload || {};
+          if (!document.hidden) {
+            showAppNotifyBanner(payload.title || 'Mục tiêu chạy xe', payload.body || '');
+          }
         }
       });
     }
