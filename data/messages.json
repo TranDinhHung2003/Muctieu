@@ -1,14 +1,5 @@
 {
-  "messages": [
-    {
-      "id": "ms6bb1o4iiontl",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "I",
-      "at": "2026-07-29T16:41:43.732Z",
-      "status": "sent"
-    }
-  ],
+  "messages": [],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
@@ -23,5 +14,5 @@
       "lastReadAt": "2026-07-29T16:50:11.264Z"
     }
   },
-  "updatedAt": "2026-07-29T16:50:11.264Z"
+  "updatedAt": "2026-07-29T17:12:35.501Z"
 }
