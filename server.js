@@ -50,6 +50,21 @@ function saveUsersStore(store) {
   writeJson(USERS_PATH, store);
 }
 
+function defaultNickname(username, role) {
+  if (role === 'viewer') return 'Theo dõi';
+  if (role === 'admin') return 'Admin';
+  return String(username || 'Bạn').slice(0, 24);
+}
+
+function normalizeNickname(value, fallback) {
+  const clean = String(value || '')
+    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 24);
+  return clean || fallback;
+}
+
 function ensureUser(store, username, password, role) {
   const exists = store.users.find((u) => u.username.toLowerCase() === username.toLowerCase());
   if (exists) return false;
@@ -58,6 +73,7 @@ function ensureUser(store, username, password, role) {
     username,
     password_hash: bcrypt.hashSync(password, 10),
     role,
+    nickname: defaultNickname(username, role),
     updated_at: nowIso(),
   });
   return true;
@@ -74,7 +90,32 @@ function initUsers() {
     console.log('Đã tạo tài khoản theo dõi:', VIEWER_USERNAME);
     changed = true;
   }
+  // Bổ sung biệt danh cho user cũ
+  usersStore.users.forEach((u) => {
+    if (!u.nickname || !String(u.nickname).trim()) {
+      u.nickname = defaultNickname(u.username, u.role);
+      changed = true;
+    }
+  });
   if (changed) saveUsersStore(usersStore);
+}
+
+function getNicknamesMap() {
+  const store = loadUsersStore();
+  const map = {};
+  (store.users || []).forEach((u) => {
+    if (!u || !u.username) return;
+    map[u.username] = normalizeNickname(u.nickname, defaultNickname(u.username, u.role));
+  });
+  return map;
+}
+
+function publicUserPayload(user) {
+  return {
+    username: user.username,
+    role: user.role,
+    nickname: normalizeNickname(user.nickname, defaultNickname(user.username, user.role)),
+  };
 }
 
 const app = express();
@@ -159,7 +200,7 @@ app.post('/api/login', (req, res) => {
 
   const token = createToken(user);
   setAuthCookie(res, token);
-  res.json({ ok: true, username: user.username, role: user.role });
+  res.json({ ok: true, ...publicUserPayload(user) });
 });
 
 app.post('/api/logout', (_req, res) => {
@@ -179,11 +220,36 @@ app.get('/api/me', (req, res) => {
       clearAuthCookie(res);
       return res.json({ loggedIn: false });
     }
-    res.json({ loggedIn: true, username: user.username, role: user.role });
+    res.json({ loggedIn: true, ...publicUserPayload(user) });
   } catch {
     clearAuthCookie(res);
     res.json({ loggedIn: false });
   }
+});
+
+app.post('/api/nickname', authMiddleware, (req, res) => {
+  const raw = String((req.body || {}).nickname || '');
+  const fallback = defaultNickname(req.user.username, req.user.role);
+  const nickname = normalizeNickname(raw, '');
+  if (!nickname) {
+    return res.status(400).json({ error: 'Biệt danh không được để trống' });
+  }
+  if (nickname.length < 1 || nickname.length > 24) {
+    return res.status(400).json({ error: 'Biệt danh tối đa 24 ký tự' });
+  }
+  const store = loadUsersStore();
+  const user = store.users.find((u) => u.username === req.user.username);
+  if (!user) {
+    return res.status(404).json({ error: 'Không tìm thấy tài khoản' });
+  }
+  user.nickname = nickname || fallback;
+  user.updated_at = nowIso();
+  saveUsersStore(store);
+  res.json({
+    ok: true,
+    nickname: user.nickname,
+    nicknames: getNicknamesMap(),
+  });
 });
 
 app.get('/api/data', authMiddleware, (_req, res) => {
@@ -255,6 +321,7 @@ app.get('/api/messages', authMiddleware, (req, res) => {
   const store = storage.markMessagesDelivered(req.user.username);
   res.json({
     messages: store.messages || [],
+    nicknames: getNicknamesMap(),
     updatedAt: store.updatedAt,
     ttlMinutes: 30,
   });
@@ -270,6 +337,7 @@ app.post('/api/messages/read', authMiddleware, (req, res) => {
   res.json({
     ok: true,
     messages: store.messages || [],
+    nicknames: getNicknamesMap(),
     updatedAt: store.updatedAt,
   });
 });
@@ -303,6 +371,7 @@ app.post('/api/messages', authMiddleware, async (req, res) => {
     res.json({
       ok: true,
       message: result.message,
+      nicknames: getNicknamesMap(),
       updatedAt: result.updatedAt,
     });
   } catch (err) {

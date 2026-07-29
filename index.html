@@ -327,12 +327,12 @@
     }
 
     .chat-bubble.mine .chat-status {
-      color: #86efac;
-      opacity: 0.85;
+      color: rgba(187, 247, 208, 0.95);
+      opacity: 0.95;
     }
 
     .chat-status.read {
-      color: #4ade80;
+      color: #86efac;
       font-weight: 700;
     }
 
@@ -1752,31 +1752,252 @@
     }
 
     .chat-ttl-note {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 8px;
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(245, 158, 11, 0.35);
-      background: rgba(245, 158, 11, 0.12);
-      color: #fbbf24;
-      font-size: 0.72rem;
-      font-weight: 700;
+      display: none;
     }
 
     .chat-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(125, 211, 252, 0.28);
+      border-radius: 20px;
       display: flex;
       flex-direction: column;
       min-height: 420px;
       max-height: min(70vh, 620px);
       overflow: hidden;
+      box-shadow: 0 12px 40px rgba(2, 18, 40, 0.35);
+      backdrop-filter: blur(8px);
+    }
+
+    .chat-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(125, 211, 252, 0.22);
+      background: linear-gradient(180deg, rgba(8, 47, 73, 0.92), rgba(12, 74, 110, 0.78));
+      flex-shrink: 0;
+    }
+
+    .chat-peer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .chat-peer-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-size: 1.25rem;
+      background: linear-gradient(145deg, #38bdf8, #0284c7);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+    }
+
+    .chat-peer-text {
+      min-width: 0;
+    }
+
+    .chat-peer-name {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-peer-sub {
+      font-size: 0.68rem;
+      color: #bae6fd;
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-nick-btn {
+      flex-shrink: 0;
+      border: 1px solid rgba(186, 230, 253, 0.35);
+      background: rgba(255, 255, 255, 0.1);
+      color: #e0f2fe;
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .chat-nick-btn:active {
+      transform: scale(0.96);
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .chat-stage {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .shark-tank {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 90% 55% at 50% -10%, rgba(125, 211, 252, 0.35), transparent 60%),
+        linear-gradient(180deg, #0369a1 0%, #0c4a6e 42%, #164e63 72%, #0f766e 100%);
+    }
+
+    .shark-tank::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 18%;
+      background:
+        radial-gradient(ellipse 40% 80% at 20% 100%, rgba(251, 191, 36, 0.35), transparent 70%),
+        radial-gradient(ellipse 50% 90% at 70% 100%, rgba(245, 158, 11, 0.28), transparent 70%),
+        linear-gradient(180deg, transparent, rgba(120, 53, 15, 0.55));
+    }
+
+    .shark-tank .seaweed {
+      position: absolute;
+      bottom: 6%;
+      width: 10px;
+      height: 58px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, #4ade80, #166534);
+      transform-origin: bottom center;
+      animation: seaweed-sway 3.8s ease-in-out infinite;
+      opacity: 0.7;
+    }
+
+    .shark-tank .seaweed.s2 { left: 18%; height: 72px; animation-delay: -0.8s; }
+    .shark-tank .seaweed.s3 { left: 78%; height: 64px; animation-delay: -1.4s; }
+    .shark-tank .seaweed.s4 { left: 88%; height: 48px; animation-delay: -2.1s; width: 8px; }
+    .shark-tank .seaweed.s1 { left: 8%; }
+
+    .shark-tank .bubble {
+      position: absolute;
+      bottom: 8%;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(186, 230, 253, 0.55);
+      background: rgba(224, 242, 254, 0.18);
+      animation: bubble-rise 7s linear infinite;
+      opacity: 0.7;
+    }
+
+    .shark-tank .bubble.b1 { left: 12%; animation-duration: 6.5s; animation-delay: -1s; }
+    .shark-tank .bubble.b2 { left: 42%; width: 6px; height: 6px; animation-duration: 8s; animation-delay: -3s; }
+    .shark-tank .bubble.b3 { left: 68%; animation-duration: 7.2s; animation-delay: -2.2s; }
+    .shark-tank .bubble.b4 { left: 86%; width: 10px; height: 10px; animation-duration: 9s; animation-delay: -4s; }
+
+    .baby-shark {
+      position: absolute;
+      width: 72px;
+      height: 36px;
+      animation: shark-swim 16s linear infinite;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
+    }
+
+    .baby-shark svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .baby-shark.shark-1 {
+      top: 14%;
+      animation-duration: 18s;
+      animation-delay: -2s;
+    }
+
+    .baby-shark.shark-2 {
+      top: 38%;
+      width: 84px;
+      height: 42px;
+      animation-duration: 22s;
+      animation-delay: -8s;
+      animation-name: shark-swim-alt;
+    }
+
+    .baby-shark.shark-3 {
+      top: 58%;
+      width: 64px;
+      height: 32px;
+      animation-duration: 15s;
+      animation-delay: -5s;
+    }
+
+    .baby-shark.shark-4 {
+      top: 28%;
+      width: 56px;
+      height: 28px;
+      animation-duration: 20s;
+      animation-delay: -12s;
+      animation-name: shark-swim-alt;
+      opacity: 0.85;
+    }
+
+    @keyframes shark-swim {
+      0% { left: -22%; transform: scaleX(1) translateY(0); }
+      45% { transform: scaleX(1) translateY(-8px); }
+      49% { left: 108%; transform: scaleX(1) translateY(0); }
+      50% { left: 108%; transform: scaleX(-1) translateY(0); }
+      95% { transform: scaleX(-1) translateY(8px); }
+      100% { left: -22%; transform: scaleX(-1) translateY(0); }
+    }
+
+    @keyframes shark-swim-alt {
+      0% { left: 110%; transform: scaleX(-1) translateY(0); }
+      45% { transform: scaleX(-1) translateY(6px); }
+      49% { left: -24%; transform: scaleX(-1) translateY(0); }
+      50% { left: -24%; transform: scaleX(1) translateY(0); }
+      95% { transform: scaleX(1) translateY(-6px); }
+      100% { left: 110%; transform: scaleX(1) translateY(0); }
+    }
+
+    @keyframes bubble-rise {
+      0% { transform: translateY(0) scale(1); opacity: 0; }
+      12% { opacity: 0.75; }
+      100% { transform: translateY(-280px) scale(1.2); opacity: 0; }
+    }
+
+    @keyframes seaweed-sway {
+      0%, 100% { transform: rotate(-6deg); }
+      50% { transform: rotate(7deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .baby-shark,
+      .shark-tank .bubble,
+      .shark-tank .seaweed {
+        animation: none !important;
+      }
+      .baby-shark.shark-1 { left: 12%; }
+      .baby-shark.shark-2 { left: 58%; }
+      .baby-shark.shark-3 { left: 30%; }
+      .baby-shark.shark-4 { left: 72%; }
     }
 
     .chat-messages {
+      position: relative;
+      z-index: 1;
       flex: 1;
       overflow-y: scroll;
       overflow-x: hidden;
@@ -1784,15 +2005,13 @@
       overscroll-behavior-y: contain;
       overscroll-behavior-x: none;
       touch-action: pan-y;
-      padding: 14px 12px;
+      padding: 14px 12px 16px;
       display: flex;
       flex-direction: column;
       gap: 10px;
       scrollbar-width: none;
       -ms-overflow-style: none;
-      background:
-        radial-gradient(ellipse 80% 40% at 50% 0%, rgba(59, 130, 246, 0.08), transparent 60%),
-        var(--bg);
+      background: linear-gradient(180deg, rgba(8, 30, 48, 0.28), rgba(8, 30, 48, 0.42));
     }
 
     .chat-messages::-webkit-scrollbar {
@@ -1806,33 +2025,55 @@
     .chat-empty {
       margin: auto;
       text-align: center;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      padding: 24px 12px;
-      line-height: 1.5;
+      color: #e0f2fe;
+      font-size: 0.88rem;
+      padding: 18px 16px;
+      line-height: 1.55;
+      max-width: 280px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(186, 230, 253, 0.25);
+      backdrop-filter: blur(6px);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
     }
 
     .chat-bubble {
       max-width: 82%;
       padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: var(--surface-2);
+      border-radius: 16px 16px 16px 6px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(15, 23, 42, 0.88);
       align-self: flex-start;
+      box-shadow: 0 6px 16px rgba(2, 12, 27, 0.28);
+      backdrop-filter: blur(10px);
+      color: #f8fafc;
     }
 
     .chat-bubble.mine {
       align-self: flex-end;
-      background: linear-gradient(145deg, #166534, #14532d);
-      border-color: #22c55e55;
+      border-radius: 16px 16px 6px 16px;
+      background: linear-gradient(145deg, rgba(22, 101, 52, 0.96), rgba(20, 83, 45, 0.96));
+      border-color: rgba(74, 222, 128, 0.35);
+    }
+
+    .chat-bubble .chat-name {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #7dd3fc;
+      margin-bottom: 3px;
+    }
+
+    .chat-bubble.mine .chat-name {
+      text-align: right;
+      color: #bbf7d0;
     }
 
     .chat-bubble .chat-meta {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
-      font-size: 0.7rem;
-      color: var(--text-muted);
+      font-size: 0.68rem;
+      color: #94a3b8;
       margin-bottom: 4px;
     }
 
@@ -1845,10 +2086,12 @@
     }
 
     .chat-bubble .chat-text {
-      font-size: 0.9rem;
-      line-height: 1.4;
+      font-size: 0.92rem;
+      line-height: 1.45;
       white-space: pre-wrap;
       word-break: break-word;
+      color: #f8fafc;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
     }
 
     .chat-bubble .chat-image {
@@ -1868,8 +2111,11 @@
     }
 
     .chat-compose-wrap {
-      border-top: 1px solid var(--border);
-      background: var(--surface);
+      position: relative;
+      z-index: 2;
+      border-top: 1px solid rgba(125, 211, 252, 0.22);
+      background: linear-gradient(180deg, rgba(8, 47, 73, 0.94), rgba(15, 23, 42, 0.96));
+      flex-shrink: 0;
     }
 
     .chat-image-preview {
@@ -1932,8 +2178,8 @@
       width: 44px;
       height: 44px;
       border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--bg);
+      border: 1px solid rgba(125, 211, 252, 0.3);
+      background: rgba(8, 47, 73, 0.85);
       color: var(--text);
       font-size: 1.15rem;
       cursor: pointer;
@@ -1942,7 +2188,7 @@
     }
 
     .chat-attach-btn:hover {
-      background: var(--surface-2);
+      background: rgba(12, 74, 110, 0.9);
     }
 
     .chat-compose input[type="text"] {
@@ -2609,11 +2855,71 @@
       <div class="chat-page-header">
         <h2>Tin nhắn</h2>
         <p id="chat-subtitle">Trao đổi nhanh</p>
-        <div class="chat-ttl-note" title="Tin nhắn và ảnh tự xóa sau 30 phút">⏱ Tự xóa sau 30 phút</div>
       </div>
       <div class="chat-box">
-        <div class="chat-messages" id="chat-messages">
-          <div class="chat-empty">Chưa có tin nhắn.<br>Gửi chữ hoặc ảnh — tự xóa sau 30 phút.</div>
+        <div class="chat-toolbar">
+          <div class="chat-peer">
+            <div class="chat-peer-avatar" aria-hidden="true">🦈</div>
+            <div class="chat-peer-text">
+              <div class="chat-peer-name" id="chat-peer-name">Đối phương</div>
+              <div class="chat-peer-sub" id="chat-peer-sub">Baby Shark tank · tự xóa sau 30 phút</div>
+            </div>
+          </div>
+          <button type="button" class="chat-nick-btn" id="chat-nickname-btn" title="Đổi biệt danh">Biệt danh</button>
+        </div>
+        <div class="chat-stage">
+          <div class="shark-tank" aria-hidden="true">
+            <span class="seaweed s1"></span>
+            <span class="seaweed s2"></span>
+            <span class="seaweed s3"></span>
+            <span class="seaweed s4"></span>
+            <span class="bubble b1"></span>
+            <span class="bubble b2"></span>
+            <span class="bubble b3"></span>
+            <span class="bubble b4"></span>
+            <div class="baby-shark shark-1">
+              <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="58" cy="32" rx="38" ry="18" fill="#fde047"/>
+                <path d="M20 32 L2 18 L8 32 L2 46 Z" fill="#facc15"/>
+                <path d="M70 16 L82 2 L88 18 Z" fill="#f59e0b"/>
+                <path d="M68 46 L78 58 L86 44 Z" fill="#f59e0b"/>
+                <circle cx="78" cy="28" r="3.2" fill="#0f172a"/>
+                <path d="M88 30 Q98 26 104 32 Q98 36 88 34 Z" fill="#fb7185"/>
+                <path d="M48 38 Q58 44 70 38" stroke="#ca8a04" stroke-width="2" fill="none" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="baby-shark shark-2">
+              <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="58" cy="32" rx="40" ry="19" fill="#fda4af"/>
+                <path d="M18 32 L0 16 L6 32 L0 48 Z" fill="#fb7185"/>
+                <path d="M70 14 L84 0 L90 18 Z" fill="#e11d48"/>
+                <path d="M66 46 L78 58 L88 44 Z" fill="#e11d48"/>
+                <circle cx="80" cy="28" r="3.4" fill="#0f172a"/>
+                <path d="M90 30 Q102 25 108 33 Q100 38 90 34 Z" fill="#f472b6"/>
+              </svg>
+            </div>
+            <div class="baby-shark shark-3">
+              <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="58" cy="32" rx="36" ry="17" fill="#7dd3fc"/>
+                <path d="M22 32 L6 20 L10 32 L6 44 Z" fill="#38bdf8"/>
+                <path d="M68 16 L78 4 L84 18 Z" fill="#0284c7"/>
+                <circle cx="76" cy="28" r="3" fill="#0f172a"/>
+                <path d="M86 30 Q96 26 100 32 Q96 36 86 34 Z" fill="#fb7185"/>
+              </svg>
+            </div>
+            <div class="baby-shark shark-4">
+              <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="58" cy="32" rx="34" ry="16" fill="#fdba74"/>
+                <path d="M24 32 L8 22 L12 32 L8 42 Z" fill="#fb923c"/>
+                <path d="M66 17 L76 6 L82 18 Z" fill="#ea580c"/>
+                <circle cx="74" cy="28" r="2.8" fill="#0f172a"/>
+                <path d="M84 30 Q92 27 96 32 Q92 35 84 33 Z" fill="#fb7185"/>
+              </svg>
+            </div>
+          </div>
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-empty">Chưa có tin nhắn.<br>Gửi chữ hoặc ảnh — tự xóa sau 30 phút.</div>
+          </div>
         </div>
         <form class="chat-compose-wrap" id="chat-form">
           <div class="chat-image-preview" id="chat-image-preview">
@@ -2643,6 +2949,20 @@
     </div>
   </div>
   </div>
+  </div>
+
+  <div class="modal-overlay" id="nickname-modal">
+    <div class="modal">
+      <h2>Đổi biệt danh</h2>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 14px">Biệt danh hiện trên tin nhắn cho cả hai phía. Tối đa 24 ký tự.</p>
+      <label for="nickname-input">Biệt danh của bạn</label>
+      <input type="text" id="nickname-input" maxlength="24" placeholder="vd: Baby Shark" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text);margin-top:8px;margin-bottom:8px">
+      <div class="login-error" id="nickname-error"></div>
+      <div class="modal-actions">
+        <button type="button" id="nickname-cancel">Hủy</button>
+        <button type="button" class="primary" id="nickname-save">Lưu</button>
+      </div>
+    </div>
   </div>
 
   <div class="modal-overlay" id="password-modal">
@@ -2758,6 +3078,8 @@
     let lastMessagesAt = null;
     let chatPollBusy = false;
     let pendingChatImage = null; // { dataUrl, name, size }
+    let currentNickname = '';
+    let chatNicknames = {};
 
     const FIELD_MAP = {
       app: { input: 'app-income', locked: 'locked-app', label: 'tiền app', preview: 'preview-app', money: true },
@@ -2818,6 +3140,12 @@
       chatSend: document.getElementById('chat-send'),
       chatBadge: document.getElementById('chat-badge'),
       chatSubtitle: document.getElementById('chat-subtitle'),
+      chatPeerName: document.getElementById('chat-peer-name'),
+      chatPeerSub: document.getElementById('chat-peer-sub'),
+      chatNicknameBtn: document.getElementById('chat-nickname-btn'),
+      nicknameModal: document.getElementById('nickname-modal'),
+      nicknameInput: document.getElementById('nickname-input'),
+      nicknameError: document.getElementById('nickname-error'),
       chatAttachBtn: document.getElementById('chat-attach-btn'),
       chatImageInput: document.getElementById('chat-image-input'),
       chatImagePreview: document.getElementById('chat-image-preview'),
@@ -2929,6 +3257,8 @@
       isLoggedIn = false;
       currentRole = 'admin';
       currentUsername = '';
+      currentNickname = '';
+      chatNicknames = {};
       lastUpdatedAt = null;
       lastMessagesAt = null;
       chatMessages = [];
@@ -2950,11 +3280,13 @@
       else els.loginError.textContent = '';
     }
 
-    function showApp(username, role) {
+    function showApp(username, role, nickname) {
       isLoggedIn = true;
       currentUsername = username || '';
+      currentNickname = (nickname && String(nickname).trim()) || username || '';
+      chatNicknames = Object.assign({}, chatNicknames, { [currentUsername]: currentNickname });
       applyRoleUI(role);
-      els.adminName.textContent = username;
+      els.adminName.textContent = currentNickname || username;
       els.loginError.textContent = '';
       document.body.classList.remove('logged-out');
       document.body.classList.add('logged-in');
@@ -2963,7 +3295,79 @@
           ? 'Bạn đang nhắn với tài khoản admin'
           : 'Bạn đang nhắn với tài khoản theo dõi';
       }
+      updateChatPeerHeader();
       navigateTo('home');
+    }
+
+    function displayNameFor(username) {
+      const key = String(username || '');
+      if (chatNicknames[key]) return chatNicknames[key];
+      if (key === currentUsername && currentNickname) return currentNickname;
+      return key || 'Người dùng';
+    }
+
+    function applyNicknames(map) {
+      if (!map || typeof map !== 'object') return false;
+      const prev = JSON.stringify(chatNicknames);
+      chatNicknames = Object.assign({}, chatNicknames, map);
+      if (currentUsername && chatNicknames[currentUsername]) {
+        currentNickname = chatNicknames[currentUsername];
+        if (els.adminName) els.adminName.textContent = currentNickname;
+      }
+      updateChatPeerHeader();
+      return JSON.stringify(chatNicknames) !== prev;
+    }
+
+    function updateChatPeerHeader() {
+      const peerUser = Object.keys(chatNicknames).find((u) => u && u !== currentUsername)
+        || (currentRole === 'viewer' ? 'admin' : 'theodoi');
+      const peerName = displayNameFor(peerUser);
+      if (els.chatPeerName) els.chatPeerName.textContent = peerName;
+      if (els.chatPeerSub) {
+        els.chatPeerSub.textContent = 'Bạn: ' + displayNameFor(currentUsername) + ' · tự xóa sau 30 phút';
+      }
+    }
+
+    function openNicknameModal() {
+      if (!els.nicknameModal) return;
+      if (els.nicknameError) els.nicknameError.textContent = '';
+      if (els.nicknameInput) {
+        els.nicknameInput.value = currentNickname || currentUsername || '';
+      }
+      els.nicknameModal.classList.add('show');
+      setTimeout(() => {
+        if (els.nicknameInput) {
+          els.nicknameInput.focus();
+          els.nicknameInput.select();
+        }
+      }, 40);
+    }
+
+    function closeNicknameModal() {
+      if (els.nicknameModal) els.nicknameModal.classList.remove('show');
+    }
+
+    async function saveNickname() {
+      if (!els.nicknameInput) return;
+      const nickname = String(els.nicknameInput.value || '').trim();
+      if (!nickname) {
+        if (els.nicknameError) els.nicknameError.textContent = 'Biệt danh không được để trống';
+        return;
+      }
+      if (nickname.length > 24) {
+        if (els.nicknameError) els.nicknameError.textContent = 'Biệt danh tối đa 24 ký tự';
+        return;
+      }
+      try {
+        const result = await api('/nickname', { method: 'POST', body: { nickname } });
+        currentNickname = result.nickname || nickname;
+        applyNicknames(result.nicknames || { [currentUsername]: currentNickname });
+        closeNicknameModal();
+        renderChatMessages({ forceBottom: false });
+        showToast('Đã cập nhật biệt danh');
+      } catch (err) {
+        if (els.nicknameError) els.nicknameError.textContent = err.message || 'Không lưu được biệt danh';
+      }
     }
 
     function setSyncStatus(msg, ok = true) {
@@ -3230,7 +3634,7 @@
           startWeatherEffects();
           return;
         }
-        showApp(me.username, me.role || 'admin');
+        showApp(me.username, me.role || 'admin', me.nickname);
         await loadFromServer();
         setTodayDate();
         startLiveClock();
@@ -3262,7 +3666,7 @@
       submitBtn.textContent = 'Đang đăng nhập...';
       try {
         const result = await api('/login', { method: 'POST', body: { username, password } });
-        showApp(result.username, result.role || 'admin');
+        showApp(result.username, result.role || 'admin', result.nickname);
         await loadFromServer();
         setTodayDate();
         startLiveClock();
@@ -3806,6 +4210,7 @@
       // Báo server: đã đọc → đối phương thấy "Đã đọc"
       if (isLoggedIn) {
         api('/messages/read', { method: 'POST', body: {} }).then((result) => {
+          if (result.nicknames) applyNicknames(result.nicknames);
           if (Array.isArray(result.messages)) {
             chatMessages = result.messages;
             lastMessagesAt = result.updatedAt || lastMessagesAt;
@@ -3868,7 +4273,8 @@
         m.imageId || '',
         m.at || '',
         m.status || 'sent',
-      ].join(':')).join('|');
+        displayNameFor(m.from),
+      ].join(':')).join('|') + '::' + JSON.stringify(chatNicknames);
     }
 
     function messageStatusLabel(status) {
@@ -4001,6 +4407,7 @@
       }
       els.chatMessages.innerHTML = chatMessages.map((m) => {
         const mine = m.from === currentUsername;
+        const nick = displayNameFor(m.from);
         const time = new Date(m.at).toLocaleString('vi-VN', {
           hour: '2-digit',
           minute: '2-digit',
@@ -4019,6 +4426,7 @@
           : '';
         return `
           <div class="chat-bubble${mine ? ' mine' : ''}">
+            <div class="chat-name">${escapeHtml(nick)}</div>
             <div class="chat-meta">
               <span>${time}</span>
             </div>
@@ -4048,14 +4456,15 @@
       try {
         const result = await api('/messages');
         const list = Array.isArray(result.messages) ? result.messages : [];
+        const nickChanged = applyNicknames(result.nicknames);
         const prevLatest = chatMessages.length ? chatMessages[chatMessages.length - 1].id : null;
         const prevKey = chatListKey(chatMessages);
-        const nextKey = chatListKey(list);
         chatMessages = list;
+        const nextKey = chatListKey(list);
         lastMessagesAt = result.updatedAt || lastMessagesAt;
         const onChat = els.pageChat && els.pageChat.classList.contains('active');
         if (onChat) {
-          if (prevKey !== nextKey) {
+          if (prevKey !== nextKey || nickChanged) {
             renderChatMessages({ forceBottom: false });
           }
           markChatRead();
@@ -4066,12 +4475,12 @@
         if (notify && latest && latest.id !== prevLatest && latest.from !== currentUsername) {
           const preview = (latest.text && String(latest.text).trim())
             || (latest.imageId ? '[Ảnh]' : 'Tin nhắn mới');
-          if (!onChat) showToast('💬 Tin nhắn mới từ ' + latest.from);
+          if (!onChat) showToast('💬 Tin nhắn mới từ ' + displayNameFor(latest.from));
           // Thông báo máy khi không đang xem chat, hoặc app đang ẩn
           if (!onChat || document.hidden) {
             showDeviceNotify(
               '💬 Tin nhắn mới',
-              latest.from + ': ' + preview.slice(0, 120),
+              displayNameFor(latest.from) + ': ' + preview.slice(0, 120),
               { tag: 'muctieu-chat', renotify: true, data: { page: 'chat' } }
             );
           }
@@ -4100,6 +4509,7 @@
         if (image) body.image = image;
         const result = await api('/messages', { method: 'POST', body });
         if (result.message) {
+          if (result.nicknames) applyNicknames(result.nicknames);
           chatMessages = [...chatMessages, result.message];
           lastMessagesAt = result.updatedAt || lastMessagesAt;
           if (els.chatInput) els.chatInput.value = '';
@@ -4780,6 +5190,21 @@
     if (chatNavBtn) {
       chatNavBtn.addEventListener('click', () => navigateTo('chat'));
     }
+    if (els.chatNicknameBtn) {
+      els.chatNicknameBtn.addEventListener('click', openNicknameModal);
+    }
+    const nicknameCancel = document.getElementById('nickname-cancel');
+    const nicknameSave = document.getElementById('nickname-save');
+    if (nicknameCancel) nicknameCancel.addEventListener('click', closeNicknameModal);
+    if (nicknameSave) nicknameSave.addEventListener('click', saveNickname);
+    if (els.nicknameInput) {
+      els.nicknameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveNickname();
+        }
+      });
+    }
     document.querySelectorAll('.drawer-item[data-nav]').forEach(btn => {
       btn.addEventListener('click', () => navigateTo(btn.dataset.nav));
     });
@@ -4790,7 +5215,7 @@
     });
 
     // Đóng popup khi bấm nền tối
-    [els.passwordModal, els.goalModal, els.logoutModal, els.weatherModal].forEach(overlay => {
+    [els.passwordModal, els.goalModal, els.logoutModal, els.weatherModal, els.nicknameModal].forEach(overlay => {
       if (!overlay) return;
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.classList.remove('show');
