@@ -1,21 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms66d31kn76eyd",
-      "from": "admin",
-      "role": "admin",
-      "text": "Cuộc gọi nhỡ · Cuộc gọi thoại",
-      "at": "2026-07-29T14:23:20.744Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T14:23:40.986Z",
-      "readAt": "2026-07-29T14:23:40.986Z",
-      "kind": "call",
-      "callEvent": "missed",
-      "callMode": "audio",
-      "durationSec": 0,
-      "callId": "cms66clbh05ubv"
-    },
-    {
       "id": "ms66dlf8ur4uy7",
       "from": "admin",
       "role": "admin",
@@ -167,13 +152,14 @@
       "text": "",
       "imageId": "ms67ely0pzkrvx",
       "at": "2026-07-29T14:52:31.513Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T14:53:15.814Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T14:53:15.814Z",
+      "readAt": "2026-07-29T14:53:16.095Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:53:15.814Z"
+  "updatedAt": "2026-07-29T14:53:21.597Z"
 }
