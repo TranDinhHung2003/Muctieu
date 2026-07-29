@@ -114,6 +114,36 @@
       flex-shrink: 0;
     }
 
+    .live-clock {
+      flex-shrink: 0;
+      min-width: 42px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.15;
+    }
+
+    .live-clock .clock-time {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: var(--accent);
+    }
+
+    .live-clock .clock-sec {
+      font-weight: 600;
+      color: #86efac;
+      font-size: 0.78rem;
+    }
+
+    .live-clock .clock-ampm {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 1px;
+    }
+
     .drawer-overlay {
       position: fixed;
       inset: 0;
@@ -1686,7 +1716,10 @@
         <h1 id="page-title">Mục tiêu chạy xe</h1>
         <p id="today-date"></p>
       </div>
-      <div class="top-bar-spacer"></div>
+      <div class="live-clock" id="live-clock" aria-live="polite" aria-label="Đồng hồ thời gian thực">
+        <span class="clock-time"><span id="clock-hm">--:--</span><span class="clock-sec" id="clock-sec">:--</span></span>
+        <span class="clock-ampm" id="clock-label">Giờ Việt Nam</span>
+      </div>
     </div>
     <div class="sync-status" id="sync-status">✓ Dữ liệu đã lưu trên server</div>
     <div class="role-banner admin hidden" id="role-banner">👤 Bạn đang ở tài khoản admin</div>
@@ -1956,6 +1989,8 @@
     let celebrateRaf = 0;
     let celebrateParticles = [];
     let celebrateBurstsLeft = 0;
+    let clockTimer = null;
+    let lastClockDateKey = null;
 
     const FIELD_MAP = {
       app: { input: 'app-income', locked: 'locked-app', label: 'tiền app', preview: 'preview-app', money: true },
@@ -1985,6 +2020,10 @@
       passwordModal: document.getElementById('password-modal'),
       passwordError: document.getElementById('password-error'),
       todayDate: document.getElementById('today-date'),
+      liveClock: document.getElementById('live-clock'),
+      clockHm: document.getElementById('clock-hm'),
+      clockSec: document.getElementById('clock-sec'),
+      clockLabel: document.getElementById('clock-label'),
       statDay: document.getElementById('stat-day'),
       statWeek: document.getElementById('stat-week'),
       statMonth: document.getElementById('stat-month'),
@@ -3132,7 +3171,39 @@
     function setTodayDate() {
       const now = new Date();
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      els.todayDate.textContent = now.toLocaleDateString('vi-VN', options);
+      if (els.todayDate) els.todayDate.textContent = now.toLocaleDateString('vi-VN', options);
+      lastClockDateKey = getTodayKey();
+    }
+
+    function pad2(n) {
+      return String(n).padStart(2, '0');
+    }
+
+    function updateLiveClock() {
+      const now = new Date();
+      const h = pad2(now.getHours());
+      const m = pad2(now.getMinutes());
+      const s = pad2(now.getSeconds());
+      if (els.clockHm) els.clockHm.textContent = h + ':' + m;
+      if (els.clockSec) els.clockSec.textContent = ':' + s;
+      if (els.clockLabel) {
+        els.clockLabel.textContent = now.toLocaleDateString('vi-VN', {
+          weekday: 'short',
+          day: '2-digit',
+          month: '2-digit',
+        });
+      }
+      const key = getTodayKey();
+      if (lastClockDateKey && key !== lastClockDateKey) {
+        setTodayDate();
+        handleDayRollover(true);
+      }
+    }
+
+    function startLiveClock() {
+      updateLiveClock();
+      if (clockTimer) clearInterval(clockTimer);
+      clockTimer = setInterval(updateLiveClock, 1000);
     }
 
     document.querySelectorAll('.add-btn').forEach(btn => {
