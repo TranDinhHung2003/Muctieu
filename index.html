@@ -224,6 +224,118 @@
       flex-shrink: 0;
     }
 
+    .chat-nav-btn {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      margin-top: 2px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      font-size: 1.15rem;
+      transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .chat-nav-btn:active {
+      transform: scale(0.92);
+      background: var(--surface-2);
+    }
+
+    .chat-nav-btn .nav-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      border: 2px solid var(--bg);
+    }
+
+    .chat-nav-btn .nav-badge.show {
+      display: inline-flex;
+    }
+
+    /* Chế độ trang tin nhắn: chỉ đồng hồ + khung chat */
+    body.chat-mode .sync-status,
+    body.chat-mode .role-banner,
+    body.chat-mode #app-footer,
+    body.chat-mode .weather-badge,
+    body.chat-mode #page-home,
+    body.chat-mode #page-history,
+    body.chat-mode .top-bar-title h1,
+    body.chat-mode #today-date,
+    body.chat-mode .chat-page-header {
+      display: none !important;
+    }
+
+    body.chat-mode .app-scroll {
+      overflow: hidden !important;
+    }
+
+    body.chat-mode .container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: max(10px, calc(var(--sab) + 8px));
+    }
+
+    body.chat-mode .top-bar {
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    body.chat-mode #main-content {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body.chat-mode #page-chat {
+      display: flex !important;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    body.chat-mode .chat-box {
+      flex: 1;
+      min-height: 0;
+      max-height: none;
+      height: 100%;
+    }
+
+    .chat-status {
+      margin-top: 4px;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .chat-bubble.mine .chat-status {
+      color: #86efac;
+      opacity: 0.85;
+    }
+
+    .chat-status.read {
+      color: #4ade80;
+      font-weight: 700;
+    }
+
     .live-clock {
       display: inline-flex;
       flex-direction: column;
@@ -1717,11 +1829,15 @@
 
     .chat-bubble .chat-meta {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 10px;
       font-size: 0.7rem;
       color: var(--text-muted);
       margin-bottom: 4px;
+    }
+
+    .chat-bubble:not(.mine) .chat-meta {
+      justify-content: flex-start;
     }
 
     .chat-bubble.mine .chat-meta {
@@ -2308,7 +2424,10 @@
           <span class="clock-ampm" id="clock-label">Đồng hồ realtime</span>
         </div>
       </div>
-      <div class="top-bar-spacer"></div>
+      <button type="button" class="chat-nav-btn" id="chat-nav-btn" aria-label="Tin nhắn" title="Tin nhắn">
+        💬
+        <span class="nav-badge" id="chat-nav-badge">0</span>
+      </button>
     </div>
     <div class="sync-status" id="sync-status">✓ Dữ liệu đã lưu trên server</div>
     <div class="role-banner admin hidden" id="role-banner">👤 Bạn đang ở tài khoản admin</div>
@@ -2489,7 +2608,7 @@
     <div id="page-chat" class="page">
       <div class="chat-page-header">
         <h2>Tin nhắn</h2>
-        <p id="chat-subtitle">Trao đổi giữa admin và tài khoản theo dõi</p>
+        <p id="chat-subtitle">Trao đổi nhanh</p>
         <div class="chat-ttl-note" title="Tin nhắn và ảnh tự xóa sau 30 phút">⏱ Tự xóa sau 30 phút</div>
       </div>
       <div class="chat-box">
@@ -2508,7 +2627,7 @@
           <div class="chat-compose">
             <input type="file" id="chat-image-input" accept="image/jpeg,image/png,image/webp,image/*" hidden>
             <button type="button" class="chat-attach-btn" id="chat-attach-btn" title="Gửi ảnh" aria-label="Gửi ảnh">🖼</button>
-            <input type="text" id="chat-input" maxlength="1000" placeholder="Nhập tin nhắn hoặc đính kèm ảnh..." autocomplete="off">
+            <input type="text" id="chat-input" maxlength="1000" placeholder="Nhập tin nhắn..." autocomplete="off">
             <button type="submit" id="chat-send">Gửi</button>
           </div>
         </form>
@@ -2758,6 +2877,7 @@
       els.pageHome.classList.toggle('active', isHome);
       els.pageHistory.classList.toggle('active', isHistory);
       if (els.pageChat) els.pageChat.classList.toggle('active', isChat);
+      document.body.classList.toggle('chat-mode', isChat);
       els.pageTitle.textContent = isHistory
         ? 'Doanh số các ngày'
         : isChat
@@ -2769,7 +2889,6 @@
       closeDrawer();
       if (isHistory) renderHistory(loadData());
       if (isChat) {
-        // Vào tin nhắn: tắt hiệu ứng thời tiết để dễ đọc chat
         if (typeof isWeatherEnabled === 'function' && isWeatherEnabled()) {
           setWeatherEnabled(false, { toast: false });
         }
@@ -2782,9 +2901,8 @@
           scrollChatToBottom();
         }, 50);
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       const appScroll = document.getElementById('app-scroll');
-      if (appScroll) appScroll.scrollTo({ top: 0, behavior: 'smooth' });
+      if (appScroll) appScroll.scrollTo({ top: 0, behavior: isChat ? 'auto' : 'smooth' });
     }
 
     async function api(url, options = {}) {
@@ -3685,6 +3803,17 @@
         localStorage.setItem(chatReadKey(), latest);
       } catch { /* ignore */ }
       updateChatBadge(0);
+      // Báo server: đã đọc → đối phương thấy "Đã đọc"
+      if (isLoggedIn) {
+        api('/messages/read', { method: 'POST', body: {} }).then((result) => {
+          if (Array.isArray(result.messages)) {
+            chatMessages = result.messages;
+            lastMessagesAt = result.updatedAt || lastMessagesAt;
+            const onChat = els.pageChat && els.pageChat.classList.contains('active');
+            if (onChat) renderChatMessages({ forceBottom: false });
+          }
+        }).catch(() => {});
+      }
     }
 
     function countUnreadMessages() {
@@ -3697,15 +3826,19 @@
     }
 
     function updateChatBadge(count) {
-      if (!els.chatBadge) return;
       const n = typeof count === 'number' ? count : countUnreadMessages();
-      if (n > 0) {
-        els.chatBadge.textContent = n > 99 ? '99+' : String(n);
-        els.chatBadge.classList.add('show');
-      } else {
-        els.chatBadge.textContent = '0';
-        els.chatBadge.classList.remove('show');
-      }
+      const apply = (el) => {
+        if (!el) return;
+        if (n > 0) {
+          el.textContent = n > 99 ? '99+' : String(n);
+          el.classList.add('show');
+        } else {
+          el.textContent = '0';
+          el.classList.remove('show');
+        }
+      };
+      apply(els.chatBadge);
+      apply(document.getElementById('chat-nav-badge'));
     }
 
     let chatPinnedToBottom = true;
@@ -3734,7 +3867,14 @@
         m.text || '',
         m.imageId || '',
         m.at || '',
+        m.status || 'sent',
       ].join(':')).join('|');
+    }
+
+    function messageStatusLabel(status) {
+      if (status === 'read') return 'Đã đọc';
+      if (status === 'delivered') return 'Đã nhận';
+      return 'Đã gửi';
     }
 
     function escapeHtml(str) {
@@ -3861,7 +4001,6 @@
       }
       els.chatMessages.innerHTML = chatMessages.map((m) => {
         const mine = m.from === currentUsername;
-        const roleLabel = m.role === 'viewer' ? 'theo dõi' : 'admin';
         const time = new Date(m.at).toLocaleString('vi-VN', {
           hour: '2-digit',
           minute: '2-digit',
@@ -3874,14 +4013,18 @@
         const imageHtml = m.imageId
           ? `<img class="chat-image" src="/api/messages/media/${encodeURIComponent(m.imageId)}" alt="Ảnh đính kèm" loading="lazy">`
           : '';
+        const status = m.status || 'sent';
+        const statusHtml = mine
+          ? `<div class="chat-status${status === 'read' ? ' read' : ''}">${escapeHtml(messageStatusLabel(status))}</div>`
+          : '';
         return `
           <div class="chat-bubble${mine ? ' mine' : ''}">
             <div class="chat-meta">
-              <span>${escapeHtml(m.from)} · ${roleLabel}</span>
               <span>${time}</span>
             </div>
             ${textHtml}
             ${imageHtml}
+            ${statusHtml}
           </div>
         `;
       }).join('');
@@ -4633,6 +4776,10 @@
 
     els.menuBtn.addEventListener('click', openDrawer);
     els.drawerOverlay.addEventListener('click', closeDrawer);
+    const chatNavBtn = document.getElementById('chat-nav-btn');
+    if (chatNavBtn) {
+      chatNavBtn.addEventListener('click', () => navigateTo('chat'));
+    }
     document.querySelectorAll('.drawer-item[data-nav]').forEach(btn => {
       btn.addEventListener('click', () => navigateTo(btn.dataset.nav));
     });
@@ -5133,6 +5280,7 @@
 
       scroller.addEventListener('touchstart', (e) => {
         if (e.touches.length !== 1) return;
+        if (document.body.classList.contains('chat-mode')) return;
         if (document.body.classList.contains('drawer-open')) return;
         if (document.querySelector('.modal-overlay.show')) return;
         if (raf) {

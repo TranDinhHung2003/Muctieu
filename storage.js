@@ -243,12 +243,20 @@ function normalizeMessagesStore(raw) {
       text,
       imageId: imageId || undefined,
       at: m.at || nowIso(),
+      status: normalizeMessageStatus(m.status),
+      deliveredAt: m.deliveredAt || undefined,
+      readAt: m.readAt || undefined,
     });
   }
   return {
     messages: kept.slice(-MAX_MESSAGES),
     updatedAt: raw.updatedAt || nowIso(),
   };
+}
+
+function normalizeMessageStatus(status) {
+  if (status === 'delivered' || status === 'read' || status === 'sent') return status;
+  return 'sent';
 }
 
 function pruneExpiredMessages(persist = true) {
@@ -403,6 +411,7 @@ async function addMessage({ from, role, text, imageDataUrl }) {
     text: clean,
     imageId,
     at: nowIso(),
+    status: 'sent',
   };
   store.messages = [...store.messages, msg].slice(-MAX_MESSAGES);
   store.updatedAt = nowIso();
@@ -410,6 +419,53 @@ async function addMessage({ from, role, text, imageDataUrl }) {
   saveMessagesToDisk(store);
   await saveMessagesToGitHub(store);
   return { message: msg, updatedAt: store.updatedAt };
+}
+
+function markMessagesDelivered(viewerUsername) {
+  const store = getMessagesStore();
+  const user = String(viewerUsername || '');
+  let changed = false;
+  const now = nowIso();
+  store.messages = (store.messages || []).map((m) => {
+    if (!m || m.from === user) return m;
+    if (m.status === 'delivered' || m.status === 'read') return m;
+    changed = true;
+    return Object.assign({}, m, {
+      status: 'delivered',
+      deliveredAt: m.deliveredAt || now,
+    });
+  });
+  if (changed) {
+    store.updatedAt = now;
+    memoryMessages = store;
+    saveMessagesToDisk(store);
+    saveMessagesToGitHub(store).catch(() => {});
+  }
+  return store;
+}
+
+function markMessagesRead(viewerUsername) {
+  const store = getMessagesStore();
+  const user = String(viewerUsername || '');
+  let changed = false;
+  const now = nowIso();
+  store.messages = (store.messages || []).map((m) => {
+    if (!m || m.from === user) return m;
+    if (m.status === 'read') return m;
+    changed = true;
+    return Object.assign({}, m, {
+      status: 'read',
+      deliveredAt: m.deliveredAt || now,
+      readAt: now,
+    });
+  });
+  if (changed) {
+    store.updatedAt = now;
+    memoryMessages = store;
+    saveMessagesToDisk(store);
+    saveMessagesToGitHub(store).catch(() => {});
+  }
+  return store;
 }
 
 module.exports = {
@@ -426,6 +482,8 @@ module.exports = {
   initMessagesStore,
   getMessagesStore,
   addMessage,
+  markMessagesDelivered,
+  markMessagesRead,
   pruneExpiredMessages,
   readChatImage,
 };

@@ -250,8 +250,9 @@ app.post('/api/restore', authMiddleware, adminOnly, async (req, res) => {
   res.json({ ok: true, updatedAt });
 });
 
-app.get('/api/messages', authMiddleware, (_req, res) => {
-  const store = storage.getMessagesStore();
+app.get('/api/messages', authMiddleware, (req, res) => {
+  // Người nhận đang online / đồng bộ → đánh dấu đã nhận
+  const store = storage.markMessagesDelivered(req.user.username);
   res.json({
     messages: store.messages || [],
     updatedAt: store.updatedAt,
@@ -262,6 +263,15 @@ app.get('/api/messages', authMiddleware, (_req, res) => {
 app.get('/api/messages/sync', authMiddleware, (_req, res) => {
   const store = storage.getMessagesStore();
   res.json({ updatedAt: store.updatedAt });
+});
+
+app.post('/api/messages/read', authMiddleware, (req, res) => {
+  const store = storage.markMessagesRead(req.user.username);
+  res.json({
+    ok: true,
+    messages: store.messages || [],
+    updatedAt: store.updatedAt,
+  });
 });
 
 app.get('/api/messages/media/:id', authMiddleware, (req, res) => {
