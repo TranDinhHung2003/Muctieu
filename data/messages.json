@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms62dn0rbel8w8",
-      "from": "admin",
-      "role": "admin",
-      "text": "Mẹ cá vào lưu biệt danh đi",
-      "at": "2026-07-29T12:31:48.171Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T12:31:51.902Z",
-      "readAt": "2026-07-29T12:33:33.260Z"
-    },
-    {
       "id": "ms63b9o4fxekaf",
       "from": "admin",
       "role": "admin",
@@ -45,5 +35,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T12:58:57.815Z"
+  "updatedAt": "2026-07-29T13:02:40.186Z"
 }
