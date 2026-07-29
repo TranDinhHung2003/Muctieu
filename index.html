@@ -1977,6 +1977,12 @@
         <span class="knob"></span>
       </button>
     </div>
+    <div class="drawer-item" id="notify-toggle-btn" role="button" tabindex="0" aria-pressed="true">
+      <span class="drawer-item-label">🔔 Thông báo máy</span>
+      <button type="button" class="switch on" id="notify-drawer-switch" role="switch" aria-checked="true" aria-label="Bật tắt thông báo trên máy">
+        <span class="knob"></span>
+      </button>
+    </div>
   </nav>
 
   <div class="container">
@@ -2642,6 +2648,9 @@
     }
 
     async function refreshFromServer(notify) {
+      const beforeKey = getTodayKey();
+      const beforeDay = appData && appData.days ? appData.days[beforeKey] : null;
+      const beforeNet = beforeDay ? calcNet(beforeDay) : null;
       const result = await api('/data');
       appData = stripLogsFromData(result.data || { days: {} });
       lastUpdatedAt = result.updatedAt || null;
@@ -2650,7 +2659,21 @@
       }
       calculate();
       updateSyncTime(result.updatedAt);
-      if (notify) showToast('Có dữ liệu mới từ admin');
+      if (notify) {
+        showToast('Có dữ liệu mới từ admin');
+        const afterNet = calcNet((appData.days || {})[beforeKey]);
+        let detail = 'Admin vừa cập nhật doanh thu hôm nay';
+        if (beforeNet != null && afterNet !== beforeNet) {
+          const delta = afterNet - beforeNet;
+          detail = (delta >= 0 ? 'Doanh thu +' : 'Doanh thu ') + formatMoney(delta)
+            + ' · hiện tại ' + formatMoney(afterNet);
+        }
+        showDeviceNotify('💰 Dữ liệu tiền mới', detail, {
+          tag: 'muctieu-money',
+          renotify: true,
+          data: { page: 'home' },
+        });
+      }
     }
 
     function updateSyncTime(updatedAt) {
@@ -2757,6 +2780,7 @@
         applyRoleUI(me.role || 'admin');
         startWeatherEffects();
         refreshMessages(false);
+        initDeviceNotifications();
       } catch (err) {
         showLogin(err.message);
         startLiveClock();
@@ -2789,6 +2813,7 @@
         startWeatherEffects();
         refreshMessages(false);
         showToast(result.role === 'viewer' ? 'Đăng nhập theo dõi · chỉ xem' : 'Đăng nhập admin thành công');
+        initDeviceNotifications();
       } catch (err) {
         els.loginError.textContent = err.message;
       } finally {
@@ -3551,9 +3576,19 @@
           markChatRead();
         } else {
           updateChatBadge();
-          const latest = list.length ? list[list.length - 1] : null;
-          if (notify && latest && latest.id !== prevLatest && latest.from !== currentUsername) {
-            showToast('💬 Tin nhắn mới từ ' + latest.from);
+        }
+        const latest = list.length ? list[list.length - 1] : null;
+        if (notify && latest && latest.id !== prevLatest && latest.from !== currentUsername) {
+          const preview = (latest.text && String(latest.text).trim())
+            || (latest.imageId ? '[Ảnh]' : 'Tin nhắn mới');
+          if (!onChat) showToast('💬 Tin nhắn mới từ ' + latest.from);
+          // Thông báo máy khi không đang xem chat, hoặc app đang ẩn
+          if (!onChat || document.hidden) {
+            showDeviceNotify(
+              '💬 Tin nhắn mới',
+              latest.from + ': ' + preview.slice(0, 120),
+              { tag: 'muctieu-chat', renotify: true, data: { page: 'chat' } }
+            );
           }
         }
       } catch {
@@ -3602,6 +3637,11 @@
     }
 
     function celebrateGoalComplete(goal, net) {
+      showDeviceNotify(
+        '🎉 Đã đạt mục tiêu!',
+        'Mục tiêu ' + formatMoney(goal) + ' · đạt ' + formatMoney(net),
+        { tag: 'muctieu-goal', renotify: true, data: { page: 'home' }, vibrate: [80, 40, 80, 40, 120] }
+      );
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         showToast('🎉 Chúc mừng! Đã hoàn thành mục tiêu');
         return;
@@ -3651,6 +3691,116 @@
       els.toast.classList.add('show');
       clearTimeout(els.toast._timer);
       els.toast._timer = setTimeout(() => els.toast.classList.remove('show'), 2200);
+    }
+
+    const NOTIFY_ENABLED_KEY = 'muctieu_device_notify';
+
+    function supportsDeviceNotify() {
+      return typeof window !== 'undefined' && 'Notification' in window;
+    }
+
+    function isDeviceNotifyEnabled() {
+      try {
+        return localStorage.getItem(NOTIFY_ENABLED_KEY) !== '0';
+      } catch {
+        return true;
+      }
+    }
+
+    function updateNotifyToggleUI() {
+      const enabled = isDeviceNotifyEnabled();
+      const permitted = supportsDeviceNotify() && Notification.permission === 'granted';
+      const on = enabled && (!supportsDeviceNotify() || Notification.permission !== 'denied');
+      const btn = document.getElementById('notify-toggle-btn');
+      const sw = document.getElementById('notify-drawer-switch');
+      if (btn) btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      if (sw) {
+        sw.classList.toggle('on', on);
+        sw.setAttribute('aria-checked', on ? 'true' : 'false');
+      }
+      if (btn) {
+        btn.title = !supportsDeviceNotify()
+          ? 'Trình duyệt không hỗ trợ thông báo'
+          : Notification.permission === 'denied'
+            ? 'Đã chặn thông báo — hãy bật lại trong cài đặt trình duyệt'
+            : permitted
+              ? (enabled ? 'Đang bật thông báo trên máy' : 'Đã tắt thông báo trên máy')
+              : 'Bấm để cho phép thông báo trên máy';
+      }
+    }
+
+    async function ensureNotifyPermission(interactive) {
+      if (!supportsDeviceNotify()) return false;
+      if (Notification.permission === 'granted') return true;
+      if (Notification.permission === 'denied') return false;
+      if (!interactive) return false;
+      try {
+        const result = await Notification.requestPermission();
+        updateNotifyToggleUI();
+        return result === 'granted';
+      } catch {
+        return false;
+      }
+    }
+
+    async function setDeviceNotifyEnabled(on, opts = {}) {
+      const next = !!on;
+      try {
+        localStorage.setItem(NOTIFY_ENABLED_KEY, next ? '1' : '0');
+      } catch { /* ignore */ }
+      if (next) {
+        const ok = await ensureNotifyPermission(true);
+        updateNotifyToggleUI();
+        if (opts.toast !== false) {
+          if (ok) showToast('Đã bật thông báo trên máy');
+          else if (!supportsDeviceNotify()) showToast('Trình duyệt không hỗ trợ thông báo');
+          else if (Notification.permission === 'denied') showToast('Thông báo bị chặn — mở cài đặt trình duyệt để bật lại');
+          else showToast('Chưa được cấp quyền thông báo');
+        }
+        return ok;
+      }
+      updateNotifyToggleUI();
+      if (opts.toast !== false) showToast('Đã tắt thông báo trên máy');
+      return false;
+    }
+
+    function showDeviceNotify(title, body, options = {}) {
+      if (!isDeviceNotifyEnabled() || !supportsDeviceNotify()) return null;
+      if (Notification.permission !== 'granted') return null;
+      try {
+        const n = new Notification(title || 'Mục tiêu chạy xe', {
+          body: body || '',
+          tag: options.tag || 'muctieu',
+          renotify: !!options.renotify,
+          silent: false,
+          data: options.data || {},
+        });
+        n.onclick = () => {
+          try { window.focus(); } catch { /* ignore */ }
+          if (options.data && options.data.page) {
+            try { navigateTo(options.data.page); } catch { /* ignore */ }
+          }
+          n.close();
+        };
+        if (navigator.vibrate) {
+          try { navigator.vibrate(options.vibrate || [40, 30, 40]); } catch { /* ignore */ }
+        }
+        setTimeout(() => { try { n.close(); } catch { /* ignore */ } }, options.ttl || 8000);
+        return n;
+      } catch {
+        return null;
+      }
+    }
+
+    async function initDeviceNotifications() {
+      updateNotifyToggleUI();
+      if (!isDeviceNotifyEnabled() || !supportsDeviceNotify()) return;
+      if (Notification.permission === 'default') {
+        // Xin quyền sau đăng nhập (cần thao tác người dùng trước đó — login đủ điều kiện)
+        await ensureNotifyPermission(true);
+      } else {
+        updateNotifyToggleUI();
+      }
     }
 
     function spawnTapRipple(x, y) {
@@ -3712,6 +3862,11 @@
         ? formatPoints(value) + ' điểm'
         : formatMoney(value);
       showToast('Đã cộng ' + displayVal + ' · ' + config.label);
+      showDeviceNotify(
+        '💰 Đã nhập ' + config.label,
+        'Cộng ' + displayVal,
+        { tag: 'muctieu-money', renotify: true, data: { page: 'home' } }
+      );
     }
 
     function openGoalModal() {
@@ -4386,6 +4541,30 @@
         e.preventDefault();
         e.stopPropagation();
         setWeatherEnabled(!isWeatherEnabled());
+      });
+    }
+
+    const notifyToggleBtn = document.getElementById('notify-toggle-btn');
+    const notifyDrawerSwitch = document.getElementById('notify-drawer-switch');
+    updateNotifyToggleUI();
+    if (notifyDrawerSwitch) {
+      notifyDrawerSwitch.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDeviceNotifyEnabled(!isDeviceNotifyEnabled());
+      });
+    }
+    if (notifyToggleBtn) {
+      notifyToggleBtn.addEventListener('click', (e) => {
+        if (e.target.closest('.switch')) return;
+        setDeviceNotifyEnabled(!isDeviceNotifyEnabled());
+      });
+      notifyToggleBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (e.target.closest('.switch')) return;
+          e.preventDefault();
+          setDeviceNotifyEnabled(!isDeviceNotifyEnabled());
+        }
       });
     }
 
