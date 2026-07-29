@@ -29,7 +29,15 @@
       "status": "read",
       "deliveredAt": "2026-07-29T08:55:37.897Z",
       "readAt": "2026-07-29T08:55:42.401Z"
+    },
+    {
+      "id": "ms5uv7hlra6fn2",
+      "from": "admin",
+      "role": "admin",
+      "text": "Hi",
+      "at": "2026-07-29T09:01:30.921Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T08:55:42.401Z"
+  "updatedAt": "2026-07-29T09:01:30.921Z"
 }
