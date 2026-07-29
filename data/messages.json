@@ -1,36 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms6717zpimn6xt",
-      "from": "admin",
-      "role": "admin",
-      "text": "Cuộc gọi thoại · Đã hủy",
-      "at": "2026-07-29T14:42:06.901Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T14:42:07.530Z",
-      "readAt": "2026-07-29T14:42:07.767Z",
-      "kind": "call",
-      "callEvent": "cancelled",
-      "callMode": "audio",
-      "durationSec": 0,
-      "callId": "cms6713jtss4ge"
-    },
-    {
-      "id": "ms671angbbobje",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "Cuộc gọi thoại · Đã từ chối",
-      "at": "2026-07-29T14:42:10.348Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T14:42:11.124Z",
-      "readAt": "2026-07-29T14:42:11.388Z",
-      "kind": "call",
-      "callEvent": "rejected",
-      "callMode": "audio",
-      "durationSec": 0,
-      "callId": "cms6713jtss4ge"
-    },
-    {
       "id": "ms67ely0pzkrvx",
       "from": "admin",
       "role": "admin",
@@ -89,5 +59,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:08:43.122Z"
+  "updatedAt": "2026-07-29T15:12:10.547Z"
 }
