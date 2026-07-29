@@ -1,21 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5nuoxwy2akfw",
-      "from": "admin",
-      "role": "admin",
-      "text": "30 phút tự xóa tin nhắn",
-      "at": "2026-07-29T05:45:09.572Z"
-    },
-    {
-      "id": "ms5ny4jaua0onc",
-      "from": "admin",
-      "role": "admin",
-      "text": "",
-      "imageId": "ms5ny4jaua0onc",
-      "at": "2026-07-29T05:47:49.751Z"
-    },
-    {
       "id": "ms5o2nrkttj2j7",
       "from": "admin",
       "role": "admin",
@@ -44,5 +29,5 @@
       "at": "2026-07-29T05:58:05.801Z"
     }
   ],
-  "updatedAt": "2026-07-29T06:15:00.780Z"
+  "updatedAt": "2026-07-29T06:18:20.371Z"
 }
