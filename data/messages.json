@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5qy59u1ky8pz",
-      "from": "admin",
-      "role": "admin",
-      "text": "Chào cậu",
-      "at": "2026-07-29T07:11:49.554Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T07:38:23.013Z",
-      "readAt": "2026-07-29T07:38:29.591Z"
-    },
-    {
       "id": "ms5rw22t1gdn5k",
       "from": "admin",
       "role": "admin",
@@ -26,8 +16,9 @@
       "role": "viewer",
       "text": "U",
       "at": "2026-07-29T07:41:33.833Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T07:42:17.971Z"
     }
   ],
-  "updatedAt": "2026-07-29T07:41:33.833Z"
+  "updatedAt": "2026-07-29T07:42:17.971Z"
 }
