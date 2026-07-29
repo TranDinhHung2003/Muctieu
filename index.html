@@ -2278,6 +2278,10 @@
       closeDrawer();
       if (isHistory) renderHistory(loadData());
       if (isChat) {
+        // Vào tin nhắn: tắt hiệu ứng thời tiết để dễ đọc chat
+        if (typeof isWeatherEnabled === 'function' && isWeatherEnabled()) {
+          setWeatherEnabled(false, { toast: false });
+        }
         markChatRead();
         renderChatMessages();
         refreshMessages(false);
