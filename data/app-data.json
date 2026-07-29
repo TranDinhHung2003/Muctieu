@@ -99,7 +99,7 @@
         "outside": 900000,
         "zoomPoints": 0,
         "highway": 0,
-        "tip": 0,
+        "tip": 1000,
         "entries": [
           {
             "id": "ms5lid0220np88",
@@ -118,11 +118,17 @@
             "field": "app",
             "value": 1000,
             "at": "2026-07-29T09:58:27.833Z"
+          },
+          {
+            "id": "ms5wxlyvw51ot7",
+            "field": "tip",
+            "value": 1000,
+            "at": "2026-07-29T09:59:22.231Z"
           }
         ]
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-07-29T09:58:27.994Z"
+  "updatedAt": "2026-07-29T09:59:22.395Z"
 }
