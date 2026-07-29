@@ -46,9 +46,10 @@
       "role": "admin",
       "text": "Ping",
       "at": "2026-07-29T09:01:59.759Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T09:02:01.749Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T09:02:01.749Z",
+      "readAt": "2026-07-29T09:07:15.345Z"
     }
   ],
-  "updatedAt": "2026-07-29T09:02:01.749Z"
+  "updatedAt": "2026-07-29T09:07:15.345Z"
 }
