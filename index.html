@@ -282,11 +282,6 @@
       display: none !important;
     }
 
-    /* Phiên bản luôn hiện để kiểm tra đã cập nhật */
-    body.chat-mode #app-build {
-      bottom: max(62px, calc(env(safe-area-inset-bottom, 0px) + 54px));
-    }
-
     body.chat-mode .app-scroll {
       overflow: hidden !important;
     }
@@ -1729,23 +1724,6 @@
       line-height: 1.5;
     }
 
-    #app-build {
-      position: fixed;
-      left: max(10px, env(safe-area-inset-left, 0px));
-      bottom: max(8px, calc(env(safe-area-inset-bottom, 0px) + 4px));
-      z-index: 60;
-      font-size: 0.68rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      color: rgba(148, 163, 184, 0.9);
-      background: rgba(15, 23, 42, 0.55);
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      border-radius: 999px;
-      padding: 3px 9px;
-      pointer-events: none;
-      backdrop-filter: blur(6px);
-    }
-
     .app-build-inline {
       display: inline-block;
       margin-top: 4px;
@@ -2983,13 +2961,11 @@
       <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
-    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 12.20260729e</span></footer>
+    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 12.20260729f</span></footer>
     </div>
   </div>
   </div>
   </div>
-
-  <div id="app-build" aria-hidden="true">v12.20260729e</div>
 
   <div class="modal-overlay" id="nickname-modal">
     <div class="modal">
@@ -3101,7 +3077,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '12.20260729e';
+    const APP_VERSION = '12.20260729f';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -3882,8 +3858,6 @@
       if (els.appFooter) {
         els.appFooter.innerHTML = COPYRIGHT_TEXT + '<br><span class="app-build-inline">' + APP_VERSION_LABEL + '</span>';
       }
-      const buildEl = document.getElementById('app-build');
-      if (buildEl) buildEl.textContent = 'v' + APP_VERSION;
     }
 
     function normalizeDay(day) {
@@ -6248,8 +6222,6 @@
     setupEdgeRubberBand();
     // Hiện phiên bản ngay khi mở (kể cả màn đăng nhập)
     try {
-      const buildEl = document.getElementById('app-build');
-      if (buildEl) buildEl.textContent = 'v' + APP_VERSION;
       if (els.appFooter) {
         els.appFooter.innerHTML = COPYRIGHT_TEXT + '<br><span class="app-build-inline">' + APP_VERSION_LABEL + '</span>';
       }
