@@ -1,5 +1,14 @@
 {
-  "messages": [],
+  "messages": [
+    {
+      "id": "ms6bb1o4iiontl",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "I",
+      "at": "2026-07-29T16:41:43.732Z",
+      "status": "sent"
+    }
+  ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
@@ -10,9 +19,9 @@
       "lastReadAt": "2026-07-29T15:46:33.648Z"
     },
     "theodoi": {
-      "lastDeliveredAt": "2026-07-29T16:41:40.934Z",
-      "lastReadAt": "2026-07-29T16:41:40.934Z"
+      "lastDeliveredAt": "2026-07-29T16:41:41.189Z",
+      "lastReadAt": "2026-07-29T16:41:41.189Z"
     }
   },
-  "updatedAt": "2026-07-29T16:41:40.934Z"
+  "updatedAt": "2026-07-29T16:41:43.732Z"
 }
