@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5qx8gpdws1nt",
-      "from": "admin",
-      "role": "admin",
-      "text": "Hello",
-      "at": "2026-07-29T07:11:07.033Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T07:38:23.013Z",
-      "readAt": "2026-07-29T07:38:29.591Z"
-    },
-    {
       "id": "ms5qy59u1ky8pz",
       "from": "admin",
       "role": "admin",
@@ -31,5 +21,5 @@
       "readAt": "2026-07-29T07:38:29.591Z"
     }
   ],
-  "updatedAt": "2026-07-29T07:38:29.591Z"
+  "updatedAt": "2026-07-29T07:41:08.966Z"
 }
