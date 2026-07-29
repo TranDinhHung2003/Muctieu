@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms685dkwt174zp",
-      "from": "admin",
-      "role": "admin",
-      "text": "Mlem",
-      "at": "2026-07-29T15:13:20.384Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T15:13:22.164Z",
-      "readAt": "2026-07-29T15:14:07.608Z"
-    },
-    {
       "id": "ms689y9zda1sbb",
       "from": "theodoi",
       "role": "viewer",
@@ -65,5 +55,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:43:01.493Z"
+  "updatedAt": "2026-07-29T15:43:21.911Z"
 }
