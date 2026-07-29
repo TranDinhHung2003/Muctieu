@@ -55,5 +55,15 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:43:21.911Z"
+  "receipts": {
+    "admin": {
+      "lastDeliveredAt": "2026-07-29T15:44:07.480Z",
+      "lastReadAt": "2026-07-29T15:44:07.480Z"
+    },
+    "theodoi": {
+      "lastDeliveredAt": "2026-07-29T15:43:01.493Z",
+      "lastReadAt": "2026-07-29T15:43:01.493Z"
+    }
+  },
+  "updatedAt": "2026-07-29T15:44:07.480Z"
 }
