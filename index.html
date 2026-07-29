@@ -41,34 +41,75 @@
 
     html {
       height: 100%;
-      scroll-behavior: smooth;
-      /* Ẩn thanh cuộn — 2 mép màn hình đồng bộ */
-      scrollbar-width: none; /* Firefox */
-      -ms-overflow-style: none; /* IE/Edge cũ */
+      height: 100dvh;
+      overflow: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
     }
 
     html::-webkit-scrollbar,
     body::-webkit-scrollbar,
     *::-webkit-scrollbar {
-      width: 0;
-      height: 0;
-      display: none;
-      background: transparent;
+      -webkit-appearance: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      display: none !important;
+      background: transparent !important;
     }
 
     html, body {
-      /* Cho phép kéo quá mép một chút rồi nảy về (rubber-band) */
-      overscroll-behavior-y: auto;
       overscroll-behavior-x: none;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
 
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+
+    /* Cắt thanh cuộn khỏi vùng nhìn thấy — hoạt động cả Safari cũ */
+    .app-scroll-clip {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .app-scroll {
+      height: 100%;
+      width: 100%;
+      overflow-x: hidden;
+      overflow-y: scroll; /* scroll (không auto) để iOS cũ mượt hơn */
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      overscroll-behavior-x: none;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      /* Đẩy thanh cuộn ra ngoài rồi cắt bởi .app-scroll-clip */
+      padding-right: 28px;
+      margin-right: -28px;
+      width: calc(100% + 28px);
+      box-sizing: content-box;
+    }
+
+    .app-scroll::-webkit-scrollbar {
+      -webkit-appearance: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      display: none !important;
+    }
+
     .chat-messages,
     .drawer,
-    .history-list,
-    .entries-list {
+    .history-list {
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
@@ -76,42 +117,21 @@
     /* Chế độ app từ màn hình chính: không còn giao diện Safari */
     html.standalone-app,
     html.standalone-app body {
-      min-height: 100dvh;
       background: var(--bg);
-      /* App: không zoom bằng chạm */
       touch-action: pan-x pan-y;
     }
 
     html.standalone-app body {
       position: relative;
-      overflow-x: clip;
+      overflow: hidden;
     }
 
     html.is-browser body {
-      /* Trên Safari thường: vẫn zoom 2 ngón được */
       touch-action: auto;
     }
 
     .container {
       will-change: transform;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100%;
-      min-height: 100dvh;
-      line-height: 1.5;
-    }
-
-    .container {
       max-width: 480px;
       margin: 0 auto;
       padding: 16px 16px 40px;
@@ -119,6 +139,12 @@
       padding-left: max(16px, env(safe-area-inset-left, 0px));
       padding-right: max(16px, env(safe-area-inset-right, 0px));
       padding-bottom: max(40px, calc(env(safe-area-inset-bottom, 0px) + 24px));
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     .top-bar {
@@ -1639,19 +1665,30 @@
 
     .chat-messages {
       flex: 1;
-      overflow-y: auto;
+      overflow-y: scroll;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: auto;
+      overscroll-behavior-y: contain;
       overscroll-behavior-x: none;
       touch-action: pan-y;
       padding: 14px 12px;
+      padding-right: 32px;
+      margin-right: -20px;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
       background:
         radial-gradient(ellipse 80% 40% at 50% 0%, rgba(59, 130, 246, 0.08), transparent 60%),
         var(--bg);
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      -webkit-appearance: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      display: none !important;
     }
 
     .chat-empty {
@@ -2240,6 +2277,8 @@
     </p>
   </nav>
 
+  <div class="app-scroll-clip">
+  <div class="app-scroll" id="app-scroll">
   <div class="container">
     <div id="login-panel" class="login-panel">
       <div class="login-card">
@@ -2483,6 +2522,8 @@
 
     <footer id="app-footer">Mục tiêu: 1.200.000đ / ngày · Dữ liệu lưu trên server</footer>
     </div>
+  </div>
+  </div>
   </div>
 
   <div class="modal-overlay" id="password-modal">
@@ -2742,6 +2783,8 @@
         }, 50);
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      const appScroll = document.getElementById('app-scroll');
+      if (appScroll) appScroll.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     async function api(url, options = {}) {
@@ -5030,49 +5073,94 @@
     }
 
     function setupEdgeRubberBand() {
+      const scroller = document.getElementById('app-scroll');
       const target = document.querySelector('.container');
-      if (!target) return;
-      const scroller = document.scrollingElement || document.documentElement;
+      if (!scroller || !target) return;
+
       let startY = 0;
+      let lastY = 0;
+      let lastT = 0;
+      let velocity = 0;
       let offset = 0;
       let pulling = false;
-      const MAX = 84;
-      const FACTOR = 0.32;
+      let raf = 0;
+      const MAX = 96;
+
+      const resist = (dy) => {
+        const sign = dy < 0 ? -1 : 1;
+        const d = Math.abs(dy);
+        // Càng kéo càng nặng — cảm giác cao su mượt
+        return sign * Math.min(MAX, (d * 0.42) / (1 + d / 220));
+      };
 
       const apply = (y) => {
         offset = y;
-        target.style.transform = y ? 'translate3d(0, ' + y + 'px, 0)' : '';
+        target.style.transform = y ? 'translate3d(0,' + y.toFixed(2) + 'px,0)' : '';
       };
 
       const springBack = () => {
+        if (raf) cancelAnimationFrame(raf);
         if (!offset) return;
-        target.style.transition = 'transform 0.38s cubic-bezier(0.22, 1, 0.36, 1)';
-        apply(0);
-        window.setTimeout(() => {
-          target.style.transition = '';
-        }, 400);
+        const from = offset;
+        const start = performance.now();
+        // Thêm quán tính nhẹ theo hướng kéo rồi về 0
+        const kick = Math.max(-18, Math.min(18, velocity * 12));
+        const peak = from + kick * 0.35;
+        const dur = 480;
+
+        const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+        const frame = (now) => {
+          const t = Math.min(1, (now - start) / dur);
+          let y;
+          if (t < 0.18) {
+            // nhún nhẹ theo quán tính
+            const u = easeOutCubic(t / 0.18);
+            y = from + (peak - from) * u;
+          } else {
+            const u = easeOutCubic((t - 0.18) / 0.82);
+            y = peak * (1 - u);
+          }
+          apply(Math.abs(y) < 0.4 ? 0 : y);
+          if (t < 1) raf = requestAnimationFrame(frame);
+          else {
+            apply(0);
+            raf = 0;
+          }
+        };
+        raf = requestAnimationFrame(frame);
       };
 
-      window.addEventListener('touchstart', (e) => {
+      scroller.addEventListener('touchstart', (e) => {
         if (e.touches.length !== 1) return;
         if (document.body.classList.contains('drawer-open')) return;
         if (document.querySelector('.modal-overlay.show')) return;
-        startY = e.touches[0].clientY;
+        if (raf) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+        startY = lastY = e.touches[0].clientY;
+        lastT = performance.now();
+        velocity = 0;
         pulling = true;
-        target.style.transition = '';
       }, { passive: true });
 
-      window.addEventListener('touchmove', (e) => {
+      scroller.addEventListener('touchmove', (e) => {
         if (!pulling || e.touches.length !== 1) return;
-        const dy = e.touches[0].clientY - startY;
+        const y = e.touches[0].clientY;
+        const now = performance.now();
+        const dt = Math.max(8, now - lastT);
+        velocity = (y - lastY) / dt;
+        lastY = y;
+        lastT = now;
+
+        const dy = y - startY;
         const top = scroller.scrollTop;
         const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
         let next = 0;
-        if (top <= 0 && dy > 0) {
-          next = Math.min(MAX, dy * FACTOR);
-        } else if (top >= maxScroll - 1 && dy < 0) {
-          next = Math.max(-MAX, dy * FACTOR);
-        } else {
+        if (top <= 0 && dy > 0) next = resist(dy);
+        else if (top >= maxScroll - 1 && dy < 0) next = resist(dy);
+        else {
           if (offset) apply(0);
           return;
         }
@@ -5084,8 +5172,8 @@
         pulling = false;
         springBack();
       };
-      window.addEventListener('touchend', endPull, { passive: true });
-      window.addEventListener('touchcancel', endPull, { passive: true });
+      scroller.addEventListener('touchend', endPull, { passive: true });
+      scroller.addEventListener('touchcancel', endPull, { passive: true });
     }
 
     function setupStandaloneAppMode() {
