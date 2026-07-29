@@ -55,8 +55,9 @@
       "role": "admin",
       "text": "Heloo em yêu",
       "at": "2026-07-29T12:04:20.380Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T12:04:22.584Z"
     }
   ],
-  "updatedAt": "2026-07-29T12:04:20.380Z"
+  "updatedAt": "2026-07-29T12:04:22.584Z"
 }
