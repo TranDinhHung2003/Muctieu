@@ -76,8 +76,9 @@
       "role": "admin",
       "text": "Em iu",
       "at": "2026-07-29T12:05:17.271Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T12:05:18.827Z"
     }
   ],
-  "updatedAt": "2026-07-29T12:05:17.271Z"
+  "updatedAt": "2026-07-29T12:05:18.827Z"
 }
