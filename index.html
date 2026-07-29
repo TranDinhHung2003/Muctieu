@@ -4902,29 +4902,61 @@
           showToast('Cần cho phép thông báo trước');
           return;
         }
-        const reg = await registerNotifyServiceWorker();
-        const subscribed = await subscribeWebPush(reg, { force: true });
-        if (!subscribed) {
-          showToast('Chưa đăng ký được push — mở từ icon màn hình chính');
-          return;
+        if (!isStandaloneApp()) {
+          showToast('iPhone: phải mở từ icon Màn hình chính');
         }
-        // Gửi sau 12 giây để kịp vuốt tắt app và kiểm tra
+        const reg = await registerNotifyServiceWorker();
+        // Không hủy đăng ký cũ mỗi lần — tránh race với Apple
+        const subscribed = await subscribeWebPush(reg, { force: false });
+        if (!subscribed) {
+          const forced = await subscribeWebPush(reg, { force: true });
+          if (!forced) {
+            showToast('Chưa đăng ký được push — mở từ icon màn hình chính');
+            return;
+          }
+        }
+        // Chờ APNs kịp nhận subscription mới
+        await new Promise((r) => setTimeout(r, 800));
+
         const result = await api('/push/test', {
           method: 'POST',
           body: {
             title: 'Mục tiêu chạy xe',
-            body: 'Thử khi đã vuốt tắt app — nếu thấy là OK',
+            body: 'Tin 2/2: Nhận được khi đã vuốt tắt app',
             delaySec: 12,
           },
         });
-        showToast('Trong 12 giây: VUỐT TẮT app ngay — rồi chờ thông báo');
-        updatePushStatusHint('Đang chờ gửi thử sau 12s — hãy vuốt tắt app');
-        if (result && result.delayed) {
-          /* server sẽ gửi sau delay */
+
+        const imm = result.immediate || {};
+        if (!imm.sent) {
+          showToast('Tin 1 không gửi được — kiểm tra quyền thông báo / đăng ký lại');
+          updatePushStatusHint('Lỗi: server không gửi được (sent=0). Mở lại app từ icon.');
+          return;
         }
+
+        showToast('Thấy tin 1 chưa? → VUỐT TẮT app ngay, đợi tin 2 (~12–17s)');
+        updatePushStatusHint('Đã gửi tin 1 (' + imm.sent + '). Vuốt tắt app — chờ tin 2 sau 12s');
       } catch (err) {
         showToast(err.message || 'Không gửi được thông báo thử');
       }
+    }
+
+    async function refreshPushStatusHint() {
+      if (!isLoggedIn) return;
+      try {
+        const st = await api('/push/status');
+        const last = st.lastTest;
+        const stats = st.stats || {};
+        if (last && last.phase) {
+          if (last.sent > 0) {
+            updatePushStatusHint('Lần thử ' + last.phase + ': gửi OK ' + last.sent + '/' + last.attempted);
+          } else {
+            updatePushStatusHint('Lần thử ' + last.phase + ': THẤT BẠI (sent=0). ' + (last.error || ''));
+          }
+        } else {
+          updatePushStatusHint('Đăng ký máy: ' + (stats.subscriptions || 0) + ' — bấm Thử thông báo');
+        }
+      } catch { /* ignore */ }
     }
 
     async function unsubscribeWebPush() {
@@ -4954,12 +4986,15 @@
         }
       } else if (Notification.permission === 'granted') {
         updateNotifyToggleUI();
-        const subscribed = await subscribeWebPush(reg, { force: true });
-        if (!subscribed) console.warn('Web Push chưa đăng ký được');
+        const subscribed = await subscribeWebPush(reg, { force: false });
+        if (!subscribed) {
+          await subscribeWebPush(reg, { force: true });
+        }
       } else {
         updateNotifyToggleUI();
         updatePushStatusHint('Thông báo bị chặn trong cài đặt máy');
       }
+      refreshPushStatusHint();
     }
 
     // Mỗi lần mở lại app / hiện tab → đồng bộ đăng ký push
