@@ -530,8 +530,8 @@ app.post('/api/restore', authMiddleware, adminOnly, async (req, res) => {
 });
 
 app.get('/api/messages', authMiddleware, (req, res) => {
-  // Người nhận đang online / đồng bộ → đánh dấu đã nhận
-  storage.markMessagesDelivered(req.user.username);
+  // Không đánh dấu đã nhận/đã đọc ở đây — chỉ trả danh sách.
+  // Đã nhận: khi push tới máy / client ack. Đã đọc: khi vào trang tin nhắn.
   const pub = storage.publicMessagesStore();
   res.json({
     messages: pub.messages || [],
@@ -544,6 +544,23 @@ app.get('/api/messages', authMiddleware, (req, res) => {
 app.get('/api/messages/sync', authMiddleware, (_req, res) => {
   const store = storage.getMessagesStore();
   res.json({ updatedAt: store.updatedAt });
+});
+
+/** Máy đã nhận thông báo / đồng bộ tin → đối phương thấy "Đã nhận" */
+app.post('/api/messages/delivered', authMiddleware, (req, res) => {
+  const messageId = String((req.body || {}).messageId || '').trim();
+  if (messageId) {
+    storage.markMessageDeliveredById(messageId);
+  } else {
+    storage.markMessagesDelivered(req.user.username);
+  }
+  const pub = storage.publicMessagesStore();
+  res.json({
+    ok: true,
+    messages: pub.messages || [],
+    nicknames: getDisplayNamesForViewer(req.user.username),
+    updatedAt: pub.updatedAt,
+  });
 });
 
 app.post('/api/messages/read', authMiddleware, (req, res) => {
@@ -591,32 +608,42 @@ app.post('/api/messages', authMiddleware, async (req, res) => {
       ? String(text).slice(0, 120)
       : (imageDataUrl ? '[Ảnh]' : 'Tin nhắn mới');
     const others = pushNotify.listOtherUsernames(getAllUsernames(), req.user.username);
-    await Promise.all(others.map((recipient) => {
+    const messageId = result.message && result.message.id;
+    await Promise.all(others.map(async (recipient) => {
       const names = getDisplayNamesForViewer(recipient);
       const fromName = names[req.user.username]
         || defaultNickname(req.user.username, req.user.role);
-      return pushNotify.sendPushToUsernames([recipient], {
-        title: '💬 Tin nhắn mới',
-        body: fromName + ': ' + preview,
-        tag: 'muctieu-chat',
-        page: 'chat',
-        type: 'chat',
-        messageId: result.message && result.message.id,
-        from: req.user.username,
-        fromName,
-        text: text || (imageDataUrl ? '[Ảnh]' : ''),
-        imageId: (result.message && result.message.imageId) || null,
-        at: (result.message && result.message.at) || new Date().toISOString(),
-      }).catch((err) => {
+      try {
+        const pushResult = await pushNotify.sendPushToUsernames([recipient], {
+          title: '💬 Tin nhắn mới',
+          body: fromName + ': ' + preview,
+          tag: 'muctieu-chat',
+          page: 'chat',
+          type: 'chat',
+          messageId,
+          from: req.user.username,
+          fromName,
+          text: text || (imageDataUrl ? '[Ảnh]' : ''),
+          imageId: (result.message && result.message.imageId) || null,
+          at: (result.message && result.message.at) || new Date().toISOString(),
+        });
+        // Thông báo đã gửi lên máy đối phương → "Đã nhận"
+        if (pushResult && pushResult.sent > 0 && messageId) {
+          storage.markMessageDeliveredById(messageId);
+        }
+      } catch (err) {
         console.warn('Push chat lỗi', recipient, err && err.message);
-        return null;
-      });
+      }
     }));
+    const latestStore = storage.getMessagesStore();
+    const fresh = messageId
+      ? (latestStore.messages || []).find((m) => m && m.id === messageId)
+      : null;
     res.json({
       ok: true,
-      message: result.message,
+      message: storage.publicMessage(fresh || result.message),
       nicknames: getDisplayNamesForViewer(req.user.username),
-      updatedAt: result.updatedAt,
+      updatedAt: latestStore.updatedAt || result.updatedAt,
     });
   } catch (err) {
     res.status(400).json({ error: err.message || 'Không gửi được tin nhắn' });

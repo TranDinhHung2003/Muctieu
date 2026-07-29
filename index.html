@@ -3123,7 +3123,7 @@
       <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
-    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.7.2</span></footer>
+    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.7.3</span></footer>
     <div class="scroll-end-spacer" aria-hidden="true"></div>
     </div>
   </div>
@@ -3243,7 +3243,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.7.2';
+    const APP_VERSION = '1.7.3';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -3828,26 +3828,28 @@
 
     async function syncChatAfterPush(payload) {
       applyIncomingChatFromPush(payload || {});
-      // Luôn kéo lại từ server để khớp id/status thật
+      // Nhận push trên máy → "Đã nhận" (chưa phải đã đọc)
+      if (payload && (payload.messageId || payload.type === 'chat' || payload.page === 'chat')) {
+        ackChatDelivered(payload.messageId || null);
+      }
       try {
         await refreshMessages(false);
       } catch { /* ignore */ }
-      const onChat = els.pageChat && els.pageChat.classList.contains('active');
-      if (onChat) {
+      if (isChatPageActive()) {
         renderChatMessages({ forceBottom: true });
         scrollChatToBottom();
+        markChatRead();
       }
     }
 
     function onVisibilitySync() {
       if (document.visibilityState === 'visible' && isLoggedIn) {
         checkForUpdates();
-        // Mở lại app / hiện tab → luôn tải lại tin nhắn (tránh khung chat trống dù đã có push)
         refreshMessages(false).then(() => {
-          const onChat = els.pageChat && els.pageChat.classList.contains('active');
-          if (onChat) {
+          if (isChatPageActive()) {
             renderChatMessages({ forceBottom: true });
             scrollChatToBottom();
+            markChatRead();
           }
         }).catch(() => {});
       }
@@ -4484,7 +4486,16 @@
       }
     }
 
-    function markChatRead() {
+    function isChatPageActive() {
+      return !!(
+        els.pageChat
+        && els.pageChat.classList.contains('active')
+        && document.body.classList.contains('chat-mode')
+        && document.visibilityState === 'visible'
+      );
+    }
+
+    function markChatBadgeLocal() {
       const latest = chatMessages.length
         ? chatMessages[chatMessages.length - 1].at
         : (lastMessagesAt || new Date().toISOString());
@@ -4492,18 +4503,37 @@
         localStorage.setItem(chatReadKey(), latest);
       } catch { /* ignore */ }
       updateChatBadge(0);
-      // Báo server: đã đọc → đối phương thấy "Đã đọc"
-      if (isLoggedIn) {
-        api('/messages/read', { method: 'POST', body: {} }).then((result) => {
-          if (result.nicknames) applyNicknames(result.nicknames);
-          if (Array.isArray(result.messages)) {
-            chatMessages = mergePendingChatMessages(result.messages);
-            lastMessagesAt = result.updatedAt || lastMessagesAt;
-            const onChat = els.pageChat && els.pageChat.classList.contains('active');
-            if (onChat) renderChatMessages({ forceBottom: false });
-          }
-        }).catch(() => {});
-      }
+    }
+
+    /** Chỉ đánh dấu "Đã đọc" khi đang mở mục Tin nhắn và app đang hiện */
+    function markChatRead() {
+      if (!isChatPageActive()) return;
+      markChatBadgeLocal();
+      if (!isLoggedIn) return;
+      api('/messages/read', { method: 'POST', body: {} }).then((result) => {
+        if (result.nicknames) applyNicknames(result.nicknames);
+        if (Array.isArray(result.messages)) {
+          chatMessages = mergePendingChatMessages(result.messages);
+          lastMessagesAt = result.updatedAt || lastMessagesAt;
+          if (isChatPageActive()) renderChatMessages({ forceBottom: false });
+        }
+      }).catch(() => {});
+    }
+
+    /** Máy đã nhận tin (push / đồng bộ) → đối phương thấy "Đã nhận" — không phải đã đọc */
+    function ackChatDelivered(messageId) {
+      if (!isLoggedIn) return;
+      // Đang xem chat thì để markChatRead xử lý thành đã đọc
+      if (isChatPageActive()) return;
+      const body = messageId ? { messageId } : {};
+      api('/messages/delivered', { method: 'POST', body }).then((result) => {
+        if (result.nicknames) applyNicknames(result.nicknames);
+        if (Array.isArray(result.messages)) {
+          chatMessages = mergePendingChatMessages(result.messages);
+          lastMessagesAt = result.updatedAt || lastMessagesAt;
+          updateChatBadge();
+        }
+      }).catch(() => {});
     }
 
     function countUnreadMessages() {
@@ -4852,7 +4882,7 @@
         chatMessages = mergePendingChatMessages(list);
         const nextKey = chatListKey(chatMessages);
         lastMessagesAt = result.updatedAt || lastMessagesAt;
-        const onChat = els.pageChat && els.pageChat.classList.contains('active');
+        const onChat = isChatPageActive();
         const latest = chatMessages.length ? chatMessages[chatMessages.length - 1] : null;
         if (onChat) {
           // Tin mới → luôn kéo xuống cuối để thấy bubble
@@ -4860,6 +4890,7 @@
           if (prevKey !== nextKey || nickChanged || hasNew) {
             renderChatMessages({ forceBottom: hasNew || chatPinnedToBottom });
           }
+          // Chỉ khi đang xem mục tin nhắn mới đánh dấu đã đọc
           markChatRead();
         } else {
           updateChatBadge();

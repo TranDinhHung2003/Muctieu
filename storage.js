@@ -723,6 +723,30 @@ async function addMessage({ from, role, text, imageDataUrl, kind, callEvent, cal
   return { message: publicMessage, updatedAt: store.updatedAt };
 }
 
+function markMessageDeliveredById(messageId) {
+  const id = String(messageId || '').trim();
+  if (!id) return getMessagesStore();
+  const store = getMessagesStore();
+  let changed = false;
+  const now = nowIso();
+  store.messages = (store.messages || []).map((m) => {
+    if (!m || m.id !== id) return m;
+    if (m.status === 'delivered' || m.status === 'read') return m;
+    changed = true;
+    return Object.assign({}, m, {
+      status: 'delivered',
+      deliveredAt: m.deliveredAt || now,
+    });
+  });
+  if (changed) {
+    store.updatedAt = now;
+    memoryMessages = store;
+    saveMessagesToDisk(store);
+    saveMessagesToGitHub(store).catch(() => {});
+  }
+  return store;
+}
+
 function markMessagesDelivered(viewerUsername) {
   const store = getMessagesStore();
   const user = String(viewerUsername || '');
@@ -786,6 +810,7 @@ module.exports = {
   getStoredNicknames,
   setPeerNickname,
   addMessage,
+  markMessageDeliveredById,
   markMessagesDelivered,
   markMessagesRead,
   pruneExpiredMessages,
