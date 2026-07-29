@@ -1384,6 +1384,20 @@
       color: var(--text-muted);
     }
 
+    .chat-ttl-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      background: rgba(245, 158, 11, 0.12);
+      color: #fbbf24;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
     .chat-box {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -1451,15 +1465,101 @@
       word-break: break-word;
     }
 
-    .chat-compose {
-      display: flex;
-      gap: 8px;
-      padding: 10px;
+    .chat-bubble .chat-image {
+      display: block;
+      width: 100%;
+      max-width: 240px;
+      max-height: 280px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-top: 6px;
+      cursor: zoom-in;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .chat-bubble .chat-text + .chat-image {
+      margin-top: 8px;
+    }
+
+    .chat-compose-wrap {
       border-top: 1px solid var(--border);
       background: var(--surface);
     }
 
-    .chat-compose input {
+    .chat-image-preview {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px 0;
+    }
+
+    .chat-image-preview.show {
+      display: flex;
+    }
+
+    .chat-image-preview img {
+      width: 52px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 10px;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+
+    .chat-image-preview .preview-meta {
+      flex: 1;
+      min-width: 0;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .chat-image-preview .preview-meta strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-preview-clear {
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-muted);
+      border-radius: 10px;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-size: 1rem;
+    }
+
+    .chat-compose {
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      align-items: center;
+    }
+
+    .chat-attach-btn {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1.15rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    .chat-attach-btn:hover {
+      background: var(--surface-2);
+    }
+
+    .chat-compose input[type="text"] {
       flex: 1;
       min-width: 0;
       background: var(--bg);
@@ -1470,20 +1570,58 @@
       font-size: 0.92rem;
     }
 
-    .chat-compose button {
+    .chat-compose button[type="submit"] {
       flex-shrink: 0;
       border: none;
       border-radius: 12px;
       padding: 0 16px;
+      height: 44px;
       background: var(--accent);
       color: #052e16;
       font-weight: 800;
       cursor: pointer;
     }
 
-    .chat-compose button:disabled {
+    .chat-compose button[type="submit"]:disabled,
+    .chat-attach-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    .chat-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 130;
+      display: none;
+      place-items: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.84);
+      backdrop-filter: blur(6px);
+    }
+
+    .chat-lightbox.show {
+      display: grid;
+    }
+
+    .chat-lightbox img {
+      max-width: min(96vw, 900px);
+      max-height: 88vh;
+      border-radius: 12px;
+      object-fit: contain;
+    }
+
+    .chat-lightbox-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      border: 0;
+      border-radius: 999px;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
     }
 
     /* —— Weather effects —— */
@@ -2048,16 +2186,34 @@
       <div class="chat-page-header">
         <h2>Tin nhắn</h2>
         <p id="chat-subtitle">Trao đổi giữa admin và tài khoản theo dõi</p>
+        <div class="chat-ttl-note" title="Tin nhắn và ảnh tự xóa sau 30 phút">⏱ Tự xóa sau 30 phút</div>
       </div>
       <div class="chat-box">
         <div class="chat-messages" id="chat-messages">
-          <div class="chat-empty">Chưa có tin nhắn.<br>Gửi lời chào để bắt đầu trò chuyện.</div>
+          <div class="chat-empty">Chưa có tin nhắn.<br>Gửi chữ hoặc ảnh — tự xóa sau 30 phút.</div>
         </div>
-        <form class="chat-compose" id="chat-form">
-          <input type="text" id="chat-input" maxlength="1000" placeholder="Nhập tin nhắn..." autocomplete="off">
-          <button type="submit" id="chat-send">Gửi</button>
+        <form class="chat-compose-wrap" id="chat-form">
+          <div class="chat-image-preview" id="chat-image-preview">
+            <img id="chat-preview-img" alt="Xem trước ảnh">
+            <div class="preview-meta">
+              <strong id="chat-preview-name">Ảnh đã chọn</strong>
+              <span id="chat-preview-size">Sẵn sàng gửi</span>
+            </div>
+            <button type="button" class="chat-preview-clear" id="chat-preview-clear" title="Bỏ ảnh" aria-label="Bỏ ảnh">×</button>
+          </div>
+          <div class="chat-compose">
+            <input type="file" id="chat-image-input" accept="image/jpeg,image/png,image/webp,image/*" hidden>
+            <button type="button" class="chat-attach-btn" id="chat-attach-btn" title="Gửi ảnh" aria-label="Gửi ảnh">🖼</button>
+            <input type="text" id="chat-input" maxlength="1000" placeholder="Nhập tin nhắn hoặc đính kèm ảnh..." autocomplete="off">
+            <button type="submit" id="chat-send">Gửi</button>
+          </div>
         </form>
       </div>
+    </div>
+
+    <div class="chat-lightbox" id="chat-lightbox" aria-hidden="true">
+      <button type="button" class="chat-lightbox-close" id="chat-lightbox-close" aria-label="Đóng">×</button>
+      <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
     <footer id="app-footer">Mục tiêu: 1.200.000đ / ngày · Dữ liệu lưu trên server</footer>
@@ -2158,6 +2314,7 @@
     let chatMessages = [];
     let lastMessagesAt = null;
     let chatPollBusy = false;
+    let pendingChatImage = null; // { dataUrl, name, size }
 
     const FIELD_MAP = {
       app: { input: 'app-income', locked: 'locked-app', label: 'tiền app', preview: 'preview-app', money: true },
@@ -2218,6 +2375,16 @@
       chatSend: document.getElementById('chat-send'),
       chatBadge: document.getElementById('chat-badge'),
       chatSubtitle: document.getElementById('chat-subtitle'),
+      chatAttachBtn: document.getElementById('chat-attach-btn'),
+      chatImageInput: document.getElementById('chat-image-input'),
+      chatImagePreview: document.getElementById('chat-image-preview'),
+      chatPreviewImg: document.getElementById('chat-preview-img'),
+      chatPreviewName: document.getElementById('chat-preview-name'),
+      chatPreviewSize: document.getElementById('chat-preview-size'),
+      chatPreviewClear: document.getElementById('chat-preview-clear'),
+      chatLightbox: document.getElementById('chat-lightbox'),
+      chatLightboxImg: document.getElementById('chat-lightbox-img'),
+      chatLightboxClose: document.getElementById('chat-lightbox-close'),
       menuBtn: document.getElementById('menu-btn'),
       drawer: document.getElementById('drawer'),
       drawerOverlay: document.getElementById('drawer-overlay'),
@@ -2321,7 +2488,10 @@
       lastMessagesAt = null;
       chatMessages = [];
       goalMetToday = false;
+      pendingChatImage = null;
       closeCelebrate();
+      closeChatLightbox();
+      clearPendingChatImage();
       stopRealtimeSync();
       document.body.classList.remove('role-viewer', 'role-admin');
       document.body.classList.remove('logged-in');
@@ -3177,10 +3347,105 @@
         .replace(/"/g, '&quot;');
     }
 
+    function formatBytes(n) {
+      if (!n || n < 1024) return (n || 0) + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+      return (n / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function clearPendingChatImage() {
+      pendingChatImage = null;
+      if (els.chatImageInput) els.chatImageInput.value = '';
+      if (els.chatImagePreview) els.chatImagePreview.classList.remove('show');
+      if (els.chatPreviewImg) els.chatPreviewImg.removeAttribute('src');
+    }
+
+    function showPendingChatImage(dataUrl, name, size) {
+      pendingChatImage = { dataUrl, name: name || 'Ảnh', size: size || 0 };
+      if (els.chatPreviewImg) els.chatPreviewImg.src = dataUrl;
+      if (els.chatPreviewName) els.chatPreviewName.textContent = pendingChatImage.name;
+      if (els.chatPreviewSize) els.chatPreviewSize.textContent = formatBytes(pendingChatImage.size) + ' · sẵn sàng gửi';
+      if (els.chatImagePreview) els.chatImagePreview.classList.add('show');
+    }
+
+    function compressImageFile(file, maxSide = 1280, quality = 0.72) {
+      return new Promise((resolve, reject) => {
+        if (!file || !file.type || !file.type.startsWith('image/')) {
+          reject(new Error('File không phải ảnh'));
+          return;
+        }
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Không đọc được ảnh'));
+        reader.onload = () => {
+          const img = new Image();
+          img.onerror = () => reject(new Error('Ảnh không hợp lệ'));
+          img.onload = () => {
+            let w = img.naturalWidth || img.width;
+            let h = img.naturalHeight || img.height;
+            if (!w || !h) {
+              reject(new Error('Ảnh trống'));
+              return;
+            }
+            const scale = Math.min(1, maxSide / Math.max(w, h));
+            w = Math.max(1, Math.round(w * scale));
+            h = Math.max(1, Math.round(h * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            let q = quality;
+            let dataUrl = canvas.toDataURL('image/jpeg', q);
+            // Giữ dưới ~650KB base64 (~490KB binary) để server nhận được
+            while (dataUrl.length > 650 * 1024 && q > 0.4) {
+              q -= 0.08;
+              dataUrl = canvas.toDataURL('image/jpeg', q);
+            }
+            if (dataUrl.length > 900 * 1024) {
+              reject(new Error('Ảnh vẫn quá lớn sau khi nén'));
+              return;
+            }
+            const approxBytes = Math.round((dataUrl.length - 'data:image/jpeg;base64,'.length) * 0.75);
+            resolve({ dataUrl, size: approxBytes, name: file.name || 'anh.jpg' });
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleChatImagePick(e) {
+      const file = e.target && e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        showToast('Đang nén ảnh...');
+        const compressed = await compressImageFile(file);
+        showPendingChatImage(compressed.dataUrl, compressed.name, compressed.size);
+        showToast('Đã đính kèm ảnh');
+      } catch (err) {
+        clearPendingChatImage();
+        showToast(err.message || 'Không xử lý được ảnh');
+      }
+    }
+
+    function openChatLightbox(src) {
+      if (!els.chatLightbox || !els.chatLightboxImg || !src) return;
+      els.chatLightboxImg.src = src;
+      els.chatLightbox.classList.add('show');
+      els.chatLightbox.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeChatLightbox() {
+      if (!els.chatLightbox) return;
+      els.chatLightbox.classList.remove('show');
+      els.chatLightbox.setAttribute('aria-hidden', 'true');
+      if (els.chatLightboxImg) els.chatLightboxImg.removeAttribute('src');
+    }
+
     function renderChatMessages() {
       if (!els.chatMessages) return;
       if (!chatMessages.length) {
-        els.chatMessages.innerHTML = '<div class="chat-empty">Chưa có tin nhắn.<br>Gửi lời chào để bắt đầu trò chuyện.</div>';
+        els.chatMessages.innerHTML = '<div class="chat-empty">Chưa có tin nhắn.<br>Gửi chữ hoặc ảnh — tự xóa sau 30 phút.</div>';
         return;
       }
       els.chatMessages.innerHTML = chatMessages.map((m) => {
@@ -3192,16 +3457,26 @@
           day: '2-digit',
           month: '2-digit',
         });
+        const textHtml = m.text
+          ? `<div class="chat-text">${escapeHtml(m.text)}</div>`
+          : '';
+        const imageHtml = m.imageId
+          ? `<img class="chat-image" src="/api/messages/media/${encodeURIComponent(m.imageId)}" alt="Ảnh đính kèm" loading="lazy">`
+          : '';
         return `
           <div class="chat-bubble${mine ? ' mine' : ''}">
             <div class="chat-meta">
               <span>${escapeHtml(m.from)} · ${roleLabel}</span>
               <span>${time}</span>
             </div>
-            <div class="chat-text">${escapeHtml(m.text)}</div>
+            ${textHtml}
+            ${imageHtml}
           </div>
         `;
       }).join('');
+      els.chatMessages.querySelectorAll('.chat-image').forEach((img) => {
+        img.addEventListener('click', () => openChatLightbox(img.src));
+      });
       scrollChatToBottom();
     }
 
@@ -3236,26 +3511,35 @@
       if (e) e.preventDefault();
       if (!isLoggedIn) return;
       const text = (els.chatInput && els.chatInput.value || '').trim();
-      if (!text) {
-        showToast('Nhập nội dung tin nhắn');
+      const image = pendingChatImage && pendingChatImage.dataUrl ? pendingChatImage.dataUrl : null;
+      if (!text && !image) {
+        showToast('Nhập tin nhắn hoặc chọn ảnh');
         return;
       }
       if (els.chatSend) els.chatSend.disabled = true;
+      if (els.chatAttachBtn) els.chatAttachBtn.disabled = true;
       try {
-        const result = await api('/messages', { method: 'POST', body: { text } });
+        const body = {};
+        if (text) body.text = text;
+        if (image) body.image = image;
+        const result = await api('/messages', { method: 'POST', body });
         if (result.message) {
           chatMessages = [...chatMessages, result.message];
           lastMessagesAt = result.updatedAt || lastMessagesAt;
           if (els.chatInput) els.chatInput.value = '';
+          clearPendingChatImage();
           renderChatMessages();
           markChatRead();
         } else {
           await refreshMessages(false);
+          clearPendingChatImage();
+          if (els.chatInput) els.chatInput.value = '';
         }
       } catch (err) {
         showToast(err.message || 'Không gửi được tin nhắn');
       } finally {
         if (els.chatSend) els.chatSend.disabled = false;
+        if (els.chatAttachBtn) els.chatAttachBtn.disabled = false;
         if (els.chatInput) els.chatInput.focus();
       }
     }
@@ -3583,6 +3867,24 @@
     els.resetBtn.addEventListener('click', resetToday);
     els.loginForm.addEventListener('submit', handleLogin);
     if (els.chatForm) els.chatForm.addEventListener('submit', sendChatMessage);
+    if (els.chatAttachBtn && els.chatImageInput) {
+      els.chatAttachBtn.addEventListener('click', () => els.chatImageInput.click());
+      els.chatImageInput.addEventListener('change', handleChatImagePick);
+    }
+    if (els.chatPreviewClear) {
+      els.chatPreviewClear.addEventListener('click', clearPendingChatImage);
+    }
+    if (els.chatLightboxClose) {
+      els.chatLightboxClose.addEventListener('click', closeChatLightbox);
+    }
+    if (els.chatLightbox) {
+      els.chatLightbox.addEventListener('click', (e) => {
+        if (e.target === els.chatLightbox) closeChatLightbox();
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeChatLightbox();
+    });
     els.logoutBtn.addEventListener('click', openLogoutModal);
     document.getElementById('logout-cancel').addEventListener('click', () => els.logoutModal.classList.remove('show'));
     document.getElementById('logout-confirm').addEventListener('click', handleLogout);

@@ -79,7 +79,7 @@ function initUsers() {
 
 const app = express();
 app.set('trust proxy', 1);
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '3mb' }));
 app.use(cookieParser());
 
 app.get('/api/health', (_req, res) => {
@@ -255,6 +255,7 @@ app.get('/api/messages', authMiddleware, (_req, res) => {
   res.json({
     messages: store.messages || [],
     updatedAt: store.updatedAt,
+    ttlMinutes: 30,
   });
 });
 
@@ -263,10 +264,21 @@ app.get('/api/messages/sync', authMiddleware, (_req, res) => {
   res.json({ updatedAt: store.updatedAt });
 });
 
+app.get('/api/messages/media/:id', authMiddleware, (req, res) => {
+  const image = storage.readChatImage(req.params.id);
+  if (!image || !image.buffer || !image.buffer.length) {
+    return res.status(404).json({ error: 'Không tìm thấy ảnh' });
+  }
+  res.setHeader('Content-Type', image.mime || 'image/jpeg');
+  res.setHeader('Cache-Control', 'private, max-age=60');
+  res.send(image.buffer);
+});
+
 app.post('/api/messages', authMiddleware, async (req, res) => {
   const text = String((req.body || {}).text || '').trim();
-  if (!text) {
-    return res.status(400).json({ error: 'Vui lòng nhập nội dung tin nhắn' });
+  const imageDataUrl = (req.body || {}).image || null;
+  if (!text && !imageDataUrl) {
+    return res.status(400).json({ error: 'Vui lòng nhập nội dung hoặc chọn ảnh' });
   }
   if (text.length > 1000) {
     return res.status(400).json({ error: 'Tin nhắn tối đa 1000 ký tự' });
@@ -276,6 +288,7 @@ app.post('/api/messages', authMiddleware, async (req, res) => {
       from: req.user.username,
       role: req.user.role,
       text,
+      imageDataUrl,
     });
     res.json({
       ok: true,
@@ -283,7 +296,7 @@ app.post('/api/messages', authMiddleware, async (req, res) => {
       updatedAt: result.updatedAt,
     });
   } catch (err) {
-    res.status(500).json({ error: 'Không gửi được tin nhắn: ' + err.message });
+    res.status(400).json({ error: err.message || 'Không gửi được tin nhắn' });
   }
 });
 
@@ -298,10 +311,15 @@ async function start() {
   await storage.initAppStore();
   await storage.initMessagesStore();
 
+  setInterval(() => {
+    try { storage.pruneExpiredMessages(true); } catch { /* ignore */ }
+  }, 60 * 1000);
+
   app.listen(PORT, '0.0.0.0', () => {
     console.log('Server chạy tại http://0.0.0.0:' + PORT);
     console.log('Data dir:', DATA_DIR);
     console.log('Admin:', ADMIN_USERNAME, '| Theo dõi:', VIEWER_USERNAME);
+    console.log('Tin nhắn tự xóa sau', Math.round(storage.MESSAGE_TTL_MS / 60000), 'phút');
     if (storage.GITHUB_TOKEN) {
       console.log('Lưu bền GitHub: bật · repo', storage.GITHUB_REPO, '· branch', storage.GITHUB_BRANCH);
     } else {
