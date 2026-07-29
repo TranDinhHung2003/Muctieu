@@ -75,7 +75,6 @@ function ensureUser(store, username, password, role) {
     password_hash: bcrypt.hashSync(password, 10),
     role,
     nickname: defaultNickname(username, role),
-    peerAliases: {},
     updated_at: nowIso(),
   });
   return true;
@@ -92,50 +91,33 @@ function initUsers() {
     console.log('Đã tạo tài khoản theo dõi:', VIEWER_USERNAME);
     changed = true;
   }
-  // Bổ sung biệt danh / peerAliases cho user cũ
+  // Bổ sung biệt danh cho user cũ
   usersStore.users.forEach((u) => {
     if (!u.nickname || !String(u.nickname).trim()) {
       u.nickname = defaultNickname(u.username, u.role);
-      changed = true;
-    }
-    if (!u.peerAliases || typeof u.peerAliases !== 'object') {
-      u.peerAliases = {};
       changed = true;
     }
   });
   if (changed) saveUsersStore(usersStore);
 }
 
-/** Tên hiển thị theo góc nhìn của viewer (biệt danh đặt cho người khác) */
-function getDisplayNamesForViewer(viewerUsername) {
+/** Biệt danh dùng chung — cả hai tài khoản thấy cùng một tên */
+function getNicknamesMap() {
   const store = loadUsersStore();
-  const viewer = (store.users || []).find((u) => u && u.username === viewerUsername) || null;
-  const aliases = (viewer && viewer.peerAliases && typeof viewer.peerAliases === 'object')
-    ? viewer.peerAliases
-    : {};
   const map = {};
   (store.users || []).forEach((u) => {
     if (!u || !u.username) return;
-    if (u.username === viewerUsername) {
-      map[u.username] = 'Bạn';
-      return;
-    }
-    map[u.username] = normalizeNickname(
-      aliases[u.username],
-      defaultNickname(u.username, u.role)
-    );
+    map[u.username] = normalizeNickname(u.nickname, defaultNickname(u.username, u.role));
   });
   return map;
 }
 
-function getNicknamesMap() {
-  // Giữ tương thích cũ — mặc định theo role
-  const store = loadUsersStore();
-  const map = {};
-  (store.users || []).forEach((u) => {
-    if (!u || !u.username) return;
-    map[u.username] = defaultNickname(u.username, u.role);
-  });
+/** Tên hiển thị trong chat: bản thân = "Bạn", người khác = biệt danh chung */
+function getDisplayNamesForViewer(viewerUsername) {
+  const map = getNicknamesMap();
+  if (viewerUsername && map[viewerUsername] !== undefined) {
+    map[viewerUsername] = 'Bạn';
+  }
   return map;
 }
 
@@ -143,7 +125,7 @@ function publicUserPayload(user) {
   return {
     username: user.username,
     role: user.role,
-    nickname: defaultNickname(user.username, user.role),
+    nickname: normalizeNickname(user.nickname, defaultNickname(user.username, user.role)),
   };
 }
 
@@ -259,7 +241,7 @@ app.get('/api/me', (req, res) => {
 });
 
 app.post('/api/nickname', authMiddleware, (req, res) => {
-  // Đặt biệt danh CHO ĐỐI PHƯƠNG (chỉ mình thấy trong khung chat)
+  // Đặt biệt danh CHO ĐỐI PHƯƠNG — lưu chung, cả hai cùng thấy
   const body = req.body || {};
   const rawNick = String(body.nickname || '');
   const nickname = normalizeNickname(rawNick, '');
@@ -271,11 +253,6 @@ app.post('/api/nickname', authMiddleware, (req, res) => {
   }
 
   const store = loadUsersStore();
-  const me = store.users.find((u) => u.username === req.user.username);
-  if (!me) {
-    return res.status(404).json({ error: 'Không tìm thấy tài khoản' });
-  }
-
   let targetUsername = String(body.username || body.forUsername || '').trim();
   if (!targetUsername) {
     const other = (store.users || []).find((u) => u && u.username && u.username !== req.user.username);
@@ -292,9 +269,8 @@ app.post('/api/nickname', authMiddleware, (req, res) => {
     return res.status(404).json({ error: 'Không tìm thấy đối phương' });
   }
 
-  if (!me.peerAliases || typeof me.peerAliases !== 'object') me.peerAliases = {};
-  me.peerAliases[targetUsername] = nickname;
-  me.updated_at = nowIso();
+  target.nickname = nickname;
+  target.updated_at = nowIso();
   saveUsersStore(store);
 
   res.json({

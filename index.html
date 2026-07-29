@@ -3037,7 +3037,7 @@
   <div class="modal-overlay" id="nickname-modal">
     <div class="modal">
       <h2>Đặt biệt danh đối phương</h2>
-      <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 14px">Tên này chỉ bạn thấy trong khung chat. Đối phương không bị đổi tên phía họ. Tối đa 24 ký tự.</p>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 14px">Tên này cả hai tài khoản đều thấy trong khung chat. Admin đặt tên cho theo dõi (hoặc ngược lại) — tối đa 24 ký tự.</p>
       <label for="nickname-input">Biệt danh gọi đối phương</label>
       <input type="text" id="nickname-input" maxlength="24" placeholder="vd: Baby Shark" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text);margin-top:8px;margin-bottom:8px">
       <div class="login-error" id="nickname-error"></div>
@@ -3144,7 +3144,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.5.6';
+    const APP_VERSION = '1.5.7';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -3434,7 +3434,7 @@
       const peerName = displayNameFor(peerUser);
       if (els.chatPeerName) els.chatPeerName.textContent = peerName;
       if (els.chatPeerSub) {
-        els.chatPeerSub.textContent = 'Biệt danh đối phương · tự xóa sau 30 phút';
+        els.chatPeerSub.textContent = 'Biệt danh dùng chung · tự xóa sau 30 phút';
       }
     }
 
@@ -3479,7 +3479,7 @@
         closeNicknameModal();
         renderChatMessages({ forceBottom: false });
         updateChatPeerHeader();
-        showToast('Đã đặt biệt danh cho đối phương');
+        showToast('Đã đặt biệt danh (cả hai đều thấy)');
       } catch (err) {
         if (els.nicknameError) els.nicknameError.textContent = err.message || 'Không lưu được biệt danh';
       }
