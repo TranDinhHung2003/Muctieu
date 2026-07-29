@@ -4773,7 +4773,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=6', { scope: '/' });
+        const reg = await navigator.serviceWorker.register('/sw.js?v=7', { scope: '/' });
         await navigator.serviceWorker.ready;
         return reg;
       } catch {
@@ -4789,11 +4789,12 @@
         const keyRes = await api('/push/vapid-public-key');
         const publicKey = keyRes && keyRes.publicKey;
         if (!publicKey) return false;
+        const appKey = urlBase64ToUint8Array(publicKey);
         let sub = await reg.pushManager.getSubscription();
         if (!sub) {
           sub = await reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey),
+            applicationServerKey: appKey,
           });
         }
         await api('/push/subscribe', {
@@ -4803,7 +4804,31 @@
         return true;
       } catch (err) {
         console.warn('Không đăng ký Web Push:', err);
-        return false;
+        // Thử hủy đăng ký cũ rồi tạo lại 1 lần (thường do VAPID đổi)
+        try {
+          const old = await reg.pushManager.getSubscription();
+          if (old) {
+            try {
+              await api('/push/unsubscribe', { method: 'POST', body: { endpoint: old.endpoint } });
+            } catch { /* ignore */ }
+            try { await old.unsubscribe(); } catch { /* ignore */ }
+          }
+          const keyRes = await api('/push/vapid-public-key');
+          const publicKey = keyRes && keyRes.publicKey;
+          if (!publicKey) return false;
+          const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
+          });
+          await api('/push/subscribe', {
+            method: 'POST',
+            body: { subscription: sub.toJSON() },
+          });
+          return true;
+        } catch (err2) {
+          console.warn('Đăng ký lại Web Push thất bại:', err2);
+          return false;
+        }
       }
     }
 
@@ -4828,14 +4853,26 @@
       if (!isDeviceNotifyEnabled() || !supportsDeviceNotify()) return;
       if (Notification.permission === 'default') {
         const ok = await ensureNotifyPermission(true);
-        if (ok) await subscribeWebPush(reg);
+        if (ok) {
+          const subscribed = await subscribeWebPush(reg);
+          if (!subscribed) showToast('Chưa đăng ký được thông báo đẩy — mở lại app từ màn hình chính');
+        }
       } else if (Notification.permission === 'granted') {
         updateNotifyToggleUI();
-        await subscribeWebPush(reg);
+        const subscribed = await subscribeWebPush(reg);
+        if (!subscribed) console.warn('Web Push chưa đăng ký được');
       } else {
         updateNotifyToggleUI();
       }
     }
+
+    // Mỗi lần mở lại app / hiện tab → đăng ký lại push (tránh mất subscription)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible' || !isLoggedIn) return;
+      if (!isDeviceNotifyEnabled() || !supportsDeviceNotify()) return;
+      if (Notification.permission !== 'granted') return;
+      registerNotifyServiceWorker().then((reg) => subscribeWebPush(reg)).catch(() => {});
+    });
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', (event) => {

@@ -1,5 +1,5 @@
-/* Service worker v6: PWA + Web Push thông báo khi app đóng */
-const SW_VERSION = 'muctieu-sw-v6';
+/* Service worker v7: PWA + Web Push bền khi app đóng */
+const SW_VERSION = 'muctieu-sw-v7';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

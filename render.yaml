@@ -2,11 +2,13 @@ services:
   - type: web
     name: muctieu-chay-xe
     runtime: node
-    plan: free
+    # Starter: dịch vụ không bị sleep như gói free
+    plan: starter
     region: singapore
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
@@ -28,3 +30,12 @@ services:
         value: cursor/muc-tieu-chay-xe-becf
       - key: GITHUB_DATA_PATH
         value: data/app-data.json
+      - key: GITHUB_MESSAGES_PATH
+        value: data/messages.json
+      - key: GITHUB_VAPID_PATH
+        value: data/vapid.json
+      - key: GITHUB_PUSH_PATH
+        value: data/push-subscriptions.json
+      - key: KEEP_ALIVE_MS
+        value: "300000"
+      # Render tự gắn RENDER_EXTERNAL_URL — server dùng để tự ping giữ máy

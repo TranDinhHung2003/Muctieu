@@ -125,10 +125,12 @@ app.use(express.json({ limit: '3mb' }));
 app.use(cookieParser());
 
 app.get('/api/health', (_req, res) => {
+  const pushStats = pushNotify.getStats ? pushNotify.getStats() : null;
   res.json({
     ok: true,
     time: nowIso(),
     durable: !!storage.GITHUB_TOKEN,
+    push: pushStats,
   });
 });
 
@@ -265,6 +267,31 @@ function pushToOthers(exceptUsername, payload) {
   });
 }
 
+function startKeepAlive() {
+  const ms = Math.max(60 * 1000, Number(process.env.KEEP_ALIVE_MS || 5 * 60 * 1000) || 5 * 60 * 1000);
+  const base = String(
+    process.env.KEEP_ALIVE_URL
+    || process.env.RENDER_EXTERNAL_URL
+    || ''
+  ).replace(/\/$/, '');
+  if (!base) {
+    console.log('Keep-alive: chưa có RENDER_EXTERNAL_URL / KEEP_ALIVE_URL (GitHub Action vẫn ping được).');
+    return;
+  }
+  const ping = () => {
+    fetch(base + '/api/health')
+      .then((r) => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+      })
+      .catch((err) => {
+        console.warn('Keep-alive lỗi:', err && err.message ? err.message : err);
+      });
+  };
+  setTimeout(ping, 20 * 1000);
+  setInterval(ping, ms);
+  console.log('Keep-alive bật mỗi', Math.round(ms / 1000), 's →', base + '/api/health');
+}
+
 app.get('/api/push/vapid-public-key', authMiddleware, (_req, res) => {
   res.json({ publicKey: pushNotify.getPublicKey() });
 });
@@ -302,7 +329,7 @@ app.put('/api/data', authMiddleware, adminOnly, async (req, res) => {
     if (pushPayload && typeof pushPayload === 'object') {
       const title = String(pushPayload.title || 'Cập nhật doanh thu').trim() || 'Cập nhật doanh thu';
       const body = String(pushPayload.body || 'Có cập nhật số tiền mới').trim() || 'Có cập nhật số tiền mới';
-      pushToOthers(req.user.username, {
+      await pushToOthers(req.user.username, {
         title,
         body,
         tag: 'muctieu-money',
@@ -415,7 +442,7 @@ app.post('/api/messages', authMiddleware, async (req, res) => {
     const preview = text
       ? String(text).slice(0, 120)
       : (imageDataUrl ? '[Ảnh]' : 'Tin nhắn mới');
-    pushToOthers(req.user.username, {
+    await pushToOthers(req.user.username, {
       title: '💬 Tin nhắn mới',
       body: fromName + ': ' + preview,
       tag: 'muctieu-chat',
@@ -466,6 +493,8 @@ async function start() {
   initUsers();
   await storage.initAppStore();
   await storage.initMessagesStore();
+  await pushNotify.init();
+  startKeepAlive();
 
   setInterval(() => {
     try { storage.pruneExpiredMessages(true); } catch { /* ignore */ }
@@ -476,10 +505,11 @@ async function start() {
     console.log('Data dir:', DATA_DIR);
     console.log('Admin:', ADMIN_USERNAME, '| Theo dõi:', VIEWER_USERNAME);
     console.log('Tin nhắn tự xóa sau', Math.round(storage.MESSAGE_TTL_MS / 60000), 'phút');
+    console.log('Web Push public key:', (pushNotify.getPublicKey() || '').slice(0, 16) + '...');
     if (storage.GITHUB_TOKEN) {
       console.log('Lưu bền GitHub: bật · repo', storage.GITHUB_REPO, '· branch', storage.GITHUB_BRANCH);
     } else {
-      console.warn('Chưa có GITHUB_TOKEN — dữ liệu có thể mất khi Render sleep. Thêm GITHUB_TOKEN trên Render.');
+      console.warn('Chưa có GITHUB_TOKEN — dữ liệu/push có thể mất khi Render restart. Thêm GITHUB_TOKEN trên Render.');
     }
   });
 }
