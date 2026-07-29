@@ -85,12 +85,13 @@
       "role": "admin",
       "text": "Gọi điện thui bỏ r 😂",
       "at": "2026-07-29T15:05:42.816Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T15:05:45.088Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:05:42.816Z"
+  "updatedAt": "2026-07-29T15:05:45.088Z"
 }
