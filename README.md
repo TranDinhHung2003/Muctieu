@@ -36,18 +36,19 @@ Mở http://localhost:3000
 | `GITHUB_REPO` | `TranDinhHung2003/Muctieu` |
 | `GITHUB_BRANCH` | `cursor/muc-tieu-chay-xe-becf` |
 
-### Tạo GITHUB_TOKEN (quan trọng)
+### Render luôn chạy (không sleep)
 
-Để `theodoi` vẫn xem được số tiền khi admin đã thoát / Render sleep:
+- `render.yaml` dùng **plan: starter** (không bị tắt như free).
+- Server tự ping `/api/health` qua `RENDER_EXTERNAL_URL`.
+- GitHub Action `.github/workflows/keep-render-alive.yml` ping mỗi 10 phút (có thể set secret `RENDER_HEALTH_URL` nếu URL khác).
 
-1. GitHub → **Settings** → **Developer settings** → **Personal access tokens**
-2. Tạo token (fine-grained hoặc classic) với quyền **Contents: Read and write** cho repo `Muctieu`
-3. Dán vào Render env `GITHUB_TOKEN`
+### Thông báo đẩy khi thoát app
 
-Khi admin thêm tiền → lưu lên GitHub. Khi server khởi động lại → tự tải về. Tài khoản theo dõi chỉ cần đăng nhập `theodoi` là thấy.
+1. Cần `GITHUB_TOKEN` để lưu bền khóa Web Push + đăng ký máy.
+2. Mỗi tài khoản mở app **một lần**, cho phép thông báo (iPhone: mở từ biểu tượng màn hình chính).
+3. Sau đó tắt app vẫn nhận tin nhắn / số tiền nhập trên thanh thông báo.
 
 ## Lưu ý
 
-- Render Free: lần mở đầu sau sleep có thể chậm ~30–50 giây
-- Không có `GITHUB_TOKEN` thì dữ liệu dễ mất khi server sleep
+- Không có `GITHUB_TOKEN` thì dữ liệu và Web Push dễ mất khi server restart
 - Đổi mật khẩu ngay trên production
