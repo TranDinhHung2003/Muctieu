@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5rw22t1gdn5k",
-      "from": "admin",
-      "role": "admin",
-      "text": "Xin chào",
-      "at": "2026-07-29T07:38:11.717Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T07:38:23.013Z",
-      "readAt": "2026-07-29T07:38:29.591Z"
-    },
-    {
       "id": "ms5s0e15xg2jok",
       "from": "theodoi",
       "role": "viewer",
@@ -89,5 +79,5 @@
       "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T08:07:47.957Z"
+  "updatedAt": "2026-07-29T08:08:14.090Z"
 }
