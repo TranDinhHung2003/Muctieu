@@ -26,9 +26,18 @@
       "role": "viewer",
       "text": "Lại qq 😂",
       "at": "2026-07-29T11:21:53.719Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T11:21:54.674Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T11:21:54.674Z",
+      "readAt": "2026-07-29T11:21:54.939Z"
+    },
+    {
+      "id": "ms5zw6meazkwla",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "Guhg",
+      "at": "2026-07-29T11:22:14.534Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T11:21:54.674Z"
+  "updatedAt": "2026-07-29T11:22:14.534Z"
 }
