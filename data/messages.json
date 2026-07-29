@@ -186,17 +186,18 @@
       "role": "viewer",
       "text": "Cuộc gọi nhỡ · Cuộc gọi thoại",
       "at": "2026-07-29T14:35:47.489Z",
-      "status": "sent",
+      "status": "delivered",
       "kind": "call",
       "callEvent": "missed",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms66smqmipzfk"
+      "callId": "cms66smqmipzfk",
+      "deliveredAt": "2026-07-29T14:35:48.747Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:35:47.489Z"
+  "updatedAt": "2026-07-29T14:35:48.747Z"
 }
