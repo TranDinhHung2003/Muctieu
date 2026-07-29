@@ -186,18 +186,27 @@
       "role": "viewer",
       "text": "Cuộc gọi nhỡ · Cuộc gọi thoại",
       "at": "2026-07-29T14:35:47.489Z",
-      "status": "delivered",
+      "status": "read",
       "kind": "call",
       "callEvent": "missed",
       "callMode": "audio",
       "durationSec": 0,
       "callId": "cms66smqmipzfk",
-      "deliveredAt": "2026-07-29T14:35:48.747Z"
+      "deliveredAt": "2026-07-29T14:35:48.747Z",
+      "readAt": "2026-07-29T14:35:48.975Z"
+    },
+    {
+      "id": "ms66tnxgdibssd",
+      "from": "admin",
+      "role": "admin",
+      "text": "9",
+      "at": "2026-07-29T14:36:14.308Z",
+      "status": "sent"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:35:48.747Z"
+  "updatedAt": "2026-07-29T14:36:14.308Z"
 }
