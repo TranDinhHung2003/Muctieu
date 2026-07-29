@@ -2,12 +2,14 @@ require('dotenv').config();
 
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const storage = require('./storage');
 const pushNotify = require('./push-notify');
+const { attachCallSignaling } = require('./call-signaling');
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -672,11 +674,42 @@ async function start() {
     try { storage.pruneExpiredMessages(true); } catch { /* ignore */ }
   }, 60 * 1000);
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const httpServer = http.createServer(app);
+  attachCallSignaling(httpServer, {
+    jwt,
+    jwtSecret: JWT_SECRET,
+    cookieName: COOKIE_NAME,
+    onCallInvite: ({ from, to, mode, callId, peerOnline }) => {
+      // Luôn gửi push để máy kia hiện thông báo cuộc gọi (kể cả khi app nền)
+      const names = getDisplayNamesForViewer(to);
+      const fromName = names[from] || defaultNickname(from, from === VIEWER_USERNAME ? 'viewer' : 'admin');
+      const isVideo = mode === 'video';
+      pushNotify.sendPushToUsernames([to], {
+        title: isVideo ? '📹 Cuộc gọi video' : '📞 Cuộc gọi thoại',
+        body: fromName + (isVideo ? ' đang gọi video…' : ' đang gọi…'),
+        tag: 'muctieu-call',
+        page: 'chat',
+        type: 'call',
+        callId,
+        mode: isVideo ? 'video' : 'audio',
+        from,
+        fromName,
+        at: nowIso(),
+      }).catch((err) => {
+        console.warn('Push cuộc gọi lỗi:', err && err.message ? err.message : err);
+      });
+      if (!peerOnline) {
+        console.log('Cuộc gọi: đối phương chưa online WS, đã gửi push', to);
+      }
+    },
+  });
+
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log('Server chạy tại http://0.0.0.0:' + PORT);
     console.log('Data dir:', DATA_DIR);
     console.log('Admin:', ADMIN_USERNAME, '| Theo dõi:', VIEWER_USERNAME);
     console.log('Tin nhắn tự xóa sau', Math.round(storage.MESSAGE_TTL_MS / 60000), 'phút');
+    console.log('WebSocket gọi điện: /ws/call');
     console.log('Web Push public key:', (pushNotify.getPublicKey() || '').slice(0, 16) + '...');
     if (storage.GITHUB_TOKEN) {
       console.log('Lưu bền GitHub: bật · repo', storage.GITHUB_REPO, '· branch', storage.GITHUB_BRANCH);

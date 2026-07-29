@@ -1,5 +1,5 @@
-/* Service worker v12: Push hệ thống chỉ khi app ở nền/tắt — dùng Cache flag (iOS) */
-const SW_VERSION = 'muctieu-sw-v12';
+/* Service worker v13: Push cuộc gọi + chat; hệ thống chỉ khi app nền */
+const SW_VERSION = 'muctieu-sw-v13';
 const FOREGROUND_CACHE = 'muctieu-runtime-v1';
 const FOREGROUND_URL = '/__muctieu_foreground';
 const FOREGROUND_TTL_MS = 25000;
@@ -78,6 +78,8 @@ function buildPushPayload(data) {
     text: (data && data.text) || null,
     imageId: (data && data.imageId) || null,
     at: (data && data.at) || null,
+    callId: (data && data.callId) || null,
+    mode: (data && data.mode) || null,
   };
 }
 
