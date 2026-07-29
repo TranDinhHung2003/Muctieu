@@ -116,9 +116,10 @@
       "role": "viewer",
       "text": "Ru",
       "at": "2026-07-29T12:19:48.097Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T12:19:50.709Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T12:19:50.709Z",
+      "readAt": "2026-07-29T12:22:15.190Z"
     }
   ],
-  "updatedAt": "2026-07-29T12:19:50.709Z"
+  "updatedAt": "2026-07-29T12:22:15.190Z"
 }
