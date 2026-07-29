@@ -59,7 +59,15 @@
       "status": "read",
       "deliveredAt": "2026-07-29T09:13:30.764Z",
       "readAt": "2026-07-29T09:14:27.349Z"
+    },
+    {
+      "id": "ms5vc6mnyti9wi",
+      "from": "admin",
+      "role": "admin",
+      "text": "Em có nhận được tin nhắn không",
+      "at": "2026-07-29T09:14:42.959Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T09:14:27.349Z"
+  "updatedAt": "2026-07-29T09:14:42.959Z"
 }
