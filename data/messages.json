@@ -204,11 +204,20 @@
       "callMode": "audio",
       "durationSec": 0,
       "callId": "cms6713jtss4ge"
+    },
+    {
+      "id": "ms67ely0pzkrvx",
+      "from": "admin",
+      "role": "admin",
+      "text": "",
+      "imageId": "ms67ely0pzkrvx",
+      "at": "2026-07-29T14:52:31.513Z",
+      "status": "sent"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:52:12.601Z"
+  "updatedAt": "2026-07-29T14:52:31.513Z"
 }
