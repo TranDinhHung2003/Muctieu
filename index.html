@@ -3608,7 +3608,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.6.3';
+    const APP_VERSION = '1.6.4';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -4196,13 +4196,15 @@
 
       function signalKey(msg) {
         if (!msg) return '';
+        // Không dùng `at` — cùng callId/type chỉ xử lý 1 lần
+        const cand = msg.candidate && (msg.candidate.candidate || msg.candidate);
         return [
           msg.type || '',
           msg.callId || '',
           msg.from || '',
-          msg.at || '',
-          msg.sdp && msg.sdp.sdp ? String(msg.sdp.sdp).slice(0, 40) : '',
-          msg.candidate && msg.candidate.candidate ? String(msg.candidate.candidate).slice(0, 40) : '',
+          msg.sdp && msg.sdp.type ? msg.sdp.type : '',
+          msg.sdp && msg.sdp.sdp ? String(msg.sdp.sdp).length + ':' + String(msg.sdp.sdp).slice(0, 24) : '',
+          cand ? String(cand).slice(0, 48) : '',
         ].join('|');
       }
 
@@ -4218,20 +4220,20 @@
       }
 
       async function send(msg) {
-        let wsOk = false;
-        if (ws && ws.readyState === 1) {
-          try {
-            ws.send(JSON.stringify(msg));
-            wsOk = true;
-          } catch { wsOk = false; }
-        }
-        // HTTP là đường chính — luôn gửi để 2 máy nhận qua poll
+        // Chỉ HTTP — tránh gửi kép WS+HTTP (gây invite trùng / báo bận sai)
         try {
           await api('/call/signal', { method: 'POST', body: msg });
           return true;
         } catch (err) {
           console.warn('call signal http', err);
-          return wsOk;
+          // Fallback WS nếu HTTP lỗi
+          if (ws && ws.readyState === 1) {
+            try {
+              ws.send(JSON.stringify(msg));
+              return true;
+            } catch { /* ignore */ }
+          }
+          return false;
         }
       }
 
@@ -4546,9 +4548,19 @@
 
       async function onInvite(msg) {
         if (!msg || !msg.from || !msg.callId) return;
+        // Đang cuộc gọi với CÙNG người → gộp callId, không báo bận
         if (callState !== 'idle') {
           if (callId === msg.callId) return;
-          send({ type: 'call-busy', to: msg.from, callId: msg.callId });
+          if (callPeer === msg.from && (callState === 'ringing' || callState === 'calling' || callState === 'connecting')) {
+            callId = msg.callId;
+            lastPendingCallId = msg.callId;
+            if (msg.mode) callMode = msg.mode === 'video' ? 'video' : 'audio';
+            return;
+          }
+          // Chỉ bận khi đang ACTIVE với cuộc gọi khác
+          if (callState === 'active') {
+            send({ type: 'call-busy', to: msg.from, callId: msg.callId });
+          }
           return;
         }
         ensureAudioCtx();
@@ -4602,12 +4614,18 @@
           await ensureMedia(callMode);
           createPeerConnection();
           await send({ type: 'call-accept', to: callPeer, callId, mode: callMode });
-          if (pendingOffer) {
-            await applyRemoteOffer(pendingOffer);
-            pendingOffer = null;
-          }
+          // Callee tạo offer — tránh phụ thuộc caller còn online đúng lúc
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          await send({
+            type: 'webrtc-offer',
+            to: callPeer,
+            callId,
+            sdp: { type: pc.localDescription.type, sdp: pc.localDescription.sdp },
+          });
         } catch (err) {
-          showToast(err.message || 'Không mở được micro/camera');
+          console.warn('accept error', err);
+          showToast(err.message || 'Không kết nối được cuộc gọi');
           send({ type: 'call-reject', to: callPeer, callId });
           await finishCall('rejected', false);
         }
@@ -4637,39 +4655,63 @@
       }
 
       async function onAccept(msg) {
-        if (callRole !== 'caller' || !pc) return;
+        if (callRole !== 'caller') return;
         if (msg.callId && callId && msg.callId !== callId) return;
+        if (!pc) {
+          try {
+            await ensureMedia(callMode);
+            createPeerConnection();
+          } catch (err) {
+            showToast(err.message || 'Không mở được micro/camera');
+            await finishCall('cancelled', true);
+            return;
+          }
+        }
         callState = 'connecting';
         setStatus('Đối phương đã nghe…');
         stopRingtone();
         clearRingTimer();
-        try {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          await send({
-            type: 'webrtc-offer',
-            to: callPeer,
-            callId,
-            sdp: { type: pc.localDescription.type, sdp: pc.localDescription.sdp },
-          });
-        } catch (err) {
-          showToast(err.message || 'Không tạo được kết nối');
-          await finishCall('cancelled', true);
+        // Caller chờ offer từ callee (poll HTTP sẽ nhận webrtc-offer)
+        if (pendingOffer) {
+          try {
+            await applyRemoteOffer(pendingOffer);
+            pendingOffer = null;
+          } catch (err) {
+            console.warn('pending offer', err);
+          }
         }
       }
 
       async function onOffer(msg) {
         if (!msg.sdp) return;
-        if (msg.callId && callId && msg.callId !== callId) return;
-        if (callState === 'ringing') {
+        if (msg.callId && callId && msg.callId !== callId) {
+          // Cùng peer đang gọi — cập nhật id
+          if (callPeer && msg.from === callPeer) callId = msg.callId;
+          else return;
+        }
+        if (callState === 'ringing' && callRole === 'callee') {
           pendingOffer = msg.sdp;
+          return;
+        }
+        // Caller nhận offer từ callee sau khi accept
+        if (callRole === 'caller' && (callState === 'ringing' || callState === 'calling' || callState === 'connecting' || callState === 'active')) {
+          try {
+            if (!pc) {
+              await ensureMedia(callMode);
+              createPeerConnection();
+            }
+            await applyRemoteOffer(msg.sdp);
+          } catch (err) {
+            console.warn('offer error', err);
+            showToast('Không kết nối được cuộc gọi');
+            await finishCall('cancelled', true);
+          }
           return;
         }
         try {
           await applyRemoteOffer(msg.sdp);
         } catch (err) {
           console.warn('offer error', err);
-          await finishCall('missed', true);
         }
       }
 
@@ -4771,6 +4813,12 @@
             }
             break;
           case 'call-busy':
+            // Bỏ qua busy giả khi chính mình đang đổ chuông cùng call
+            if (msg.callId && callId && msg.callId !== callId) {
+              // invite khác bị từ chối — không hủy cuộc gọi hiện tại
+              break;
+            }
+            if (callState === 'active' || callState === 'connecting') break;
             finishCall('cancelled', false).then(() => showToast('Đối phương đang bận'));
             break;
           case 'call-end': {
@@ -4915,16 +4963,26 @@
       function onPushCall(payload, opts) {
         if (!payload || payload.type !== 'call') return;
         connect();
+        startInvitePoll(true);
         try { navigateTo('chat'); } catch { /* ignore */ }
         const forceFull = !!(opts && opts.fullscreen) || !!document.hidden;
-        if (callState === 'idle' && payload.from) {
+        // Chỉ mở invite khi có callId thật — tránh id giả gây báo bận
+        if (callState === 'idle' && payload.from && payload.callId) {
           onInvite({
             type: 'call-invite',
             from: payload.from,
-            callId: payload.callId || ('push-' + Date.now()),
+            callId: payload.callId,
             mode: payload.mode === 'video' ? 'video' : 'audio',
             forceFullscreen: forceFull,
           });
+        } else if (callState === 'idle') {
+          // Không có callId → lấy từ server pending
+          pollPendingInvite();
+          if (forceFull) {
+            setTimeout(() => {
+              if (callState === 'ringing') showIncoming(true, { fullscreen: true });
+            }, 400);
+          }
         } else if (callState === 'ringing' && forceFull) {
           showIncoming(true, { fullscreen: true });
           if (ringKind !== 'in') startRingtone('in');
@@ -6515,7 +6573,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=15', {
+        const reg = await navigator.serviceWorker.register('/sw.js?v=16', {
           scope: '/',
           updateViaCache: 'none',
         });

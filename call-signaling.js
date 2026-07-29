@@ -164,14 +164,14 @@ function attachCallSignaling(httpServer, options = {}) {
 
     if (type === 'call-invite') {
       storeInvite({ from: user.username, to: peer, callId: payload.callId, mode: payload.mode });
+      enqueueSignal(peer, payload);
+    } else {
+      enqueueSignal(peer, payload);
     }
     if (type === 'call-accept' || type === 'call-reject' || type === 'call-busy' || type === 'call-end') {
       clearInvite(user.username, payload.callId);
       clearInvite(peer, payload.callId);
     }
-
-    // Luôn xếp hàng HTTP (kể cả khi WS online) để iOS không mất tín hiệu
-    enqueueSignal(peer, payload);
     const delivered = sendToUser(peer, payload);
 
     let inviteMeta = null;
