@@ -4908,19 +4908,19 @@
           showToast('Chưa đăng ký được push — mở từ icon màn hình chính');
           return;
         }
+        // Gửi sau 12 giây để kịp vuốt tắt app và kiểm tra
         const result = await api('/push/test', {
           method: 'POST',
           body: {
             title: 'Mục tiêu chạy xe',
-            body: 'Thử thành công — hãy tắt app rồi nhờ máy kia nhắn/nhập tiền',
+            body: 'Thử khi đã vuốt tắt app — nếu thấy là OK',
+            delaySec: 12,
           },
         });
-        if (result.sent > 0) {
-          showToast('Đã gửi thử ' + result.sent + ' thông báo — kiểm tra thanh thông báo');
-          updatePushStatusHint('Push OK · đã gửi thử ' + result.sent);
-        } else {
-          showToast('Server chưa có đăng ký máy — mở lại app và thử lần nữa');
-          updatePushStatusHint('Push chưa có subscription trên server');
+        showToast('Trong 12 giây: VUỐT TẮT app ngay — rồi chờ thông báo');
+        updatePushStatusHint('Đang chờ gửi thử sau 12s — hãy vuốt tắt app');
+        if (result && result.delayed) {
+          /* server sẽ gửi sau delay */
         }
       } catch (err) {
         showToast(err.message || 'Không gửi được thông báo thử');
