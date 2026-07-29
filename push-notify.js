@@ -122,12 +122,23 @@ function emptySubs() {
   return { users: {}, updatedAt: nowIso() };
 }
 
+function normalizeVapidSubject(subject) {
+  const fallback = process.env.VAPID_SUBJECT || 'mailto:admin@example.com';
+  const s = String(subject || '').trim();
+  if (!s) return fallback;
+  // Apple từ chối @localhost / *.local → BadJwtToken
+  if (/@localhost\b/i.test(s) || /\.local\b/i.test(s) || !/^(mailto:|https:\/\/)/i.test(s)) {
+    return fallback;
+  }
+  return s;
+}
+
 function normalizeVapid(raw) {
   if (!raw || !raw.publicKey || !raw.privateKey) return null;
   return {
     publicKey: String(raw.publicKey),
     privateKey: String(raw.privateKey),
-    subject: String(raw.subject || 'mailto:admin@muctieu.local'),
+    subject: normalizeVapidSubject(raw.subject),
   };
 }
 
@@ -136,13 +147,19 @@ async function resolveVapid() {
     return {
       publicKey: process.env.VAPID_PUBLIC_KEY,
       privateKey: process.env.VAPID_PRIVATE_KEY,
-      subject: process.env.VAPID_SUBJECT || 'mailto:admin@muctieu.local',
+      subject: normalizeVapidSubject(process.env.VAPID_SUBJECT || 'mailto:admin@example.com'),
     };
   }
 
-  const fromGithub = normalizeVapid(await loadGithubJson(GITHUB_VAPID_PATH, vapidShaRef));
+  const rawGithub = await loadGithubJson(GITHUB_VAPID_PATH, vapidShaRef);
+  const fromGithub = normalizeVapid(rawGithub);
   if (fromGithub) {
     writeJson(VAPID_PATH, fromGithub);
+    const rawSubject = rawGithub && rawGithub.subject != null ? String(rawGithub.subject) : '';
+    if (rawSubject !== fromGithub.subject) {
+      await saveGithubJson(GITHUB_VAPID_PATH, fromGithub, vapidShaRef, 'fix: VAPID subject hợp lệ cho Apple/iOS');
+      console.log('Đã sửa VAPID subject →', fromGithub.subject);
+    }
     return fromGithub;
   }
 
@@ -156,7 +173,7 @@ async function resolveVapid() {
   const created = {
     publicKey: generated.publicKey,
     privateKey: generated.privateKey,
-    subject: 'mailto:admin@muctieu.local',
+    subject: normalizeVapidSubject('mailto:admin@example.com'),
   };
   writeJson(VAPID_PATH, created);
   await saveGithubJson(GITHUB_VAPID_PATH, created, vapidShaRef, 'chore: tạo khóa Web Push bền');

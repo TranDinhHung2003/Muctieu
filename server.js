@@ -309,6 +309,34 @@ app.post('/api/push/unsubscribe', authMiddleware, (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/api/push/test', authMiddleware, async (req, res) => {
+  const title = String((req.body || {}).title || 'Mục tiêu chạy xe').trim() || 'Mục tiêu chạy xe';
+  const body = String((req.body || {}).body || 'Đây là thông báo thử — tắt app vẫn nhận được').trim();
+  const result = await pushNotify.sendPushToUsernames([req.user.username], {
+    title,
+    body,
+    tag: 'muctieu-test',
+    page: 'home',
+    type: 'test',
+  });
+  res.json({
+    ok: true,
+    attempted: result.attempted || 0,
+    sent: result.sent || 0,
+    stats: pushNotify.getStats(),
+  });
+});
+
+app.get('/api/push/status', authMiddleware, (req, res) => {
+  const storeUsers = pushNotify.getStats();
+  res.json({
+    ok: true,
+    publicKey: pushNotify.getPublicKey(),
+    stats: storeUsers,
+    username: req.user.username,
+  });
+});
+
 app.get('/api/data', authMiddleware, (_req, res) => {
   const store = storage.getAppStore();
   res.json({ data: store.data || { days: {} }, updatedAt: store.updatedAt });

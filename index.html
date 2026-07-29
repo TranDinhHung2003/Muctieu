@@ -2634,8 +2634,10 @@
         <span class="knob"></span>
       </button>
     </div>
+    <button type="button" class="drawer-item" id="push-test-btn">📨 Thử thông báo (tắt app vẫn nhận)</button>
+    <p class="drawer-hint" id="push-status-hint">Thông báo đẩy: chưa kiểm tra</p>
     <p class="drawer-hint" id="homescreen-hint">
-      Để dùng như app (không còn thanh Safari): xóa icon cũ → mở bằng <strong>Safari</strong> → Chia sẻ → <strong>Thêm vào Màn hình chính</strong> → mở bằng <strong>icon trên màn hình chính</strong> (không mở từ tab Safari).
+      iPhone: phải mở bằng <strong>icon Màn hình chính</strong> (Safari → Chia sẻ → Thêm vào Màn hình chính) rồi cho phép thông báo. Tắt app vẫn nhận tin nhắn / tiền nhập.
     </p>
   </nav>
 
@@ -4781,7 +4783,9 @@
       }
     }
 
-    async function subscribeWebPush(reg) {
+    const VAPID_KEY_CACHE = 'muctieu_vapid_public';
+
+    async function subscribeWebPush(reg, { force = false } = {}) {
       if (!reg || !('PushManager' in window)) return false;
       if (!supportsDeviceNotify() || Notification.permission !== 'granted') return false;
       if (!isDeviceNotifyEnabled()) return false;
@@ -4789,22 +4793,33 @@
         const keyRes = await api('/push/vapid-public-key');
         const publicKey = keyRes && keyRes.publicKey;
         if (!publicKey) return false;
-        const appKey = urlBase64ToUint8Array(publicKey);
+
+        let cached = '';
+        try { cached = localStorage.getItem(VAPID_KEY_CACHE) || ''; } catch { /* ignore */ }
         let sub = await reg.pushManager.getSubscription();
-        if (!sub) {
+        if (force || (cached && cached !== publicKey) || !sub) {
+          if (sub) {
+            try {
+              await api('/push/unsubscribe', { method: 'POST', body: { endpoint: sub.endpoint } });
+            } catch { /* ignore */ }
+            try { await sub.unsubscribe(); } catch { /* ignore */ }
+            sub = null;
+          }
           sub = await reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: appKey,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
           });
         }
+
         await api('/push/subscribe', {
           method: 'POST',
           body: { subscription: sub.toJSON() },
         });
+        try { localStorage.setItem(VAPID_KEY_CACHE, publicKey); } catch { /* ignore */ }
+        updatePushStatusHint('Đã đăng ký thông báo đẩy ✓');
         return true;
       } catch (err) {
         console.warn('Không đăng ký Web Push:', err);
-        // Thử hủy đăng ký cũ rồi tạo lại 1 lần (thường do VAPID đổi)
         try {
           const old = await reg.pushManager.getSubscription();
           if (old) {
@@ -4824,11 +4839,51 @@
             method: 'POST',
             body: { subscription: sub.toJSON() },
           });
+          try { localStorage.setItem(VAPID_KEY_CACHE, publicKey); } catch { /* ignore */ }
+          updatePushStatusHint('Đã đăng ký lại thông báo đẩy ✓');
           return true;
         } catch (err2) {
           console.warn('Đăng ký lại Web Push thất bại:', err2);
+          updatePushStatusHint('Chưa đăng ký được thông báo đẩy');
           return false;
         }
+      }
+    }
+
+    function updatePushStatusHint(text) {
+      const el = document.getElementById('push-status-hint');
+      if (el) el.textContent = text || '';
+    }
+
+    async function testPushNotification() {
+      try {
+        const ok = await ensureNotifyPermission(true);
+        if (!ok) {
+          showToast('Cần cho phép thông báo trước');
+          return;
+        }
+        const reg = await registerNotifyServiceWorker();
+        const subscribed = await subscribeWebPush(reg, { force: true });
+        if (!subscribed) {
+          showToast('Chưa đăng ký được push — mở từ icon màn hình chính');
+          return;
+        }
+        const result = await api('/push/test', {
+          method: 'POST',
+          body: {
+            title: 'Mục tiêu chạy xe',
+            body: 'Thử thành công — hãy tắt app rồi nhờ máy kia nhắn/nhập tiền',
+          },
+        });
+        if (result.sent > 0) {
+          showToast('Đã gửi thử ' + result.sent + ' thông báo — kiểm tra thanh thông báo');
+          updatePushStatusHint('Push OK · đã gửi thử ' + result.sent);
+        } else {
+          showToast('Server chưa có đăng ký máy — mở lại app và thử lần nữa');
+          updatePushStatusHint('Push chưa có subscription trên server');
+        }
+      } catch (err) {
+        showToast(err.message || 'Không gửi được thông báo thử');
       }
     }
 
@@ -4854,19 +4909,20 @@
       if (Notification.permission === 'default') {
         const ok = await ensureNotifyPermission(true);
         if (ok) {
-          const subscribed = await subscribeWebPush(reg);
+          const subscribed = await subscribeWebPush(reg, { force: true });
           if (!subscribed) showToast('Chưa đăng ký được thông báo đẩy — mở lại app từ màn hình chính');
         }
       } else if (Notification.permission === 'granted') {
         updateNotifyToggleUI();
-        const subscribed = await subscribeWebPush(reg);
+        const subscribed = await subscribeWebPush(reg, { force: true });
         if (!subscribed) console.warn('Web Push chưa đăng ký được');
       } else {
         updateNotifyToggleUI();
+        updatePushStatusHint('Thông báo bị chặn trong cài đặt máy');
       }
     }
 
-    // Mỗi lần mở lại app / hiện tab → đăng ký lại push (tránh mất subscription)
+    // Mỗi lần mở lại app / hiện tab → đồng bộ đăng ký push
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState !== 'visible' || !isLoggedIn) return;
       if (!isDeviceNotifyEnabled() || !supportsDeviceNotify()) return;
@@ -5737,6 +5793,13 @@
           e.preventDefault();
           setDeviceNotifyEnabled(!isDeviceNotifyEnabled());
         }
+      });
+    }
+    const pushTestBtn = document.getElementById('push-test-btn');
+    if (pushTestBtn) {
+      pushTestBtn.addEventListener('click', () => {
+        closeDrawer();
+        testPushNotification();
       });
     }
 
