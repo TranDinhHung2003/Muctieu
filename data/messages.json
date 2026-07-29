@@ -9,7 +9,15 @@
       "status": "read",
       "deliveredAt": "2026-07-29T10:57:51.949Z",
       "readAt": "2026-07-29T10:58:30.880Z"
+    },
+    {
+      "id": "ms5zv87zk7bfz3",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "Cc",
+      "at": "2026-07-29T11:21:29.951Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T11:19:01.874Z"
+  "updatedAt": "2026-07-29T11:21:29.951Z"
 }
