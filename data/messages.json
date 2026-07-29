@@ -1,4 +1,13 @@
 {
-  "messages": [],
-  "updatedAt": "2026-07-29T08:51:55.443Z"
+  "messages": [
+    {
+      "id": "ms5ujpvebxydeb",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "O",
+      "at": "2026-07-29T08:52:34.874Z",
+      "status": "sent"
+    }
+  ],
+  "updatedAt": "2026-07-29T08:52:34.874Z"
 }
