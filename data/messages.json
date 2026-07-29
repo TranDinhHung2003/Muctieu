@@ -59,7 +59,15 @@
       "status": "read",
       "deliveredAt": "2026-07-29T12:08:06.037Z",
       "readAt": "2026-07-29T12:08:22.695Z"
+    },
+    {
+      "id": "ms61p7z5uuel97",
+      "from": "admin",
+      "role": "admin",
+      "text": "Bú",
+      "at": "2026-07-29T12:12:48.929Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T12:08:22.695Z"
+  "updatedAt": "2026-07-29T12:12:48.929Z"
 }
