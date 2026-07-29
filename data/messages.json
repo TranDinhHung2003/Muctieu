@@ -46,8 +46,9 @@
       "role": "admin",
       "text": "U",
       "at": "2026-07-29T12:03:52.492Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T12:03:58.303Z"
     }
   ],
-  "updatedAt": "2026-07-29T12:03:52.492Z"
+  "updatedAt": "2026-07-29T12:03:58.303Z"
 }
