@@ -60,13 +60,14 @@
       "role": "admin",
       "text": "Mlem",
       "at": "2026-07-29T15:13:20.384Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T15:13:22.164Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T15:13:22.164Z",
+      "readAt": "2026-07-29T15:14:07.608Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:13:22.164Z"
+  "updatedAt": "2026-07-29T15:14:07.608Z"
 }
