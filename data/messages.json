@@ -1,15 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5wbmkrnfki0o",
-      "from": "admin",
-      "role": "admin",
-      "text": "Alo",
-      "at": "2026-07-29T09:42:16.587Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T09:48:45.420Z"
-    },
-    {
       "id": "ms5wgso85ggvg1",
       "from": "admin",
       "role": "admin",
@@ -24,7 +15,8 @@
       "role": "admin",
       "text": "Test",
       "at": "2026-07-29T09:49:52.655Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T10:15:29.108Z"
     },
     {
       "id": "ms5wm136kdbe6y",
@@ -32,8 +24,9 @@
       "role": "admin",
       "text": "Bíp",
       "at": "2026-07-29T09:50:21.954Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T10:15:29.108Z"
     }
   ],
-  "updatedAt": "2026-07-29T09:50:21.954Z"
+  "updatedAt": "2026-07-29T10:15:29.108Z"
 }
