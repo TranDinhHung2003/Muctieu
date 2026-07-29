@@ -56,13 +56,14 @@
       "role": "admin",
       "text": "6",
       "at": "2026-07-29T15:42:58.991Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T15:43:00.107Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T15:43:00.107Z",
+      "readAt": "2026-07-29T15:43:01.493Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:43:00.107Z"
+  "updatedAt": "2026-07-29T15:43:01.493Z"
 }
