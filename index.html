@@ -3586,12 +3586,66 @@
       window.removeEventListener('focus', onFocusSync);
     }
 
+    function applyIncomingChatFromPush(payload) {
+      if (!payload || payload.type !== 'chat') return false;
+      const id = payload.messageId || ('push-' + Date.now());
+      if (chatMessages.some((m) => m && (m.id === id || (m.text === payload.text && m.from === payload.from)))) {
+        return false;
+      }
+      const from = payload.from || '';
+      if (from && payload.fromName) {
+        applyNicknames({ [from]: payload.fromName });
+      }
+      const msg = {
+        id,
+        from,
+        text: payload.text || '',
+        imageId: payload.imageId || null,
+        at: payload.at || new Date().toISOString(),
+        status: 'delivered',
+      };
+      chatMessages = [...chatMessages, msg];
+      const onChat = els.pageChat && els.pageChat.classList.contains('active');
+      if (onChat) {
+        renderChatMessages({ forceBottom: true });
+      } else {
+        updateChatBadge();
+      }
+      return true;
+    }
+
+    async function syncChatAfterPush(payload) {
+      applyIncomingChatFromPush(payload || {});
+      // Luôn kéo lại từ server để khớp id/status thật
+      try {
+        await refreshMessages(false);
+      } catch { /* ignore */ }
+      const onChat = els.pageChat && els.pageChat.classList.contains('active');
+      if (onChat) {
+        renderChatMessages({ forceBottom: true });
+        scrollChatToBottom();
+      }
+    }
+
     function onVisibilitySync() {
-      if (document.visibilityState === 'visible' && isLoggedIn) checkForUpdates();
+      if (document.visibilityState === 'visible' && isLoggedIn) {
+        checkForUpdates();
+        // Mở lại app / hiện tab → luôn tải lại tin nhắn (tránh khung chat trống dù đã có push)
+        refreshMessages(false).then(() => {
+          const onChat = els.pageChat && els.pageChat.classList.contains('active');
+          if (onChat) {
+            renderChatMessages({ forceBottom: true });
+            scrollChatToBottom();
+          }
+        }).catch(() => {});
+      }
     }
 
     function onFocusSync() {
-      if (isLoggedIn) checkForUpdates();
+      if (isLoggedIn) {
+        checkForUpdates();
+        refreshMessages(false).catch(() => {});
+      }
     }
 
     let pendingServerPushNotify = null;
@@ -4517,15 +4571,17 @@
         const nextKey = chatListKey(chatMessages);
         lastMessagesAt = result.updatedAt || lastMessagesAt;
         const onChat = els.pageChat && els.pageChat.classList.contains('active');
+        const latest = list.length ? list[list.length - 1] : null;
         if (onChat) {
-          if (prevKey !== nextKey || nickChanged) {
-            renderChatMessages({ forceBottom: false });
+          // Tin mới → luôn kéo xuống cuối để thấy bubble
+          const hasNew = !!latest && latest.id !== prevLatest;
+          if (prevKey !== nextKey || nickChanged || hasNew) {
+            renderChatMessages({ forceBottom: hasNew || chatPinnedToBottom });
           }
           markChatRead();
         } else {
           updateChatBadge();
         }
-        const latest = list.length ? list[list.length - 1] : null;
         if (notify && latest && latest.id !== prevLatest && latest.from !== currentUsername) {
           const preview = (latest.text && String(latest.text).trim())
             || (latest.imageId ? '[Ảnh]' : 'Tin nhắn mới');
@@ -4840,7 +4896,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=9', {
+        const reg = await navigator.serviceWorker.register('/sw.js?v=10', {
           scope: '/',
           updateViaCache: 'none',
         });
@@ -5045,11 +5101,20 @@
         const data = event.data || {};
         if (data.type === 'muctieu-notify-open' && data.page && isLoggedIn) {
           try { navigateTo(data.page); } catch { /* ignore */ }
+          if (data.page === 'chat') {
+            syncChatAfterPush({ type: 'chat' });
+          }
         }
-        if (data.type === 'PUSH_NOTIFY' && isLoggedIn && isDeviceNotifyEnabled()) {
+        if (data.type === 'PUSH_NOTIFY' && isLoggedIn) {
           const payload = data.payload || {};
-          if (!document.hidden) {
+          if (!document.hidden && isDeviceNotifyEnabled()) {
             showAppNotifyBanner(payload.title || 'Mục tiêu chạy xe', payload.body || '');
+          }
+          // Quan trọng: cập nhật khung chat ngay khi nhận push (không chỉ hiện banner)
+          if (payload.type === 'chat' || payload.page === 'chat' || payload.messageId) {
+            syncChatAfterPush(payload);
+          } else {
+            checkForUpdates();
           }
         }
       });

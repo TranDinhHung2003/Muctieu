@@ -545,6 +545,12 @@ app.post('/api/messages', authMiddleware, async (req, res) => {
       tag: 'muctieu-chat',
       page: 'chat',
       type: 'chat',
+      messageId: result.message && result.message.id,
+      from: req.user.username,
+      fromName,
+      text: text || (imageDataUrl ? '[Ảnh]' : ''),
+      imageId: (result.message && result.message.imageId) || null,
+      at: (result.message && result.message.at) || new Date().toISOString(),
     });
     res.json({
       ok: true,

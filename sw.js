@@ -1,5 +1,5 @@
-/* Service worker v9: Web Push — app đang mở không hiện OS notify trùng */
-const SW_VERSION = 'muctieu-sw-v9';
+/* Service worker v10: Web Push + đồng bộ tin nhắn khi app đang mở */
+const SW_VERSION = 'muctieu-sw-v10';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -34,45 +34,57 @@ function absUrl(path) {
   }
 }
 
-async function showPushNotification(data) {
+function buildPushPayload(data) {
   const title = String((data && data.title) || 'Mục tiêu chạy xe').trim() || 'Mục tiêu chạy xe';
   const body = String((data && data.body) || 'Có cập nhật mới').trim() || 'Có cập nhật mới';
   const tag = String((data && data.tag) || 'muctieu-push');
   const page = (data && data.page) || ((data && data.type) === 'chat' ? 'chat' : 'home');
-  const payload = {
+  return {
     title,
     body,
     tag,
     page,
     type: (data && data.type) || 'general',
+    messageId: (data && data.messageId) || null,
+    from: (data && data.from) || null,
+    fromName: (data && data.fromName) || null,
+    text: (data && data.text) || null,
+    imageId: (data && data.imageId) || null,
+    at: (data && data.at) || null,
   };
+}
 
-  // App đang mở (tab visible) → chỉ gửi banner trong app, không hiện OS lần nữa
+async function showPushNotification(data) {
+  const payload = buildPushPayload(data);
+
+  let visibleClients = [];
   try {
     const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const visibleClients = allClients.filter((c) => c && c.visibilityState === 'visible');
-    if (visibleClients.length) {
-      visibleClients.forEach((client) => {
-        try {
-          client.postMessage({ type: 'PUSH_NOTIFY', payload });
-        } catch { /* ignore */ }
-      });
-      return;
-    }
-  } catch { /* fall through → hiện OS */ }
+    visibleClients = allClients.filter((c) => c && c.visibilityState === 'visible');
+    // Mọi client (kể cả nền) đều nhận tin để cập nhật khung chat
+    allClients.forEach((client) => {
+      try {
+        client.postMessage({ type: 'PUSH_NOTIFY', payload });
+      } catch { /* ignore */ }
+    });
+  } catch { /* ignore */ }
 
-  // App đã vuốt tắt / ở nền → hiện thông báo hệ thống (1 lần)
-  await self.registration.showNotification(title, {
-    body,
-    tag,
+  // App đang mở → không hiện OS (tránh trùng); chỉ banner + sync trong app
+  if (visibleClients.length) return;
+
+  // App đã vuốt tắt / không có tab hiện → hiện thông báo hệ thống (1 lần)
+  await self.registration.showNotification(payload.title, {
+    body: payload.body,
+    tag: payload.tag,
     renotify: true,
     requireInteraction: false,
     silent: false,
     icon: absUrl('/icons/icon-192.png'),
     badge: absUrl('/icons/icon-96.png'),
     data: {
-      page,
+      page: payload.page,
       type: payload.type,
+      messageId: payload.messageId,
       sw: SW_VERSION,
     },
   });
