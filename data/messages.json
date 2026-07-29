@@ -67,7 +67,15 @@
       "text": "Em có nhận được tin nhắn không",
       "at": "2026-07-29T09:14:42.959Z",
       "status": "sent"
+    },
+    {
+      "id": "ms5vh6fai9pdo1",
+      "from": "admin",
+      "role": "admin",
+      "text": "Hi",
+      "at": "2026-07-29T09:18:35.974Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T09:14:42.959Z"
+  "updatedAt": "2026-07-29T09:18:35.974Z"
 }
