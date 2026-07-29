@@ -1,24 +1,15 @@
 {
   "messages": [
     {
-      "id": "ms5wm136kdbe6y",
-      "from": "admin",
-      "role": "admin",
-      "text": "Bíp",
-      "at": "2026-07-29T09:50:21.954Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T10:15:29.108Z",
-      "readAt": "2026-07-29T10:18:48.394Z"
-    },
-    {
       "id": "ms5xnrebdfkdad",
       "from": "admin",
       "role": "admin",
       "text": "Ô",
       "at": "2026-07-29T10:19:42.323Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T10:19:44.817Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T10:19:44.817Z",
+      "readAt": "2026-07-29T10:20:36.208Z"
     }
   ],
-  "updatedAt": "2026-07-29T10:19:53.563Z"
+  "updatedAt": "2026-07-29T10:20:36.208Z"
 }
