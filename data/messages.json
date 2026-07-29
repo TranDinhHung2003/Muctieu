@@ -1,26 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5zv87zk7bfz3",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "Cc",
-      "at": "2026-07-29T11:21:29.951Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T11:21:30.640Z",
-      "readAt": "2026-07-29T11:21:30.876Z"
-    },
-    {
-      "id": "ms5zvqk73hc72v",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "Lại qq 😂",
-      "at": "2026-07-29T11:21:53.719Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T11:21:54.674Z",
-      "readAt": "2026-07-29T11:21:54.939Z"
-    },
-    {
       "id": "ms5zw6meazkwla",
       "from": "theodoi",
       "role": "viewer",
@@ -121,5 +101,5 @@
       "readAt": "2026-07-29T11:37:11.937Z"
     }
   ],
-  "updatedAt": "2026-07-29T11:37:11.937Z"
+  "updatedAt": "2026-07-29T11:52:06.998Z"
 }
