@@ -95,8 +95,9 @@
       "role": "viewer",
       "text": "Rt",
       "at": "2026-07-29T11:35:47.972Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T11:35:51.260Z"
     }
   ],
-  "updatedAt": "2026-07-29T11:35:47.972Z"
+  "updatedAt": "2026-07-29T11:35:51.260Z"
 }
