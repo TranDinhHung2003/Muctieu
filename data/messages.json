@@ -22,13 +22,13 @@
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T13:55:51.679Z",
       "status": "read",
+      "deliveredAt": "2026-07-29T13:55:53.116Z",
+      "readAt": "2026-07-29T13:55:53.394Z",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms65do7p1bkp6",
-      "deliveredAt": "2026-07-29T13:55:53.116Z",
-      "readAt": "2026-07-29T13:55:53.394Z"
+      "callId": "cms65do7p1bkp6"
     },
     {
       "id": "ms65dzlau7c59e",
@@ -36,7 +36,8 @@
       "role": "viewer",
       "text": "Cuộc gọi thoại · Đã từ chối",
       "at": "2026-07-29T13:56:03.310Z",
-      "status": "sent",
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T13:56:47.520Z",
       "kind": "call",
       "callEvent": "rejected",
       "callMode": "audio",
@@ -48,5 +49,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T13:56:03.310Z"
+  "updatedAt": "2026-07-29T13:56:47.520Z"
 }
