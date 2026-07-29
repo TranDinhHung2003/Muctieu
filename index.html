@@ -4498,6 +4498,32 @@
       }
     }
 
+    function mergePendingChatMessages(serverList) {
+      const list = Array.isArray(serverList) ? serverList.slice() : [];
+      const pendingLocals = chatMessages.filter((m) => m.pending && m.localId);
+      if (!pendingLocals.length) return list;
+
+      const matchedLocalIds = new Set();
+      for (const p of pendingLocals) {
+        const alreadyOnServer = list.some((m) => {
+          if (m.from !== p.from) return false;
+          const sameText = (m.text || '') === (p.text || '');
+          const pendingHadImage = !!p.localImage;
+          const serverHasImage = !!m.imageId;
+          if (pendingHadImage !== serverHasImage) return false;
+          if (!sameText && !(pendingHadImage && !p.text)) return false;
+          const dt = Math.abs(new Date(m.at).getTime() - new Date(p.at).getTime());
+          return dt < 120000;
+        });
+        if (alreadyOnServer) {
+          matchedLocalIds.add(p.localId);
+        }
+      }
+
+      const keep = pendingLocals.filter((p) => !matchedLocalIds.has(p.localId));
+      return keep.length ? list.concat(keep) : list;
+    }
+
     async function refreshMessages(notify) {
       if (!isLoggedIn || chatPollBusy) return;
       chatPollBusy = true;
@@ -4507,11 +4533,8 @@
         const nickChanged = applyNicknames(result.nicknames);
         const prevLatest = chatMessages.length ? chatMessages[chatMessages.length - 1].id : null;
         const prevKey = chatListKey(chatMessages);
-        chatMessages = list;
-        // Giữ tin đang gửi optimistic chưa có trên server
-        const pendingLocals = (chatMessagesBefore || []).filter((m) => m.pending && m.localId);
-        // note: we'll set chatMessagesBefore below
-        const nextKey = chatListKey(list);
+        chatMessages = mergePendingChatMessages(list);
+        const nextKey = chatListKey(chatMessages);
         lastMessagesAt = result.updatedAt || lastMessagesAt;
         const onChat = els.pageChat && els.pageChat.classList.contains('active');
         if (onChat) {
@@ -4550,8 +4573,26 @@
         showToast('Nhập tin nhắn hoặc chọn ảnh');
         return;
       }
-      if (els.chatSend) els.chatSend.disabled = true;
-      if (els.chatAttachBtn) els.chatAttachBtn.disabled = true;
+
+      // Hiện tin ngay trong khung chat — không chờ server
+      const localId = 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+      const optimistic = {
+        id: localId,
+        localId,
+        from: currentUsername,
+        text: text || '',
+        imageId: null,
+        localImage: image || null,
+        at: new Date().toISOString(),
+        status: 'sending',
+        pending: true,
+      };
+      if (els.chatInput) els.chatInput.value = '';
+      clearPendingChatImage();
+      chatMessages = [...chatMessages, optimistic];
+      renderChatMessages({ forceBottom: true });
+      if (els.chatInput) els.chatInput.focus();
+
       try {
         const body = {};
         if (text) body.text = text;
@@ -4559,24 +4600,24 @@
         const result = await api('/messages', { method: 'POST', body });
         if (result.message) {
           if (result.nicknames) applyNicknames(result.nicknames);
-          chatMessages = [...chatMessages, result.message];
+          const serverMsg = result.message;
+          chatMessages = chatMessages
+            .filter((m) => m.localId !== localId && m.id !== serverMsg.id)
+            .concat([serverMsg]);
           lastMessagesAt = result.updatedAt || lastMessagesAt;
-          if (els.chatInput) els.chatInput.value = '';
-          clearPendingChatImage();
           renderChatMessages({ forceBottom: true });
           markChatRead();
         } else {
           await refreshMessages(false);
-          clearPendingChatImage();
-          if (els.chatInput) els.chatInput.value = '';
-          scrollChatToBottom();
         }
       } catch (err) {
+        chatMessages = chatMessages.map((m) => (
+          m.localId === localId
+            ? { ...m, pending: false, status: 'failed' }
+            : m
+        ));
+        renderChatMessages({ forceBottom: false });
         showToast(err.message || 'Không gửi được tin nhắn');
-      } finally {
-        if (els.chatSend) els.chatSend.disabled = false;
-        if (els.chatAttachBtn) els.chatAttachBtn.disabled = false;
-        if (els.chatInput) els.chatInput.focus();
       }
     }
 
