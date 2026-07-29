@@ -126,8 +126,10 @@
       "role": "admin",
       "text": "O",
       "at": "2026-07-29T12:24:32.502Z",
-      "status": "sent"
+      "status": "read",
+      "deliveredAt": "2026-07-29T12:24:33.164Z",
+      "readAt": "2026-07-29T12:24:33.429Z"
     }
   ],
-  "updatedAt": "2026-07-29T12:24:32.502Z"
+  "updatedAt": "2026-07-29T12:24:33.429Z"
 }
