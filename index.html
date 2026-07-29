@@ -3810,6 +3810,7 @@
         chatPinnedToBottom = true;
         renderChatMessages({ forceBottom: true });
         refreshMessages(false);
+        try { CallApp.connect(); CallApp.warmPermissions(); } catch { /* ignore */ }
         setTimeout(() => {
           scrollChatToBottom();
           syncChatKeyboardInset();
