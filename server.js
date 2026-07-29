@@ -2,17 +2,12 @@ require('dotenv').config();
 
 const fs = require('fs');
 const path = require('path');
-const http = require('http');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const storage = require('./storage');
 const pushNotify = require('./push-notify');
-const { attachCallSignaling } = require('./call-signaling');
-
-/** Gán sau khi HTTP server + WS khởi động */
-let callHub = null;
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -570,94 +565,6 @@ app.get('/api/messages/media/:id', authMiddleware, (req, res) => {
   res.send(image.buffer);
 });
 
-/** Ticket ngắn hạn để mở WebSocket gọi điện (iOS/PWA đôi khi không gửi cookie WS) */
-app.get('/api/call/ticket', authMiddleware, (req, res) => {
-  const ticket = jwt.sign(
-    {
-      purpose: 'call-ws',
-      username: req.user.username,
-      role: req.user.role,
-    },
-    JWT_SECRET,
-    { expiresIn: '10m' }
-  );
-  res.json({ ticket, expiresIn: 600 });
-});
-
-/** Invite đang chờ — HTTP fallback khi WebSocket bị iOS suspend */
-app.get('/api/call/pending', authMiddleware, (req, res) => {
-  if (!callHub) return res.json({ invite: null, signals: [] });
-  const invite = callHub.getPendingInvite(req.user.username);
-  const signals = callHub.drainSignals ? callHub.drainSignals(req.user.username) : [];
-  res.json({
-    invite: invite || null,
-    signals: signals || [],
-    online: callHub.listOnline(),
-  });
-});
-
-/** Gửi / chuyển tiếp tín hiệu cuộc gọi qua HTTP (bổ sung cho WS) */
-app.post('/api/call/signal', authMiddleware, (req, res) => {
-  if (!callHub) return res.status(503).json({ error: 'Chưa sẵn sàng gọi điện' });
-  const body = req.body || {};
-  const result = callHub.handleRelay(
-    { username: req.user.username, role: req.user.role },
-    body
-  );
-  if (!result.ok) {
-    return res.status(400).json({ error: result.error || 'Lỗi tín hiệu' });
-  }
-  // Trả luôn tín hiệu đang chờ của mình → trao đổi offer/answer nhanh hơn
-  const incoming = callHub.drainSignals ? callHub.drainSignals(req.user.username) : [];
-  res.json({
-    ok: true,
-    delivered: result.delivered,
-    peerOffline: !!result.peerOffline,
-    invite: result.inviteMeta || null,
-    signals: incoming || [],
-  });
-});
-
-/** Ghi sự kiện cuộc gọi vào khung chat (kiểu Zalo) */
-app.post('/api/call/log', authMiddleware, async (req, res) => {
-  const body = req.body || {};
-  const callEvent = String(body.event || body.callEvent || '').trim();
-  if (!['ended', 'cancelled', 'rejected', 'missed'].includes(callEvent)) {
-    return res.status(400).json({ error: 'Loại sự kiện cuộc gọi không hợp lệ' });
-  }
-  const callMode = body.mode === 'video' || body.callMode === 'video' ? 'video' : 'audio';
-  const durationSec = Math.max(0, Math.min(86400, Number(body.durationSec) || 0));
-  const callId = String(body.callId || '').trim().slice(0, 64);
-  try {
-    const result = await storage.addMessage({
-      from: req.user.username,
-      role: req.user.role,
-      kind: 'call',
-      callEvent,
-      callMode,
-      durationSec,
-      callId: callId || undefined,
-      text: '',
-    });
-    if (result.duplicate) {
-      return res.json({
-        ok: true,
-        duplicate: true,
-        nicknames: getDisplayNamesForViewer(req.user.username),
-        updatedAt: result.updatedAt,
-      });
-    }
-    res.json({
-      ok: true,
-      message: result.message,
-      nicknames: getDisplayNamesForViewer(req.user.username),
-      updatedAt: result.updatedAt,
-    });
-  } catch (err) {
-    res.status(400).json({ error: err.message || 'Không ghi được cuộc gọi' });
-  }
-});
-
 app.post('/api/messages', authMiddleware, async (req, res) => {
   const text = String((req.body || {}).text || '').trim();
   const imageDataUrl = (req.body || {}).image || null;
@@ -765,42 +672,11 @@ async function start() {
     try { storage.pruneExpiredMessages(true); } catch { /* ignore */ }
   }, 60 * 1000);
 
-  const httpServer = http.createServer(app);
-  callHub = attachCallSignaling(httpServer, {
-    jwt,
-    jwtSecret: JWT_SECRET,
-    cookieName: COOKIE_NAME,
-    onCallInvite: ({ from, to, mode, callId, peerOnline }) => {
-      // Luôn gửi push để máy kia hiện thông báo cuộc gọi (kể cả khi app nền / tắt màn)
-      const names = getDisplayNamesForViewer(to);
-      const fromName = names[from] || defaultNickname(from, from === VIEWER_USERNAME ? 'viewer' : 'admin');
-      const isVideo = mode === 'video';
-      pushNotify.sendPushToUsernames([to], {
-        title: isVideo ? '📹 Cuộc gọi video' : '📞 Cuộc gọi thoại',
-        body: fromName + (isVideo ? ' đang gọi video…' : ' đang gọi…'),
-        tag: 'muctieu-call',
-        page: 'chat',
-        type: 'call',
-        callId,
-        mode: isVideo ? 'video' : 'audio',
-        from,
-        fromName,
-        at: nowIso(),
-      }).catch((err) => {
-        console.warn('Push cuộc gọi lỗi:', err && err.message ? err.message : err);
-      });
-      if (!peerOnline) {
-        console.log('Cuộc gọi: đối phương chưa online WS, đã gửi push', to);
-      }
-    },
-  });
-
-  httpServer.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log('Server chạy tại http://0.0.0.0:' + PORT);
     console.log('Data dir:', DATA_DIR);
     console.log('Admin:', ADMIN_USERNAME, '| Theo dõi:', VIEWER_USERNAME);
     console.log('Tin nhắn tự xóa sau', Math.round(storage.MESSAGE_TTL_MS / 60000), 'phút');
-    console.log('WebSocket gọi điện: /ws/call');
     console.log('Web Push public key:', (pushNotify.getPublicKey() || '').slice(0, 16) + '...');
     if (storage.GITHUB_TOKEN) {
       console.log('Lưu bền GitHub: bật · repo', storage.GITHUB_REPO, '· branch', storage.GITHUB_BRANCH);

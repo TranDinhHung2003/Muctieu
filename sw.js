@@ -1,5 +1,5 @@
-/* Service worker v17: Cuộc gọi luôn hiện thông báo khi app nền/tắt màn */
-const SW_VERSION = 'muctieu-sw-v17';
+/* Service worker v18: Web Push tin nhắn / cập nhật */
+const SW_VERSION = 'muctieu-sw-v18';
 const FOREGROUND_CACHE = 'muctieu-runtime-v1';
 const FOREGROUND_URL = '/__muctieu_foreground';
 const FOREGROUND_TTL_MS = 25000;
@@ -30,7 +30,6 @@ self.addEventListener('message', (event) => {
   if (data.type === 'APP_BACKGROUND') {
     if (clientId) foregroundClients.delete(clientId);
     event.waitUntil((async () => {
-      // Chỉ xóa flag nếu không còn client nào đang foreground
       pruneForegroundMap();
       const still = await hasLiveForegroundClient();
       if (!still) await writeForegroundFlag(false);
@@ -78,8 +77,6 @@ function buildPushPayload(data) {
     text: (data && data.text) || null,
     imageId: (data && data.imageId) || null,
     at: (data && data.at) || null,
-    callId: (data && data.callId) || null,
-    mode: (data && data.mode) || null,
   };
 }
 
@@ -161,41 +158,30 @@ async function clearNotificationsWithTag(tag) {
 async function showPushNotification(data) {
   const payload = buildPushPayload(data);
 
-  // Đồng bộ khung chat / cuộc gọi nếu app còn sống
   await notifyClients(payload);
 
-  const isCall = payload.type === 'call';
-
-  // Chat thường: đang trong app → không hiện OS notify
-  // Cuộc gọi: LUÔN hiện OS notify khi không chắc app đang mở (iOS tắt màn vẫn coi foreground)
-  if (!isCall && (await isAppInForeground())) {
+  // Đang trong app → không hiện OS notify
+  if (await isAppInForeground()) {
     await clearNotificationsWithTag(payload.tag);
     return;
   }
 
-  // Nếu cuộc gọi mà app đang thật sự visible trên 1 client → vẫn postMessage (đã làm),
-  // và vẫn hiện notify ngắn để chắc chắn user thấy khi màn hình khóa.
-  const notifData = {
-    page: isCall ? 'chat' : payload.page,
-    type: payload.type,
-    messageId: payload.messageId,
-    callId: payload.callId,
-    mode: payload.mode,
-    from: payload.from,
-    fromName: payload.fromName,
-    sw: SW_VERSION,
-  };
-
   await self.registration.showNotification(payload.title, {
     body: payload.body,
-    tag: payload.tag || (isCall ? 'muctieu-call' : 'muctieu-push'),
+    tag: payload.tag || 'muctieu-push',
     renotify: true,
-    requireInteraction: isCall,
+    requireInteraction: false,
     silent: false,
-    vibrate: isCall ? [250, 120, 250, 120, 400] : undefined,
     icon: absUrl('/icons/icon-192.png'),
     badge: absUrl('/icons/icon-96.png'),
-    data: notifData,
+    data: {
+      page: payload.page,
+      type: payload.type,
+      messageId: payload.messageId,
+      from: payload.from,
+      fromName: payload.fromName,
+      sw: SW_VERSION,
+    },
   });
 }
 
@@ -260,14 +246,7 @@ self.addEventListener('notificationclick', (event) => {
     const all = await clients.matchAll({ type: 'window', includeUncontrolled: true });
     const openPayload = {
       type: 'muctieu-notify-open',
-      page: data.page || (data.type === 'call' ? 'chat' : 'home'),
-      call: data.type === 'call' ? {
-        type: 'call',
-        callId: data.callId,
-        mode: data.mode,
-        from: data.from,
-        fromName: data.fromName,
-      } : null,
+      page: data.page || 'home',
     };
     for (const client of all) {
       if ('focus' in client) {
@@ -279,9 +258,7 @@ self.addEventListener('notificationclick', (event) => {
       }
     }
     if (clients.openWindow) {
-      const url = (data.type === 'call' || data.page === 'chat')
-        ? '/?open=chat&call=1'
-        : '/';
+      const url = data.page === 'chat' ? '/?open=chat' : '/';
       await clients.openWindow(url);
     }
   })());

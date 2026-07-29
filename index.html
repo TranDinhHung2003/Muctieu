@@ -546,21 +546,6 @@
       margin-top: auto;
     }
 
-    .drawer-hint {
-      margin: 8px 12px 16px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.28);
-      color: #fcd34d;
-      font-size: 0.72rem;
-      line-height: 1.45;
-    }
-
-    .drawer-hint strong {
-      color: #fde68a;
-    }
-
     body.weather-disabled .weather-fx,
     body.weather-disabled .weather-badge {
       display: none !important;
@@ -1835,48 +1820,52 @@
     }
 
     .chat-box {
-      background: rgba(15, 23, 42, 0.72);
-      border: 1px solid rgba(125, 211, 252, 0.28);
-      border-radius: 20px;
+      background:
+        linear-gradient(165deg, rgba(8, 47, 73, 0.55), rgba(15, 23, 42, 0.78)),
+        rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(125, 211, 252, 0.22);
+      border-radius: 22px;
       display: flex;
       flex-direction: column;
       min-height: 420px;
       max-height: min(70vh, 620px);
       overflow: hidden;
-      box-shadow: 0 12px 40px rgba(2, 18, 40, 0.35);
-      backdrop-filter: blur(8px);
+      box-shadow:
+        0 18px 48px rgba(2, 18, 40, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(10px);
     }
 
     .chat-toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(125, 211, 252, 0.22);
-      background: linear-gradient(180deg, rgba(8, 47, 73, 0.92), rgba(12, 74, 110, 0.78));
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(125, 211, 252, 0.18);
+      background: linear-gradient(180deg, rgba(7, 40, 64, 0.96), rgba(12, 74, 110, 0.72));
       flex-shrink: 0;
     }
 
     .chat-peer {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       min-width: 0;
       flex: 1;
     }
 
     .chat-peer-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 14px;
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
       display: grid;
       place-items: center;
-      font-size: 1.25rem;
-      background: linear-gradient(145deg, #38bdf8, #0284c7);
-      border: 1px solid rgba(255, 255, 255, 0.25);
+      font-size: 1.35rem;
+      background: linear-gradient(145deg, #7dd3fc, #0ea5e9 55%, #0284c7);
+      border: 1px solid rgba(255, 255, 255, 0.28);
       flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+      box-shadow: 0 6px 16px rgba(14, 165, 233, 0.38);
     }
 
     .chat-peer-text {
@@ -1884,8 +1873,9 @@
     }
 
     .chat-peer-name {
-      font-size: 0.95rem;
+      font-size: 1rem;
       font-weight: 800;
+      letter-spacing: -0.02em;
       color: #f8fafc;
       white-space: nowrap;
       overflow: hidden;
@@ -1893,9 +1883,10 @@
     }
 
     .chat-peer-sub {
-      font-size: 0.68rem;
-      color: #bae6fd;
-      margin-top: 1px;
+      font-size: 0.7rem;
+      color: #a5f3fc;
+      margin-top: 2px;
+      opacity: 0.9;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1903,63 +1894,30 @@
 
     .chat-nick-btn {
       flex-shrink: 0;
-      border: 1px solid rgba(186, 230, 253, 0.35);
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(186, 230, 253, 0.32);
       background: rgba(255, 255, 255, 0.1);
       color: #e0f2fe;
-      border-radius: 12px;
-      padding: 8px 10px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .chat-nick-btn:active {
-      transform: scale(0.96);
-      background: rgba(255, 255, 255, 0.18);
-    }
-
-    .chat-call-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .chat-call-btn {
-      width: 40px;
-      height: 40px;
       border-radius: 14px;
-      border: 1px solid rgba(186, 230, 253, 0.4);
-      background: linear-gradient(160deg, rgba(56, 189, 248, 0.28), rgba(14, 165, 233, 0.18));
-      color: #e0f2fe;
+      padding: 0;
       cursor: pointer;
       display: grid;
       place-items: center;
-      padding: 0;
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.22);
+      transition: background 0.15s ease, transform 0.12s ease;
     }
 
-    .chat-call-btn svg {
-      width: 20px;
-      height: 20px;
-      display: block;
-    }
-
-    .chat-call-btn.video {
-      background: linear-gradient(160deg, rgba(45, 212, 191, 0.32), rgba(13, 148, 136, 0.2));
-      border-color: rgba(153, 246, 228, 0.4);
-    }
-
-    .chat-call-btn:active {
+    .chat-nick-btn:active {
       transform: scale(0.94);
-      filter: brightness(1.08);
+      background: rgba(255, 255, 255, 0.2);
     }
 
-    .chat-call-btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
+    @media (prefers-reduced-motion: reduce) {
+      .chat-bubble {
+        animation: none;
+      }
     }
+
 
     .chat-send-btn {
       flex-shrink: 0;
@@ -1995,334 +1953,11 @@
       display: block;
     }
 
-    /* Cuộc gọi overlay */
-    .call-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 12000;
-      display: none;
-      flex-direction: column;
-      background: linear-gradient(165deg, #0c4a6e 0%, #082f49 45%, #042f2e 100%);
-      color: #f8fafc;
-      padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
-    }
 
-    .call-overlay.show {
-      display: flex;
-    }
 
-    body.in-call {
-      overflow: hidden;
-    }
 
-    .call-remote-wrap {
-      flex: 1;
-      min-height: 0;
-      position: relative;
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-    }
 
-    .call-remote-video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      background: #020617;
-      display: none;
-    }
 
-    .call-overlay.video-on .call-remote-video.has-stream {
-      display: block;
-    }
-
-    .call-avatar-fallback {
-      text-align: center;
-      padding: 24px;
-    }
-
-    .call-avatar-fallback .big {
-      width: 112px;
-      height: 112px;
-      margin: 0 auto 18px;
-      border-radius: 36px;
-      display: grid;
-      place-items: center;
-      font-size: 3rem;
-      background: linear-gradient(145deg, #38bdf8, #0284c7);
-      box-shadow: 0 12px 40px rgba(14, 165, 233, 0.35);
-      animation: callPulse 1.6s ease-in-out infinite;
-    }
-
-    @keyframes callPulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 12px 40px rgba(14, 165, 233, 0.35); }
-      50% { transform: scale(1.04); box-shadow: 0 16px 48px rgba(56, 189, 248, 0.5); }
-    }
-
-    .call-peer-label {
-      font-size: 1.35rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-
-    .call-status-label {
-      margin-top: 8px;
-      font-size: 0.95rem;
-      color: #bae6fd;
-    }
-
-    .call-local-video {
-      position: absolute;
-      right: 14px;
-      bottom: 14px;
-      width: min(32vw, 140px);
-      aspect-ratio: 3 / 4;
-      border-radius: 16px;
-      object-fit: cover;
-      background: #0f172a;
-      border: 2px solid rgba(255, 255, 255, 0.35);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-      display: none;
-      z-index: 2;
-      transform: scaleX(-1);
-    }
-
-    .call-overlay.video-on .call-local-video.has-stream {
-      display: block;
-    }
-
-    .call-controls {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 18px;
-      padding: 22px 16px 28px;
-      background: linear-gradient(180deg, transparent, rgba(2, 6, 23, 0.55));
-    }
-
-    .call-ctrl {
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      border: none;
-      font-size: 1.35rem;
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      background: rgba(255, 255, 255, 0.16);
-      color: #fff;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-    }
-
-    .call-ctrl:active { transform: scale(0.94); }
-
-    .call-ctrl.active {
-      background: #f8fafc;
-      color: #0f172a;
-    }
-
-    .call-ctrl.hangup {
-      background: #ef4444;
-      width: 68px;
-      height: 68px;
-      font-size: 1.55rem;
-    }
-
-    /* Banner trên đầu kiểu Zalo (trong app) */
-    .call-banner {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 12500;
-      display: none;
-      padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 10px;
-      background: linear-gradient(180deg, rgba(8, 47, 73, 0.98), rgba(12, 74, 110, 0.96));
-      border-bottom: 1px solid rgba(125, 211, 252, 0.28);
-      box-shadow: 0 10px 28px rgba(2, 18, 40, 0.35);
-      color: #f8fafc;
-    }
-
-    .call-banner.show { display: block; animation: callBannerIn 0.28s ease-out; }
-
-    @keyframes callBannerIn {
-      from { transform: translateY(-110%); opacity: 0.4; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    .call-banner-inner {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      max-width: 720px;
-      margin: 0 auto;
-    }
-
-    .call-banner-avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 16px;
-      display: grid;
-      place-items: center;
-      font-size: 1.35rem;
-      background: linear-gradient(145deg, #38bdf8, #0284c7);
-      flex-shrink: 0;
-    }
-
-    .call-banner-text { min-width: 0; flex: 1; }
-    .call-banner-text strong {
-      display: block;
-      font-size: 0.98rem;
-      font-weight: 800;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .call-banner-text span {
-      display: block;
-      margin-top: 2px;
-      font-size: 0.78rem;
-      color: #bae6fd;
-    }
-
-    .call-banner-actions {
-      display: flex;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-
-    .call-banner-actions button {
-      width: 46px;
-      height: 46px;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-    }
-
-    .call-banner-actions button svg { width: 22px; height: 22px; }
-    .call-banner-decline { background: #ef4444; color: #fff; }
-    .call-banner-accept { background: #22c55e; color: #fff; }
-
-    /* Full-screen cuộc gọi đến (ngoài app / tắt màn / mở từ notify) */
-    .call-incoming {
-      position: fixed;
-      inset: 0;
-      z-index: 12600;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: calc(28px + env(safe-area-inset-top, 0px)) 24px calc(36px + env(safe-area-inset-bottom, 0px));
-      background:
-        radial-gradient(ellipse 80% 50% at 50% 20%, rgba(56, 189, 248, 0.28), transparent 60%),
-        linear-gradient(165deg, #0c4a6e 0%, #082f49 48%, #042f2e 100%);
-      color: #f8fafc;
-    }
-
-    .call-incoming.show { display: flex; }
-
-    .call-incoming-card {
-      width: min(100%, 420px);
-      border-radius: 24px;
-      padding: 22px 20px 18px;
-      background: linear-gradient(160deg, #0c4a6e, #164e63 55%, #0f766e);
-      color: #f8fafc;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-      text-align: center;
-    }
-
-    .call-incoming-card h3 {
-      margin: 0 0 6px;
-      font-size: 1.2rem;
-    }
-
-    .call-incoming-card p {
-      margin: 0 0 18px;
-      color: #bae6fd;
-      font-size: 0.9rem;
-    }
-
-    .call-incoming-actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .call-incoming-actions button {
-      flex: 1;
-      border: none;
-      border-radius: 16px;
-      padding: 14px 12px;
-      font-weight: 800;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-
-    .call-decline {
-      background: #fecaca;
-      color: #991b1b;
-    }
-
-    .call-accept {
-      background: #86efac;
-      color: #14532d;
-    }
-
-    .chat-bubble.call-event {
-      align-self: center;
-      max-width: min(92%, 340px);
-      background: rgba(8, 47, 73, 0.72);
-      border: 1px solid rgba(125, 211, 252, 0.28);
-      color: #e0f2fe;
-      text-align: center;
-      padding: 12px 14px;
-      border-radius: 18px;
-      box-shadow: 0 6px 18px rgba(2, 18, 40, 0.25);
-    }
-
-    .chat-bubble.call-event .chat-name,
-    .chat-bubble.call-event .chat-status {
-      display: none;
-    }
-
-    .chat-bubble.call-event .chat-meta {
-      justify-content: center;
-      color: #7dd3fc;
-      font-size: 0.68rem;
-      margin-bottom: 4px;
-    }
-
-    .chat-bubble.call-event .chat-call-card {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    .chat-bubble.call-event .chat-call-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 12px;
-      display: grid;
-      place-items: center;
-      background: rgba(56, 189, 248, 0.22);
-      font-size: 1.1rem;
-      flex-shrink: 0;
-    }
-
-    .chat-bubble.call-event .chat-call-text {
-      text-align: left;
-      font-weight: 700;
-      font-size: 0.9rem;
-      line-height: 1.35;
-      color: #f8fafc;
-    }
-
-    .chat-bubble.call-event.missed .chat-call-text {
-      color: #fecaca;
-    }
 
     .chat-stage {
       position: relative;
@@ -2510,34 +2145,40 @@
       margin: auto;
       text-align: center;
       color: #e0f2fe;
-      font-size: 0.88rem;
-      padding: 18px 16px;
-      line-height: 1.55;
-      max-width: 280px;
-      border-radius: 16px;
-      background: rgba(15, 23, 42, 0.72);
-      border: 1px solid rgba(186, 230, 253, 0.25);
-      backdrop-filter: blur(6px);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+      font-size: 0.9rem;
+      padding: 20px 18px;
+      line-height: 1.6;
+      max-width: 260px;
+      border-radius: 18px;
+      background: rgba(8, 47, 73, 0.55);
+      border: 1px solid rgba(186, 230, 253, 0.18);
+      backdrop-filter: blur(8px);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes chatBubbleIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .chat-bubble {
       max-width: 82%;
-      padding: 10px 12px;
-      border-radius: 16px 16px 16px 6px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: rgba(15, 23, 42, 0.88);
+      padding: 11px 13px;
+      border-radius: 18px 18px 18px 7px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(15, 23, 42, 0.9);
       align-self: flex-start;
-      box-shadow: 0 6px 16px rgba(2, 12, 27, 0.28);
-      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 20px rgba(2, 12, 27, 0.3);
+      backdrop-filter: blur(12px);
       color: #f8fafc;
+      animation: chatBubbleIn 0.28s ease-out both;
     }
 
     .chat-bubble.mine {
       align-self: flex-end;
-      border-radius: 16px 16px 6px 16px;
-      background: linear-gradient(145deg, rgba(22, 101, 52, 0.96), rgba(20, 83, 45, 0.96));
-      border-color: rgba(74, 222, 128, 0.35);
+      border-radius: 18px 18px 7px 18px;
+      background: linear-gradient(145deg, rgba(21, 128, 61, 0.97), rgba(20, 83, 45, 0.97));
+      border-color: rgba(74, 222, 128, 0.32);
     }
 
     .chat-bubble .chat-name {
@@ -2653,37 +2294,51 @@
     .chat-compose {
       display: flex;
       gap: 8px;
-      padding: 10px;
+      padding: 10px 12px 12px;
       align-items: center;
+      background: linear-gradient(180deg, rgba(8, 30, 48, 0.2), rgba(8, 47, 73, 0.55));
+      border-top: 1px solid rgba(125, 211, 252, 0.12);
     }
 
     .chat-attach-btn {
       flex-shrink: 0;
       width: 44px;
       height: 44px;
-      border-radius: 12px;
-      border: 1px solid rgba(125, 211, 252, 0.3);
-      background: rgba(8, 47, 73, 0.85);
-      color: var(--text);
+      border-radius: 14px;
+      border: 1px solid rgba(125, 211, 252, 0.28);
+      background: rgba(8, 47, 73, 0.88);
+      color: #e0f2fe;
       font-size: 1.15rem;
       cursor: pointer;
       display: grid;
       place-items: center;
+      transition: background 0.15s ease, transform 0.12s ease;
     }
 
     .chat-attach-btn:hover {
-      background: rgba(12, 74, 110, 0.9);
+      background: rgba(12, 74, 110, 0.95);
+    }
+
+    .chat-attach-btn:active {
+      transform: scale(0.95);
     }
 
     .chat-compose input[type="text"] {
       flex: 1;
       min-width: 0;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(125, 211, 252, 0.28);
-      border-radius: 12px;
-      padding: 12px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(125, 211, 252, 0.26);
+      border-radius: 16px;
+      padding: 12px 14px;
       color: var(--text);
-      font-size: 0.92rem;
+      font-size: 0.94rem;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .chat-compose input[type="text"]:focus {
+      border-color: rgba(56, 189, 248, 0.55);
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18);
     }
 
     .chat-compose button[type="submit"].chat-send-btn {
@@ -3110,13 +2765,6 @@
         <span class="knob"></span>
       </button>
     </div>
-    <button type="button" class="drawer-item" id="push-test-btn">📨 Thử thông báo (kể cả khi vuốt tắt)</button>
-    <p class="drawer-hint" id="push-status-hint">Thông báo đẩy: chưa kiểm tra</p>
-    <p class="drawer-hint" id="homescreen-hint">
-      iPhone: mở bằng <strong>icon Màn hình chính</strong> → Menu → <strong>Thử thông báo</strong>.
-      Sau khi vuốt tắt app, vẫn nhận được nếu đã đăng ký đúng (nếu mất, mở app 1 lần rồi tắt lại).
-      Android: vào Pin/Battery → cho app chạy nền không hạn chế.
-    </p>
   </nav>
 
   <div class="app-scroll-clip">
@@ -3341,18 +2989,12 @@
             <div class="chat-peer-avatar" aria-hidden="true">🦈</div>
             <div class="chat-peer-text">
               <div class="chat-peer-name" id="chat-peer-name">Đối phương</div>
-              <div class="chat-peer-sub" id="chat-peer-sub">Baby Shark tank · tự xóa sau 30 phút</div>
+              <div class="chat-peer-sub" id="chat-peer-sub">Tin nhắn tự xóa sau 30 phút</div>
             </div>
           </div>
-          <div class="chat-call-actions">
-            <button type="button" class="chat-call-btn" id="chat-audio-call-btn" title="Gọi thoại" aria-label="Gọi thoại">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.5 3.5c.4-.4 1-.5 1.5-.3l2.2 1c.5.2.8.7.8 1.2v2.2c0 .4-.2.8-.6 1-.8.5-1.2 1.3-1.1 2.2.3 2.2 2 4 4.2 4.2.9.1 1.7-.3 2.2-1.1.2-.4.6-.6 1-.6h2.2c.5 0 1 .3 1.2.8l1 2.2c.2.5.1 1.1-.3 1.5-1.4 1.4-3.4 2.1-5.4 1.9-5.3-.5-9.6-4.8-10.1-10.1-.2-2 .5-4 1.9-5.4z" fill="currentColor"/><path d="M15.2 4.8c1.5.3 2.8 1.2 3.6 2.5.4.6-.2 1.4-.9 1.2-.5-.1-.9-.5-1.1-1-.3-.6-.8-1-1.4-1.2-.7-.2-1-.9-.8-1.5.1-.5.6-.8 1.1-.5z" fill="currentColor" opacity=".9"/><path d="M14.6 2.2c2.6.4 4.8 2 6 4.3.3.6-.2 1.3-.9 1.2-.5 0-.9-.4-1.1-.8-1-1.8-2.6-3-4.5-3.3-.7-.1-1-.8-.8-1.4.2-.5.7-.8 1.3-.5z" fill="currentColor" opacity=".7"/></svg>
-            </button>
-            <button type="button" class="chat-call-btn video" id="chat-video-call-btn" title="Gọi video" aria-label="Gọi video">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2.5" y="6" width="13.5" height="12" rx="3" fill="currentColor"/><path d="M17.2 10.2l4 2.8-4 2.8V10.2z" fill="currentColor"/><circle cx="9.2" cy="12" r="2.2" fill="#082f49" opacity=".35"/></svg>
-            </button>
-            <button type="button" class="chat-nick-btn" id="chat-nickname-btn" title="Đặt biệt danh đối phương">Biệt danh</button>
-          </div>
+          <button type="button" class="chat-nick-btn" id="chat-nickname-btn" title="Đặt biệt danh" aria-label="Đặt biệt danh">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true"><path d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
         </div>
         <div class="chat-stage">
           <div class="shark-tank" aria-hidden="true">
@@ -3436,7 +3078,7 @@
       <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
-    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.5.6</span></footer>
+    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.7.0</span></footer>
     <div class="scroll-end-spacer" aria-hidden="true"></div>
     </div>
   </div>
@@ -3445,9 +3087,9 @@
 
   <div class="modal-overlay" id="nickname-modal">
     <div class="modal">
-      <h2>Đặt biệt danh đối phương</h2>
-      <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 14px">Tên này cả hai tài khoản đều thấy trong khung chat. Admin đặt tên cho theo dõi (hoặc ngược lại) — tối đa 24 ký tự.</p>
-      <label for="nickname-input">Biệt danh gọi đối phương</label>
+      <h2>Đặt biệt danh</h2>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 14px">Tối đa 24 ký tự.</p>
+      <label for="nickname-input">Tên hiển thị</label>
       <input type="text" id="nickname-input" maxlength="24" placeholder="vd: Baby Shark" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text);margin-top:8px;margin-bottom:8px">
       <div class="login-error" id="nickname-error"></div>
       <div class="modal-actions">
@@ -3457,61 +3099,8 @@
     </div>
   </div>
 
-  <!-- Banner trên đầu kiểu Zalo khi đang trong app -->
-  <div class="call-banner" id="call-banner" aria-hidden="true">
-    <div class="call-banner-inner">
-      <div class="call-banner-avatar" aria-hidden="true">🦈</div>
-      <div class="call-banner-text">
-        <strong id="call-banner-title">Cuộc gọi đến</strong>
-        <span id="call-banner-sub">Đang đổ chuông…</span>
-      </div>
-      <div class="call-banner-actions">
-        <button type="button" class="call-banner-decline" id="call-banner-decline" title="Từ chối" aria-label="Từ chối">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.2 6.2l11.6 11.6M17.8 6.2L6.2 17.8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-        </button>
-        <button type="button" class="call-banner-accept" id="call-banner-accept" title="Nghe máy" aria-label="Nghe máy">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.5 3.5c.4-.4 1-.5 1.5-.3l2.2 1c.5.2.8.7.8 1.2v2.2c0 .4-.2.8-.6 1-.8.5-1.2 1.3-1.1 2.2.3 2.2 2 4 4.2 4.2.9.1 1.7-.3 2.2-1.1.2-.4.6-.6 1-.6h2.2c.5 0 1 .3 1.2.8l1 2.2c.2.5.1 1.1-.3 1.5-1.4 1.4-3.4 2.1-5.4 1.9-5.3-.5-9.6-4.8-10.1-10.1-.2-2 .5-4 1.9-5.4z" fill="currentColor"/></svg>
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <!-- Full-screen cuộc gọi đến (ngoài app / tắt màn / mở từ thông báo) -->
-  <div class="call-incoming" id="call-incoming" aria-hidden="true">
-    <div style="text-align:center;margin-top:12vh">
-      <div class="call-avatar-fallback">
-        <div class="big" aria-hidden="true">🦈</div>
-        <div class="call-peer-label" id="call-incoming-title">Cuộc gọi đến</div>
-        <div class="call-status-label" id="call-incoming-sub">Đang đổ chuông…</div>
-      </div>
-    </div>
-    <div class="call-controls" style="width:100%;justify-content:center;gap:36px">
-      <button type="button" class="call-ctrl hangup" id="call-decline-btn" title="Từ chối" aria-label="Từ chối" style="background:#ef4444">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true"><path d="M6.2 6.2l11.6 11.6M17.8 6.2L6.2 17.8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
-      </button>
-      <button type="button" class="call-ctrl" id="call-accept-btn" title="Nghe máy" aria-label="Nghe máy" style="background:#22c55e;width:78px;height:78px">
-        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" aria-hidden="true"><path d="M8.5 3.5c.4-.4 1-.5 1.5-.3l2.2 1c.5.2.8.7.8 1.2v2.2c0 .4-.2.8-.6 1-.8.5-1.2 1.3-1.1 2.2.3 2.2 2 4 4.2 4.2.9.1 1.7-.3 2.2-1.1.2-.4.6-.6 1-.6h2.2c.5 0 1 .3 1.2.8l1 2.2c.2.5.1 1.1-.3 1.5-1.4 1.4-3.4 2.1-5.4 1.9-5.3-.5-9.6-4.8-10.1-10.1-.2-2 .5-4 1.9-5.4z" fill="currentColor"/></svg>
-      </button>
-    </div>
-  </div>
 
-  <div class="call-overlay" id="call-overlay" aria-hidden="true">
-    <div class="call-remote-wrap">
-      <video class="call-remote-video" id="call-remote-video" autoplay playsinline></video>
-      <audio id="call-remote-audio" autoplay playsinline></audio>
-      <div class="call-avatar-fallback" id="call-avatar-fallback">
-        <div class="big" aria-hidden="true">🦈</div>
-        <div class="call-peer-label" id="call-peer-label">Đối phương</div>
-        <div class="call-status-label" id="call-status-label">Đang kết nối…</div>
-      </div>
-      <video class="call-local-video" id="call-local-video" autoplay playsinline muted></video>
-    </div>
-    <div class="call-controls">
-      <button type="button" class="call-ctrl" id="call-mute-btn" title="Tắt mic">🔇</button>
-      <button type="button" class="call-ctrl hangup" id="call-hangup-btn" title="Kết thúc">📵</button>
-      <button type="button" class="call-ctrl" id="call-cam-btn" title="Bật/tắt camera">📷</button>
-    </div>
-  </div>
 
   <div class="modal-overlay" id="password-modal">
     <div class="modal">
@@ -3609,7 +3198,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.6.5';
+    const APP_VERSION = '1.7.0';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -3634,6 +3223,7 @@
     let pendingChatImage = null; // { dataUrl, name, size }
     let currentNickname = '';
     let chatNicknames = {};
+    let weatherPausedForChat = false;
 
     const FIELD_MAP = {
       app: { input: 'app-income', locked: 'locked-app', label: 'tiền app', preview: 'preview-app', money: true },
@@ -3697,28 +3287,6 @@
       chatPeerName: document.getElementById('chat-peer-name'),
       chatPeerSub: document.getElementById('chat-peer-sub'),
       chatNicknameBtn: document.getElementById('chat-nickname-btn'),
-      chatAudioCallBtn: document.getElementById('chat-audio-call-btn'),
-      chatVideoCallBtn: document.getElementById('chat-video-call-btn'),
-      callOverlay: document.getElementById('call-overlay'),
-      callIncoming: document.getElementById('call-incoming'),
-      callIncomingTitle: document.getElementById('call-incoming-title'),
-      callIncomingSub: document.getElementById('call-incoming-sub'),
-      callBanner: document.getElementById('call-banner'),
-      callBannerTitle: document.getElementById('call-banner-title'),
-      callBannerSub: document.getElementById('call-banner-sub'),
-      callBannerAccept: document.getElementById('call-banner-accept'),
-      callBannerDecline: document.getElementById('call-banner-decline'),
-      callDeclineBtn: document.getElementById('call-decline-btn'),
-      callAcceptBtn: document.getElementById('call-accept-btn'),
-      callRemoteVideo: document.getElementById('call-remote-video'),
-      callRemoteAudio: document.getElementById('call-remote-audio'),
-      callLocalVideo: document.getElementById('call-local-video'),
-      callAvatarFallback: document.getElementById('call-avatar-fallback'),
-      callPeerLabel: document.getElementById('call-peer-label'),
-      callStatusLabel: document.getElementById('call-status-label'),
-      callMuteBtn: document.getElementById('call-mute-btn'),
-      callHangupBtn: document.getElementById('call-hangup-btn'),
-      callCamBtn: document.getElementById('call-cam-btn'),
       nicknameModal: document.getElementById('nickname-modal'),
       nicknameInput: document.getElementById('nickname-input'),
       nicknameError: document.getElementById('nickname-error'),
@@ -3804,19 +3372,22 @@
       closeDrawer();
       if (isHistory) renderHistory(loadData());
       if (isChat) {
-        if (typeof isWeatherEnabled === 'function' && isWeatherEnabled()) {
-          setWeatherEnabled(false, { toast: false });
-        }
+        weatherPausedForChat = true;
+        stopWeatherEffects();
         updateChatPeerHeader();
         markChatRead();
         chatPinnedToBottom = true;
         renderChatMessages({ forceBottom: true });
         refreshMessages(false);
-        try { CallApp.connect(); CallApp.warmPermissions(); } catch { /* ignore */ }
         setTimeout(() => {
           scrollChatToBottom();
           syncChatKeyboardInset();
         }, 50);
+      } else if (weatherPausedForChat) {
+        weatherPausedForChat = false;
+        if (typeof isWeatherEnabled === 'function' && isWeatherEnabled()) {
+          startWeatherEffects();
+        }
       }
       const appScroll = document.getElementById('app-scroll');
       if (appScroll) appScroll.scrollTo({ top: 0, behavior: isChat ? 'auto' : 'smooth' });
@@ -3859,7 +3430,6 @@
       closeChatLightbox();
       clearPendingChatImage();
       stopRealtimeSync();
-      CallApp.disconnect();
       document.body.classList.remove('role-viewer', 'role-admin');
       document.body.classList.remove('logged-in');
       document.body.classList.add('logged-out');
@@ -3890,8 +3460,6 @@
       }
       updateChatPeerHeader();
       navigateTo('home');
-      CallApp.connect();
-      try { CallApp.warmPermissions(); } catch { /* ignore */ }
     }
 
     function getPeerUsername() {
@@ -3925,7 +3493,7 @@
       const peerName = displayNameFor(peerUser);
       if (els.chatPeerName) els.chatPeerName.textContent = peerName;
       if (els.chatPeerSub) {
-        els.chatPeerSub.textContent = 'Biệt danh dùng chung · tự xóa sau 30 phút';
+        els.chatPeerSub.textContent = 'Tin nhắn tự xóa sau 30 phút';
       }
     }
 
@@ -3971,1115 +3539,11 @@
         closeNicknameModal();
         renderChatMessages({ forceBottom: false });
         updateChatPeerHeader();
-        showToast('Đã đặt biệt danh (cả hai đều thấy)');
+        showToast('Đã lưu biệt danh');
       } catch (err) {
         if (els.nicknameError) els.nicknameError.textContent = err.message || 'Không lưu được biệt danh';
       }
     }
-
-    /* ===== Gọi thoại / video — HTTP-first + chuông + quyền media ===== */
-    const CallApp = (() => {
-      const ICE_SERVERS = [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun.cloudflare.com:3478' },
-        {
-          urls: [
-            'turn:openrelay.metered.ca:80',
-            'turn:openrelay.metered.ca:80?transport=tcp',
-            'turn:openrelay.metered.ca:443',
-            'turn:openrelay.metered.ca:443?transport=tcp',
-          ],
-          username: 'openrelayproject',
-          credential: 'openrelayproject',
-        },
-      ];
-      const MEDIA_PREF_KEY = 'muctieu_media_perm_v1';
-      const SEEN_SIGNAL_MAX = 120;
-
-      let ws = null;
-      let wsTimer = null;
-      let pollTimer = null;
-      let pc = null;
-      let localStream = null;
-      let remoteStream = null;
-      let callId = null;
-      let callMode = 'audio';
-      let callRole = null;
-      let callPeer = null;
-      let callState = 'idle';
-      let muted = false;
-      let camOff = false;
-      let ringTimer = null;
-      let durationTimer = null;
-      let connectedAt = 0;
-      let pendingOffer = null;
-      let pendingIce = [];
-      let remoteDescSet = false;
-      let reconnectAttempt = 0;
-      let loggedCallId = null;
-      let ticketCache = { ticket: '', at: 0 };
-      let incomingFullscreen = false;
-      let lastPendingCallId = null;
-      let seenSignalKeys = new Set();
-      let audioCtx = null;
-      let ringNodes = null;
-      let ringInterval = null;
-      let ringKind = null; // 'in' | 'out'
-
-      function formatDur(totalSec) {
-        const s = Math.max(0, Math.floor(Number(totalSec) || 0));
-        const h = Math.floor(s / 3600);
-        const m = Math.floor((s % 3600) / 60);
-        const sec = s % 60;
-        if (h > 0) {
-          return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
-        }
-        return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
-      }
-
-      function callLabel(mode, event, durationSec) {
-        const kind = mode === 'video' ? 'Cuộc gọi video' : 'Cuộc gọi thoại';
-        if (event === 'ended') return kind + ' · ' + formatDur(durationSec);
-        if (event === 'cancelled') return kind + ' · Đã hủy';
-        if (event === 'rejected') return kind + ' · Đã từ chối';
-        if (event === 'missed') return 'Cuộc gọi nhỡ · ' + kind;
-        return kind;
-      }
-
-      function loadMediaPref() {
-        try {
-          const raw = localStorage.getItem(MEDIA_PREF_KEY);
-          return raw ? JSON.parse(raw) : {};
-        } catch {
-          return {};
-        }
-      }
-
-      function saveMediaPref(patch) {
-        try {
-          const next = Object.assign({}, loadMediaPref(), patch, { at: Date.now() });
-          localStorage.setItem(MEDIA_PREF_KEY, JSON.stringify(next));
-        } catch { /* ignore */ }
-      }
-
-      function ensureAudioCtx() {
-        if (audioCtx) return audioCtx;
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx) return null;
-        audioCtx = new Ctx();
-        return audioCtx;
-      }
-
-      function stopRingtone() {
-        ringKind = null;
-        if (ringInterval) {
-          clearInterval(ringInterval);
-          ringInterval = null;
-        }
-        if (ringNodes) {
-          try { ringNodes.forEach((n) => n.stop && n.stop()); } catch { /* ignore */ }
-          ringNodes = null;
-        }
-      }
-
-      function playTone(ctx, freq, start, dur, peak, type) {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        const filter = ctx.createBiquadFilter();
-        osc.type = type || 'triangle';
-        osc.frequency.value = freq;
-        filter.type = 'lowpass';
-        filter.frequency.value = 2800;
-        gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(peak, start + 0.025);
-        gain.gain.exponentialRampToValueAtTime(peak * 0.75, start + dur * 0.55);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(start);
-        osc.stop(start + dur + 0.02);
-        return osc;
-      }
-
-      function playRingBurst(kind) {
-        const ctx = ensureAudioCtx();
-        if (!ctx) return;
-        if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-        const now = ctx.currentTime;
-        const nodes = [];
-        if (kind === 'in') {
-          // Chuông đến: hợp âm ấm, to hơn, nhịp đôi kiểu điện thoại
-          const pattern = [
-            [0.00, [523.25, 659.25, 783.99], 0.42], // C5 E5 G5
-            [0.48, [587.33, 739.99, 880.00], 0.42], // D5 F#5 A5
-            [1.05, [659.25, 830.61, 987.77], 0.50], // E5 G#5 B5
-            [1.70, [523.25, 659.25, 987.77], 0.55], // C5 E5 B5
-          ];
-          pattern.forEach((step) => {
-            const t0 = now + step[0];
-            step[1].forEach((f, i) => {
-              nodes.push(playTone(ctx, f, t0 + i * 0.01, step[2], 0.28 - i * 0.03, i === 0 ? 'triangle' : 'sine'));
-            });
-          });
-        } else {
-          // Chuông đi: nhịp chờ máy (ringback) rõ hơn
-          const pattern = [
-            [0.00, [440, 480], 0.85],
-            [1.10, [440, 480], 0.85],
-          ];
-          pattern.forEach((step) => {
-            const t0 = now + step[0];
-            step[1].forEach((f, i) => {
-              nodes.push(playTone(ctx, f, t0, step[2], 0.18, 'sine'));
-            });
-          });
-        }
-        ringNodes = nodes;
-      }
-
-      function startRingtone(kind) {
-        stopRingtone();
-        ringKind = kind;
-        playRingBurst(kind);
-        ringInterval = setInterval(() => {
-          if (ringKind) playRingBurst(ringKind);
-        }, kind === 'out' ? 4000 : 3200);
-        try {
-          if (navigator.vibrate && kind === 'in') navigator.vibrate([220, 80, 220, 80, 420, 120, 220]);
-        } catch { /* ignore */ }
-      }
-
-      function setStatus(text) {
-        if (els.callStatusLabel) els.callStatusLabel.textContent = text || '';
-      }
-
-      function updatePeerLabel() {
-        if (els.callPeerLabel) {
-          els.callPeerLabel.textContent = displayNameFor(callPeer || getPeerUsername());
-        }
-      }
-
-      function setIncomingLabels(name, sub) {
-        if (els.callIncomingTitle) els.callIncomingTitle.textContent = name || 'Cuộc gọi đến';
-        if (els.callIncomingSub) els.callIncomingSub.textContent = sub || 'Đang đổ chuông…';
-        if (els.callBannerTitle) els.callBannerTitle.textContent = name || 'Cuộc gọi đến';
-        if (els.callBannerSub) els.callBannerSub.textContent = sub || 'Đang đổ chuông…';
-      }
-
-      function showOverlay(show) {
-        if (!els.callOverlay) return;
-        els.callOverlay.classList.toggle('show', !!show);
-        els.callOverlay.setAttribute('aria-hidden', show ? 'false' : 'true');
-        document.body.classList.toggle('in-call', !!show);
-      }
-
-      function showIncoming(show, opts) {
-        const fullscreen = !!(opts && opts.fullscreen) || (!!document.hidden && !!show);
-        incomingFullscreen = show ? fullscreen : false;
-        if (els.callBanner) {
-          const useBanner = !!show && !fullscreen;
-          els.callBanner.classList.toggle('show', useBanner);
-          els.callBanner.setAttribute('aria-hidden', useBanner ? 'false' : 'true');
-        }
-        if (els.callIncoming) {
-          const useFull = !!show && fullscreen;
-          els.callIncoming.classList.toggle('show', useFull);
-          els.callIncoming.setAttribute('aria-hidden', useFull ? 'false' : 'true');
-        }
-        if (show) {
-          try { navigateTo('chat'); } catch { /* ignore */ }
-        }
-      }
-
-      function setVideoModeUi(on) {
-        if (els.callOverlay) els.callOverlay.classList.toggle('video-on', !!on);
-      }
-
-      function bindStreamToVideo(el, stream) {
-        if (!el) return;
-        el.srcObject = stream || null;
-        el.classList.toggle('has-stream', !!stream);
-        if (stream) {
-          const play = () => el.play().catch(() => {});
-          el.onloadedmetadata = play;
-          play();
-        }
-      }
-
-      function bindRemoteMedia(stream) {
-        remoteStream = stream || remoteStream;
-        // iOS: audio riêng — video element không phát audio-only ổn định
-        if (els.callRemoteAudio) {
-          els.callRemoteAudio.srcObject = remoteStream || null;
-          els.callRemoteAudio.autoplay = true;
-          els.callRemoteAudio.setAttribute('playsinline', 'true');
-          els.callRemoteAudio.volume = 1;
-          if (remoteStream) {
-            els.callRemoteAudio.play().catch(() => {});
-          }
-        }
-        const hasVideo = !!(remoteStream && remoteStream.getVideoTracks().some((t) => t.readyState === 'live'));
-        bindStreamToVideo(els.callRemoteVideo, hasVideo ? remoteStream : null);
-        if (hasVideo) {
-          if (els.callAvatarFallback) els.callAvatarFallback.style.display = 'none';
-          if (els.callOverlay) els.callOverlay.classList.add('video-on');
-        }
-      }
-
-      function elapsedSec() {
-        if (!connectedAt) return 0;
-        return Math.max(0, Math.floor((Date.now() - connectedAt) / 1000));
-      }
-
-      function startDurationTick() {
-        stopDurationTick();
-        if (!connectedAt) connectedAt = Date.now();
-        const tick = () => {
-          if (callState === 'active') setStatus(formatDur(elapsedSec()));
-        };
-        tick();
-        durationTimer = setInterval(tick, 1000);
-      }
-
-      function stopDurationTick() {
-        if (durationTimer) {
-          clearInterval(durationTimer);
-          durationTimer = null;
-        }
-      }
-
-      function signalKey(msg) {
-        if (!msg) return '';
-        // Không dùng `at` — cùng callId/type chỉ xử lý 1 lần
-        const cand = msg.candidate && (msg.candidate.candidate || msg.candidate);
-        return [
-          msg.type || '',
-          msg.callId || '',
-          msg.from || '',
-          msg.sdp && msg.sdp.type ? msg.sdp.type : '',
-          msg.sdp && msg.sdp.sdp ? String(msg.sdp.sdp).length + ':' + String(msg.sdp.sdp).slice(0, 24) : '',
-          cand ? String(cand).slice(0, 48) : '',
-        ].join('|');
-      }
-
-      function markSeen(msg) {
-        const key = signalKey(msg);
-        if (!key) return false;
-        if (seenSignalKeys.has(key)) return true;
-        seenSignalKeys.add(key);
-        if (seenSignalKeys.size > SEEN_SIGNAL_MAX) {
-          seenSignalKeys = new Set(Array.from(seenSignalKeys).slice(-80));
-        }
-        return false;
-      }
-
-      function ingestSignals(list) {
-        if (!Array.isArray(list) || !list.length) return;
-        list.forEach((s) => {
-          try { handleMessage(s); } catch (err) { console.warn('signal', err); }
-        });
-      }
-
-      async function send(msg) {
-        // Chỉ HTTP — kèm tín hiệu chiều ngược trong response (nhanh hơn poll)
-        try {
-          const res = await api('/call/signal', { method: 'POST', body: msg });
-          if (res && res.signals) ingestSignals(res.signals);
-          return true;
-        } catch (err) {
-          console.warn('call signal http', err);
-          if (ws && ws.readyState === 1) {
-            try {
-              ws.send(JSON.stringify(msg));
-              return true;
-            } catch { /* ignore */ }
-          }
-          return false;
-        }
-      }
-
-      function stopTracks(stream) {
-        if (!stream) return;
-        stream.getTracks().forEach((t) => {
-          try { t.stop(); } catch { /* ignore */ }
-        });
-      }
-
-      async function ensureMedia(mode) {
-        const wantVideo = mode === 'video';
-        const pref = loadMediaPref();
-        if (localStream) {
-          const hasVideo = localStream.getVideoTracks().length > 0;
-          if (wantVideo === hasVideo) return localStream;
-          stopTracks(localStream);
-          localStream = null;
-        }
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error('Thiết bị không hỗ trợ gọi trên trình duyệt này');
-        }
-        try {
-          localStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-            },
-            video: wantVideo
-              ? { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
-              : false,
-          });
-          saveMediaPref({
-            audio: true,
-            video: wantVideo ? true : !!pref.video,
-            granted: true,
-          });
-          bindStreamToVideo(els.callLocalVideo, wantVideo ? localStream : null);
-          return localStream;
-        } catch (err) {
-          const name = err && err.name;
-          if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-            saveMediaPref({ granted: false, deniedAt: Date.now() });
-            throw new Error('Hãy cho phép Micro' + (wantVideo ? '/Camera' : '') + ' trong Cài đặt → Safari/BabyShark');
-          }
-          throw err;
-        }
-      }
-
-      async function warmPermissions() {
-        const pref = loadMediaPref();
-        if (pref.granted) return;
-        try {
-          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-          stopTracks(stream);
-          saveMediaPref({ audio: true, granted: true });
-        } catch { /* user may deny — will ask again on call */ }
-      }
-
-      function createPeerConnection() {
-        if (pc) {
-          try { pc.close(); } catch { /* ignore */ }
-        }
-        remoteDescSet = false;
-        pendingIce = [];
-        pc = new RTCPeerConnection({
-          iceServers: ICE_SERVERS,
-          iceCandidatePoolSize: 8,
-        });
-        remoteStream = new MediaStream();
-        bindRemoteMedia(remoteStream);
-        setVideoModeUi(callMode === 'video');
-
-        if (localStream) {
-          localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
-        } else {
-          pc.addTransceiver('audio', { direction: 'sendrecv' });
-          if (callMode === 'video') pc.addTransceiver('video', { direction: 'sendrecv' });
-        }
-
-        pc.onicecandidate = (ev) => {
-          if (!ev.candidate || !callPeer) return;
-          send({
-            type: 'webrtc-ice',
-            to: callPeer,
-            callId,
-            candidate: ev.candidate.toJSON ? ev.candidate.toJSON() : ev.candidate,
-          });
-        };
-
-        pc.ontrack = (ev) => {
-          const tracks = (ev.streams && ev.streams[0])
-            ? ev.streams[0].getTracks()
-            : (ev.track ? [ev.track] : []);
-          tracks.forEach((track) => {
-            if (track && !remoteStream.getTracks().some((t) => t.id === track.id)) {
-              remoteStream.addTrack(track);
-            }
-          });
-          bindRemoteMedia(remoteStream);
-          markConnected();
-        };
-
-        pc.onconnectionstatechange = () => {
-          const st = pc && pc.connectionState;
-          if (st === 'connected' || st === 'completed') markConnected();
-          else if (st === 'failed') {
-            setStatus('Đang thử kết nối lại…');
-            try {
-              pc.restartIce();
-            } catch { /* ignore */ }
-            setTimeout(() => {
-              if (pc && (pc.connectionState === 'failed' || pc.connectionState === 'disconnected')) {
-                setStatus('Không kết nối được');
-                finishCall(callState === 'active' ? 'ended' : 'missed', true);
-              }
-            }, 5000);
-          }
-        };
-        pc.oniceconnectionstatechange = () => {
-          const st = pc && pc.iceConnectionState;
-          if (st === 'connected' || st === 'completed') markConnected();
-        };
-        return pc;
-      }
-
-      function markConnected() {
-        stopRingtone();
-        if (callState === 'active') {
-          if (!durationTimer) startDurationTick();
-          return;
-        }
-        callState = 'active';
-        if (!connectedAt) connectedAt = Date.now();
-        startDurationTick();
-        clearRingTimer();
-      }
-
-      async function flushPendingIce() {
-        if (!pc || !remoteDescSet) return;
-        const list = pendingIce.splice(0);
-        for (const c of list) {
-          try { await pc.addIceCandidate(c); } catch { /* ignore */ }
-        }
-      }
-
-      function clearRingTimer() {
-        if (ringTimer) {
-          clearTimeout(ringTimer);
-          ringTimer = null;
-        }
-      }
-
-      async function postCallLog(event, durationSec) {
-        const id = callId;
-        if (!id || loggedCallId === id + ':' + event) return;
-        loggedCallId = id + ':' + event;
-        const mode = callMode;
-        const text = callLabel(mode, event, durationSec);
-        const localMsg = {
-          id: 'local-call-' + id + '-' + event,
-          from: currentUsername,
-          role: currentRole,
-          text,
-          kind: 'call',
-          callEvent: event,
-          callMode: mode,
-          durationSec: durationSec || 0,
-          callId: id,
-          at: new Date().toISOString(),
-          status: 'sent',
-        };
-        if (!chatMessages.some((m) => m.callId === id && m.callEvent === event)) {
-          chatMessages = [...chatMessages, localMsg];
-          renderChatMessages({ forceBottom: true });
-        }
-        try {
-          const result = await api('/call/log', {
-            method: 'POST',
-            body: { event, mode, durationSec: durationSec || 0, callId: id },
-          });
-          if (result.message) {
-            chatMessages = chatMessages.filter((m) => m.id !== localMsg.id);
-            if (!chatMessages.some((m) => m.id === result.message.id)) {
-              chatMessages = [...chatMessages, result.message];
-            }
-            if (result.updatedAt) lastMessagesAt = result.updatedAt;
-            if (result.nicknames) applyNicknames(result.nicknames);
-            renderChatMessages({ forceBottom: true });
-          } else if (result.updatedAt) {
-            lastMessagesAt = result.updatedAt;
-          }
-        } catch (err) {
-          console.warn('call log', err);
-        }
-      }
-
-      function resetCallLocal() {
-        clearRingTimer();
-        stopDurationTick();
-        stopRingtone();
-        pendingOffer = null;
-        pendingIce = [];
-        remoteDescSet = false;
-        callId = null;
-        callRole = null;
-        callPeer = null;
-        callState = 'idle';
-        callMode = 'audio';
-        muted = false;
-        camOff = false;
-        connectedAt = 0;
-        incomingFullscreen = false;
-        if (els.callMuteBtn) els.callMuteBtn.classList.remove('active');
-        if (els.callCamBtn) els.callCamBtn.classList.remove('active');
-        if (els.callAvatarFallback) els.callAvatarFallback.style.display = '';
-        showIncoming(false);
-        showOverlay(false);
-        if (pc) {
-          try { pc.close(); } catch { /* ignore */ }
-          pc = null;
-        }
-        stopTracks(localStream);
-        localStream = null;
-        remoteStream = null;
-        bindStreamToVideo(els.callRemoteVideo, null);
-        bindStreamToVideo(els.callLocalVideo, null);
-        if (els.callRemoteAudio) {
-          els.callRemoteAudio.srcObject = null;
-        }
-        startInvitePoll(false);
-      }
-
-      async function finishCall(event, notifyPeer) {
-        const peer = callPeer;
-        const id = callId;
-        const mode = callMode;
-        const role = callRole;
-        const state = callState;
-        const dur = state === 'active' ? elapsedSec() : 0;
-        let finalEvent = event;
-        if (!finalEvent) {
-          if (state === 'active') finalEvent = 'ended';
-          else if (role === 'caller') finalEvent = 'cancelled';
-          else finalEvent = 'rejected';
-        }
-        if (notifyPeer && peer) {
-          send({ type: 'call-end', to: peer, callId: id, event: finalEvent, durationSec: dur });
-        }
-        const shouldLog = (
-          (finalEvent === 'ended' && role === 'caller')
-          || (finalEvent === 'cancelled' && role === 'caller')
-          || (finalEvent === 'missed' && role === 'caller')
-          || (finalEvent === 'rejected' && role === 'callee')
-          || (finalEvent === 'ended' && role === 'callee' && !notifyPeer)
-        );
-        resetCallLocal();
-        if (shouldLog && id) {
-          callId = id;
-          callMode = mode;
-          await postCallLog(finalEvent, dur);
-          callId = null;
-          callMode = 'audio';
-        }
-        setStatus('');
-      }
-
-      async function startCall(mode) {
-        if (!isLoggedIn) return;
-        if (callState !== 'idle') {
-          showToast('Đang có cuộc gọi khác');
-          return;
-        }
-        const peer = getPeerUsername();
-        if (!peer) {
-          showToast('Không tìm thấy đối phương');
-          return;
-        }
-        try { navigateTo('chat'); } catch { /* ignore */ }
-        ensureAudioCtx();
-        callMode = mode === 'video' ? 'video' : 'audio';
-        callRole = 'caller';
-        callPeer = peer;
-        callId = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-        loggedCallId = null;
-        callState = 'calling';
-        connectedAt = 0;
-        updatePeerLabel();
-        setStatus('Đang kết nối…');
-        showOverlay(true);
-        setVideoModeUi(callMode === 'video');
-        startInvitePoll(true);
-        connect(); // WS tuỳ chọn
-
-        try {
-          await ensureMedia(callMode);
-          createPeerConnection();
-          const ok = await send({
-            type: 'call-invite',
-            to: peer,
-            callId,
-            mode: callMode,
-          });
-          if (!ok) throw new Error('Không gửi được tín hiệu gọi');
-          setStatus('Đang đổ chuông…');
-          callState = 'ringing';
-          startRingtone('out');
-          clearRingTimer();
-          ringTimer = setTimeout(() => {
-            if (callState === 'calling' || callState === 'ringing') {
-              finishCall('missed', true);
-              showToast('Không liên lạc được');
-            }
-          }, 45000);
-        } catch (err) {
-          showToast(err.message || 'Không gọi được');
-          resetCallLocal();
-        }
-      }
-
-      async function onInvite(msg) {
-        if (!msg || !msg.from || !msg.callId) return;
-        // Đang cuộc gọi với CÙNG người → gộp callId, không báo bận
-        if (callState !== 'idle') {
-          if (callId === msg.callId) return;
-          if (callPeer === msg.from && (callState === 'ringing' || callState === 'calling' || callState === 'connecting')) {
-            callId = msg.callId;
-            lastPendingCallId = msg.callId;
-            if (msg.mode) callMode = msg.mode === 'video' ? 'video' : 'audio';
-            return;
-          }
-          // Chỉ bận khi đang ACTIVE với cuộc gọi khác
-          if (callState === 'active') {
-            send({ type: 'call-busy', to: msg.from, callId: msg.callId });
-          }
-          return;
-        }
-        ensureAudioCtx();
-        callId = msg.callId;
-        callPeer = msg.from;
-        callMode = msg.mode === 'video' ? 'video' : 'audio';
-        callRole = 'callee';
-        callState = 'ringing';
-        loggedCallId = null;
-        pendingOffer = null;
-        connectedAt = 0;
-        lastPendingCallId = msg.callId;
-        updatePeerLabel();
-        setIncomingLabels(
-          displayNameFor(msg.from),
-          msg.mode === 'video' ? 'Cuộc gọi video đến…' : 'Cuộc gọi thoại đến…'
-        );
-        showIncoming(true, { fullscreen: !!document.hidden || !!(msg && msg.forceFullscreen) });
-        startRingtone('in');
-        send({ type: 'call-ringing', to: msg.from, callId });
-        try {
-          if (isDeviceNotifyEnabled() && document.hidden) {
-            showDeviceNotify(
-              msg.mode === 'video' ? '📹 Cuộc gọi video' : '📞 Cuộc gọi thoại',
-              displayNameFor(msg.from) + ' đang gọi…',
-              { tag: 'muctieu-call', renotify: true, data: { page: 'chat', type: 'call' } }
-            );
-          }
-        } catch { /* ignore */ }
-        clearRingTimer();
-        ringTimer = setTimeout(() => {
-          if (callState === 'ringing') {
-            send({ type: 'call-reject', to: callPeer, callId, reason: 'timeout' });
-            stopRingtone();
-            resetCallLocal();
-          }
-        }, 45000);
-      }
-
-      async function acceptCall() {
-        if (callState !== 'ringing' || !callPeer) return;
-        stopRingtone();
-        showIncoming(false);
-        callState = 'connecting';
-        updatePeerLabel();
-        setStatus('Đang kết nối…');
-        showOverlay(true);
-        setVideoModeUi(callMode === 'video');
-        startInvitePoll(true);
-        try {
-          await ensureMedia(callMode);
-          createPeerConnection();
-          await send({ type: 'call-accept', to: callPeer, callId, mode: callMode });
-          // Callee tạo offer — tránh phụ thuộc caller còn online đúng lúc
-          const offer = await pc.createOffer({
-            offerToReceiveAudio: true,
-            offerToReceiveVideo: callMode === 'video',
-          });
-          await pc.setLocalDescription(offer);
-          await send({
-            type: 'webrtc-offer',
-            to: callPeer,
-            callId,
-            sdp: { type: pc.localDescription.type, sdp: pc.localDescription.sdp },
-          });
-        } catch (err) {
-          console.warn('accept error', err);
-          showToast(err.message || 'Không kết nối được cuộc gọi');
-          send({ type: 'call-reject', to: callPeer, callId });
-          await finishCall('rejected', false);
-        }
-      }
-
-      async function rejectCall() {
-        stopRingtone();
-        if (callPeer) send({ type: 'call-reject', to: callPeer, callId });
-        await finishCall('rejected', false);
-      }
-
-      async function applyRemoteOffer(offer) {
-        if (!pc) createPeerConnection();
-        await pc.setRemoteDescription(offer);
-        remoteDescSet = true;
-        await flushPendingIce();
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        await send({
-          type: 'webrtc-answer',
-          to: callPeer,
-          callId,
-          sdp: { type: pc.localDescription.type, sdp: pc.localDescription.sdp },
-        });
-        callState = 'connecting';
-        setStatus('Đang kết nối…');
-      }
-
-      async function onAccept(msg) {
-        if (callRole !== 'caller') return;
-        if (msg.callId && callId && msg.callId !== callId) return;
-        if (!pc) {
-          try {
-            await ensureMedia(callMode);
-            createPeerConnection();
-          } catch (err) {
-            showToast(err.message || 'Không mở được micro/camera');
-            await finishCall('cancelled', true);
-            return;
-          }
-        }
-        callState = 'connecting';
-        setStatus('Đối phương đã nghe…');
-        stopRingtone();
-        clearRingTimer();
-        // Caller chờ offer từ callee (poll HTTP sẽ nhận webrtc-offer)
-        if (pendingOffer) {
-          try {
-            await applyRemoteOffer(pendingOffer);
-            pendingOffer = null;
-          } catch (err) {
-            console.warn('pending offer', err);
-          }
-        }
-      }
-
-      async function onOffer(msg) {
-        if (!msg.sdp) return;
-        if (msg.callId && callId && msg.callId !== callId) {
-          // Cùng peer đang gọi — cập nhật id
-          if (callPeer && msg.from === callPeer) callId = msg.callId;
-          else return;
-        }
-        if (callState === 'ringing' && callRole === 'callee') {
-          pendingOffer = msg.sdp;
-          return;
-        }
-        // Caller nhận offer từ callee sau khi accept
-        if (callRole === 'caller' && (callState === 'ringing' || callState === 'calling' || callState === 'connecting' || callState === 'active')) {
-          try {
-            if (!pc) {
-              await ensureMedia(callMode);
-              createPeerConnection();
-            }
-            await applyRemoteOffer(msg.sdp);
-          } catch (err) {
-            console.warn('offer error', err);
-            showToast('Không kết nối được cuộc gọi');
-            await finishCall('cancelled', true);
-          }
-          return;
-        }
-        try {
-          await applyRemoteOffer(msg.sdp);
-        } catch (err) {
-          console.warn('offer error', err);
-        }
-      }
-
-      async function onAnswer(msg) {
-        if (!pc || !msg.sdp) return;
-        try {
-          await pc.setRemoteDescription(msg.sdp);
-          remoteDescSet = true;
-          await flushPendingIce();
-          callState = 'connecting';
-          setStatus('Đang kết nối…');
-        } catch (err) {
-          console.warn('answer error', err);
-        }
-      }
-
-      async function onIce(msg) {
-        if (!msg.candidate) return;
-        if (!pc || !remoteDescSet) {
-          pendingIce.push(msg.candidate);
-          return;
-        }
-        try { await pc.addIceCandidate(msg.candidate); } catch (err) { console.warn('ice', err); }
-      }
-
-      function toggleMute() {
-        muted = !muted;
-        if (localStream) localStream.getAudioTracks().forEach((t) => { t.enabled = !muted; });
-        if (els.callMuteBtn) els.callMuteBtn.classList.toggle('active', muted);
-      }
-
-      async function toggleCam() {
-        if (callMode !== 'video') {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-              audio: false,
-            });
-            const vTrack = stream.getVideoTracks()[0];
-            if (!vTrack) return;
-            if (localStream) localStream.addTrack(vTrack);
-            else localStream = new MediaStream([vTrack]);
-            if (pc) {
-              const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
-              if (sender) await sender.replaceTrack(vTrack);
-              else pc.addTrack(vTrack, localStream);
-            }
-            callMode = 'video';
-            camOff = false;
-            saveMediaPref({ video: true, granted: true });
-            bindStreamToVideo(els.callLocalVideo, localStream);
-            setVideoModeUi(true);
-            if (els.callCamBtn) els.callCamBtn.classList.remove('active');
-          } catch (err) {
-            showToast(err.message || 'Không bật được camera');
-          }
-          return;
-        }
-        camOff = !camOff;
-        if (localStream) localStream.getVideoTracks().forEach((t) => { t.enabled = !camOff; });
-        if (els.callCamBtn) els.callCamBtn.classList.toggle('active', camOff);
-        if (els.callLocalVideo) els.callLocalVideo.classList.toggle('has-stream', !camOff && !!localStream);
-      }
-
-      function handleMessage(msg) {
-        if (!msg || !msg.type) return;
-        if (msg.type !== 'ready' && msg.type !== 'pong' && msg.type !== 'presence' && msg.type !== 'call-invite-sent' && msg.type !== 'peer-offline' && msg.type !== 'error') {
-          if (markSeen(msg)) return;
-        }
-        switch (msg.type) {
-          case 'ready':
-            reconnectAttempt = 0;
-            break;
-          case 'call-invite':
-            onInvite(msg);
-            break;
-          case 'call-invite-sent':
-            setStatus('Đang đổ chuông…');
-            callState = 'ringing';
-            break;
-          case 'call-ringing':
-            if (callRole === 'caller') {
-              callState = 'ringing';
-              setStatus('Đang đổ chuông…');
-              if (ringKind !== 'out') startRingtone('out');
-            }
-            break;
-          case 'call-accept':
-            onAccept(msg);
-            break;
-          case 'call-reject':
-            if (callRole === 'caller') {
-              const reason = msg.reason === 'timeout' ? 'missed' : 'rejected';
-              finishCall(reason, false).then(() => {
-                showToast(reason === 'missed' ? 'Cuộc gọi nhỡ' : 'Cuộc gọi bị từ chối');
-              });
-            } else {
-              resetCallLocal();
-            }
-            break;
-          case 'call-busy':
-            // Bỏ qua busy giả khi chính mình đang đổ chuông cùng call
-            if (msg.callId && callId && msg.callId !== callId) {
-              // invite khác bị từ chối — không hủy cuộc gọi hiện tại
-              break;
-            }
-            if (callState === 'active' || callState === 'connecting') break;
-            finishCall('cancelled', false).then(() => showToast('Đối phương đang bận'));
-            break;
-          case 'call-end': {
-            const dur = Number(msg.durationSec) || elapsedSec();
-            const wasCaller = callRole === 'caller';
-            const wasActive = callState === 'active';
-            const remoteEvent = msg.event || 'ended';
-            resetCallLocal();
-            if (!wasCaller && wasActive && remoteEvent === 'ended') {
-              showToast('Cuộc gọi đã kết thúc · ' + formatDur(dur));
-            } else if (!wasCaller && remoteEvent === 'cancelled') {
-              showToast('Đối phương đã hủy');
-            } else if (!wasCaller && remoteEvent === 'missed') {
-              showToast('Cuộc gọi nhỡ');
-            } else {
-              showToast('Cuộc gọi đã kết thúc');
-            }
-            setTimeout(() => { try { refreshMessages(false); } catch { /* ignore */ } }, 500);
-            break;
-          }
-          case 'webrtc-offer':
-            onOffer(msg);
-            break;
-          case 'webrtc-answer':
-            onAnswer(msg);
-            break;
-          case 'webrtc-ice':
-            onIce(msg);
-            break;
-          case 'error':
-            if (msg.error) showToast(msg.error);
-            break;
-          default:
-            break;
-        }
-      }
-
-      async function pollPendingInvite() {
-        if (!isLoggedIn) return;
-        try {
-          const res = await api('/call/pending');
-          ingestSignals(Array.isArray(res.signals) ? res.signals : []);
-          const invite = res && res.invite;
-          if (invite && invite.callId && invite.from && callState === 'idle') {
-            if (invite.callId !== lastPendingCallId) {
-              lastPendingCallId = invite.callId;
-              handleMessage(invite);
-            }
-          }
-        } catch { /* ignore */ }
-      }
-
-      function startInvitePoll(fast) {
-        stopInvitePoll();
-        const inCall = fast || callState !== 'idle';
-        const ms = inCall ? 400 : 2000;
-        pollTimer = setInterval(() => {
-          pollPendingInvite();
-          if (callState !== 'idle' && ms > 400) startInvitePoll(true);
-          if (callState === 'idle' && ms < 2000) startInvitePoll(false);
-        }, ms);
-        pollPendingInvite();
-      }
-
-      function stopInvitePoll() {
-        if (pollTimer) {
-          clearInterval(pollTimer);
-          pollTimer = null;
-        }
-      }
-
-      async function connect() {
-        if (!isLoggedIn) return;
-        startInvitePoll(callState !== 'idle');
-        if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
-        let ticket = '';
-        try {
-          ticket = await (async () => {
-            const now = Date.now();
-            if (ticketCache.ticket && now - ticketCache.at < 8 * 60 * 1000) return ticketCache.ticket;
-            const res = await api('/call/ticket');
-            ticketCache = { ticket: res.ticket, at: now };
-            return res.ticket;
-          })();
-        } catch (err) {
-          // Không chặn cuộc gọi — HTTP poll vẫn chạy
-          console.warn('call ticket', err);
-          return;
-        }
-        const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const url = proto + '//' + location.host + '/ws/call?ticket=' + encodeURIComponent(ticket);
-        try {
-          ws = new WebSocket(url);
-        } catch (err) {
-          console.warn('WS call:', err);
-          return;
-        }
-        ws.onopen = () => { reconnectAttempt = 0; };
-        ws.onmessage = (ev) => {
-          try { handleMessage(JSON.parse(ev.data)); } catch { /* ignore */ }
-        };
-        ws.onclose = () => {
-          ws = null;
-          if (isLoggedIn) scheduleReconnect();
-        };
-        ws.onerror = () => {
-          try { ws.close(); } catch { /* ignore */ }
-        };
-      }
-
-      function scheduleReconnect() {
-        if (wsTimer) clearTimeout(wsTimer);
-        const delay = Math.min(15000, 1000 * Math.pow(1.6, reconnectAttempt++));
-        wsTimer = setTimeout(() => {
-          if (isLoggedIn) connect();
-        }, delay);
-      }
-
-      function disconnect() {
-        stopInvitePoll();
-        stopRingtone();
-        lastPendingCallId = null;
-        if (wsTimer) {
-          clearTimeout(wsTimer);
-          wsTimer = null;
-        }
-        if (callState !== 'idle') {
-          finishCall(callState === 'active' ? 'ended' : (callRole === 'caller' ? 'cancelled' : 'rejected'), true);
-        } else {
-          resetCallLocal();
-        }
-        if (ws) {
-          try { ws.close(); } catch { /* ignore */ }
-          ws = null;
-        }
-        reconnectAttempt = 0;
-        ticketCache = { ticket: '', at: 0 };
-      }
-
-      function onPushCall(payload, opts) {
-        if (!payload || payload.type !== 'call') return;
-        connect();
-        startInvitePoll(true);
-        try { navigateTo('chat'); } catch { /* ignore */ }
-        const forceFull = !!(opts && opts.fullscreen) || !!document.hidden;
-        // Chỉ mở invite khi có callId thật — tránh id giả gây báo bận
-        if (callState === 'idle' && payload.from && payload.callId) {
-          onInvite({
-            type: 'call-invite',
-            from: payload.from,
-            callId: payload.callId,
-            mode: payload.mode === 'video' ? 'video' : 'audio',
-            forceFullscreen: forceFull,
-          });
-        } else if (callState === 'idle') {
-          // Không có callId → lấy từ server pending
-          pollPendingInvite();
-          if (forceFull) {
-            setTimeout(() => {
-              if (callState === 'ringing') showIncoming(true, { fullscreen: true });
-            }, 400);
-          }
-        } else if (callState === 'ringing' && forceFull) {
-          showIncoming(true, { fullscreen: true });
-          if (ringKind !== 'in') startRingtone('in');
-        }
-      }
-
-      return {
-        connect,
-        disconnect,
-        startCall,
-        acceptCall,
-        rejectCall,
-        hangup: () => finishCall(
-          callState === 'active' ? 'ended' : (callRole === 'caller' ? 'cancelled' : 'rejected'),
-          true
-        ),
-        toggleMute,
-        toggleCam,
-        onPushCall,
-        warmPermissions,
-      };
-    })();
 
     function setSyncStatus(msg, ok = true) {
       els.syncStatus.textContent = msg;
@@ -6053,8 +4517,6 @@
         m.status || 'sent',
         m.pending ? '1' : '0',
         m.kind || '',
-        m.callEvent || '',
-        m.durationSec || 0,
         displayNameFor(m.from),
       ].join(':')).join('|') + '::' + JSON.stringify(chatNicknames);
     }
@@ -6065,17 +4527,6 @@
       if (status === 'failed') return 'Gửi lỗi';
       if (status === 'sending') return 'Đang gửi';
       return 'Đã gửi';
-    }
-
-    function formatCallDuration(totalSec) {
-      const s = Math.max(0, Math.floor(Number(totalSec) || 0));
-      const h = Math.floor(s / 3600);
-      const m = Math.floor((s % 3600) / 60);
-      const sec = s % 60;
-      if (h > 0) {
-        return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
-      }
-      return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
     }
 
     function escapeHtml(str) {
@@ -6209,30 +4660,6 @@
           day: '2-digit',
           month: '2-digit',
         });
-        if (m.kind === 'call' || (m.callEvent && String(m.text || '').includes('Cuộc gọi'))) {
-          const event = m.callEvent || 'ended';
-          const mode = m.callMode === 'video' ? 'video' : 'audio';
-          const icon = mode === 'video' ? '📹' : '📞';
-          const missed = event === 'missed' || event === 'rejected';
-          const label = m.text || (
-            event === 'ended'
-              ? ((mode === 'video' ? 'Cuộc gọi video' : 'Cuộc gọi thoại') + ' · ' + formatCallDuration(m.durationSec))
-              : (event === 'cancelled'
-                ? ((mode === 'video' ? 'Cuộc gọi video' : 'Cuộc gọi thoại') + ' · Đã hủy')
-                : (event === 'rejected'
-                  ? ((mode === 'video' ? 'Cuộc gọi video' : 'Cuộc gọi thoại') + ' · Đã từ chối')
-                  : ('Cuộc gọi nhỡ · ' + (mode === 'video' ? 'Cuộc gọi video' : 'Cuộc gọi thoại'))))
-          );
-          return `
-            <div class="chat-bubble call-event${missed ? ' missed' : ''}${mine ? ' mine' : ''}" data-id="${escapeHtml(m.id)}">
-              <div class="chat-meta"><span>${time}</span></div>
-              <div class="chat-call-card">
-                <div class="chat-call-icon" aria-hidden="true">${icon}</div>
-                <div class="chat-call-text">${escapeHtml(label)}</div>
-              </div>
-            </div>
-          `;
-        }
         const textHtml = m.text
           ? `<div class="chat-text">${escapeHtml(m.text)}</div>`
           : '';
@@ -6648,7 +5075,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=17', {
+        const reg = await navigator.serviceWorker.register('/sw.js?v=18', {
           scope: '/',
           updateViaCache: 'none',
         });
@@ -6669,7 +5096,6 @@
         await ensureServiceWorkerControlling(reg);
         // Chỉ subscribe khi SW đang control trang (quan trọng trên iOS)
         if (!navigator.serviceWorker.controller) {
-          updatePushStatusHint('Đang kích hoạt service worker… mở lại app một lần');
           return false;
         }
 
@@ -6699,7 +5125,6 @@
           body: { subscription: sub.toJSON() },
         });
         try { localStorage.setItem(VAPID_KEY_CACHE, publicKey); } catch { /* ignore */ }
-        updatePushStatusHint('Đã đăng ký thông báo đẩy ✓ (cả khi vuốt tắt app)');
         return true;
       } catch (err) {
         console.warn('Không đăng ký Web Push:', err);
@@ -6723,83 +5148,12 @@
             body: { subscription: sub.toJSON() },
           });
           try { localStorage.setItem(VAPID_KEY_CACHE, publicKey); } catch { /* ignore */ }
-          updatePushStatusHint('Đã đăng ký lại thông báo đẩy ✓');
           return true;
         } catch (err2) {
           console.warn('Đăng ký lại Web Push thất bại:', err2);
-          updatePushStatusHint('Chưa đăng ký được thông báo đẩy');
           return false;
         }
       }
-    }
-
-    function updatePushStatusHint(text) {
-      const el = document.getElementById('push-status-hint');
-      if (el) el.textContent = text || '';
-    }
-
-    async function testPushNotification() {
-      try {
-        const ok = await ensureNotifyPermission(true);
-        if (!ok) {
-          showToast('Cần cho phép thông báo trước');
-          return;
-        }
-        if (!isStandaloneApp()) {
-          showToast('iPhone: phải mở từ icon Màn hình chính');
-        }
-        const reg = await registerNotifyServiceWorker();
-        // Không hủy đăng ký cũ mỗi lần — tránh race với Apple
-        const subscribed = await subscribeWebPush(reg, { force: false });
-        if (!subscribed) {
-          const forced = await subscribeWebPush(reg, { force: true });
-          if (!forced) {
-            showToast('Chưa đăng ký được push — mở từ icon màn hình chính');
-            return;
-          }
-        }
-        // Chờ APNs kịp nhận subscription mới
-        await new Promise((r) => setTimeout(r, 800));
-
-        const result = await api('/push/test', {
-          method: 'POST',
-          body: {
-            title: 'Mục tiêu chạy xe',
-            body: 'Tin 2/2: Nhận được khi đã vuốt tắt app',
-            delaySec: 12,
-          },
-        });
-
-        const imm = result.immediate || {};
-        if (!imm.sent) {
-          showToast('Tin 1 không gửi được — kiểm tra quyền thông báo / đăng ký lại');
-          updatePushStatusHint('Lỗi: server không gửi được (sent=0). Mở lại app từ icon.');
-          return;
-        }
-
-        showToast('Thấy tin 1 chưa? → VUỐT TẮT app ngay, đợi tin 2 (~12–17s)');
-        updatePushStatusHint('Đã gửi tin 1 (' + imm.sent + '). Vuốt tắt app — chờ tin 2 sau 12s');
-      } catch (err) {
-        showToast(err.message || 'Không gửi được thông báo thử');
-      }
-    }
-
-    async function refreshPushStatusHint() {
-      if (!isLoggedIn) return;
-      try {
-        const st = await api('/push/status');
-        const last = st.lastTest;
-        const stats = st.stats || {};
-        if (last && last.phase) {
-          if (last.sent > 0) {
-            updatePushStatusHint('Lần thử ' + last.phase + ': gửi OK ' + last.sent + '/' + last.attempted);
-          } else {
-            updatePushStatusHint('Lần thử ' + last.phase + ': THẤT BẠI (sent=0). ' + (last.error || ''));
-          }
-        } else {
-          updatePushStatusHint('Đăng ký máy: ' + (stats.subscriptions || 0) + ' — bấm Thử thông báo');
-        }
-      } catch { /* ignore */ }
     }
 
     async function unsubscribeWebPush() {
@@ -6835,9 +5189,7 @@
         }
       } else {
         updateNotifyToggleUI();
-        updatePushStatusHint('Thông báo bị chặn trong cài đặt máy');
       }
-      refreshPushStatusHint();
     }
 
     // Báo service worker + Cache: đang trong app hay đã ra ngoài (iOS tin cậy hơn postMessage)
@@ -6930,32 +5282,22 @@
         const data = event.data || {};
         if (data.type === 'muctieu-notify-open' && isLoggedIn) {
           try { navigateTo(data.page || 'chat'); } catch { /* ignore */ }
-          if (data.call && data.call.type === 'call') {
-            CallApp.onPushCall(data.call, { fullscreen: true });
-          } else if ((data.page || '') === 'chat') {
+          if ((data.page || '') === 'chat') {
             syncChatAfterPush({ type: 'chat' });
           }
         }
         if (data.type === 'PUSH_NOTIFY' && isLoggedIn) {
           const payload = data.payload || {};
-          if (payload.type === 'call') {
-            // Trong app → banner trên đầu; ngoài app / ẩn → full màn hình
-            CallApp.onPushCall(payload, { fullscreen: !!document.hidden });
-            if (!document.hidden) {
-              try { dismissSystemNotifications(); } catch { /* ignore */ }
+          if (!document.hidden) {
+            dismissSystemNotifications();
+            if (isDeviceNotifyEnabled()) {
+              showAppNotifyBanner(payload.title || 'Mục tiêu chạy xe', payload.body || '');
             }
+          }
+          if (payload.type === 'chat' || payload.page === 'chat' || payload.messageId) {
+            syncChatAfterPush(payload);
           } else {
-            if (!document.hidden) {
-              dismissSystemNotifications();
-              if (isDeviceNotifyEnabled()) {
-                showAppNotifyBanner(payload.title || 'Mục tiêu chạy xe', payload.body || '');
-              }
-            }
-            if (payload.type === 'chat' || payload.page === 'chat' || payload.messageId) {
-              syncChatAfterPush(payload);
-            } else {
-              checkForUpdates();
-            }
+            checkForUpdates();
           }
         }
       });
@@ -7355,25 +5697,6 @@
     if (els.chatNicknameBtn) {
       els.chatNicknameBtn.addEventListener('click', openNicknameModal);
     }
-    if (els.chatAudioCallBtn) {
-      els.chatAudioCallBtn.addEventListener('click', () => CallApp.startCall('audio'));
-    }
-    if (els.chatVideoCallBtn) {
-      els.chatVideoCallBtn.addEventListener('click', () => CallApp.startCall('video'));
-    }
-    if (els.callHangupBtn) els.callHangupBtn.addEventListener('click', () => CallApp.hangup());
-    if (els.callMuteBtn) els.callMuteBtn.addEventListener('click', () => CallApp.toggleMute());
-    if (els.callCamBtn) els.callCamBtn.addEventListener('click', () => CallApp.toggleCam());
-    if (els.callAcceptBtn) els.callAcceptBtn.addEventListener('click', () => CallApp.acceptCall());
-    if (els.callDeclineBtn) els.callDeclineBtn.addEventListener('click', () => CallApp.rejectCall());
-    if (els.callBannerAccept) els.callBannerAccept.addEventListener('click', () => CallApp.acceptCall());
-    if (els.callBannerDecline) els.callBannerDecline.addEventListener('click', () => CallApp.rejectCall());
-    document.addEventListener('visibilitychange', () => {
-      if (!isLoggedIn) return;
-      if (document.visibilityState === 'visible') {
-        try { CallApp.connect(); } catch { /* ignore */ }
-      }
-    });
     const nicknameCancel = document.getElementById('nickname-cancel');
     const nicknameSave = document.getElementById('nickname-save');
     if (nicknameCancel) nicknameCancel.addEventListener('click', closeNicknameModal);
@@ -7468,9 +5791,11 @@
       const next = !!on;
       const changed = weatherState.enabled !== next;
       weatherState.enabled = next;
-      try {
-        localStorage.setItem(WEATHER_ENABLED_KEY, next ? '1' : '0');
-      } catch { /* ignore */ }
+      if (opts.persist !== false) {
+        try {
+          localStorage.setItem(WEATHER_ENABLED_KEY, next ? '1' : '0');
+        } catch { /* ignore */ }
+      }
       updateWeatherToggleUI();
       if (next) {
         startWeatherEffects();
@@ -7736,7 +6061,7 @@
 
     function startWeatherEffects() {
       updateWeatherToggleUI();
-      if (!isWeatherEnabled()) {
+      if (!isWeatherEnabled() || weatherPausedForChat) {
         stopWeatherEffects();
         return;
       }
@@ -7744,14 +6069,16 @@
       if (!weatherState.started) {
         weatherState.started = true;
         window.addEventListener('resize', () => {
-          if (!isWeatherEnabled()) return;
+          if (!isWeatherEnabled() || weatherPausedForChat) return;
           resizeWeatherCanvas();
           if (weatherState.mode === 'rain' || weatherState.mode === 'storm') {
             buildRainDrops(weatherState.mode);
           }
         });
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible' && isWeatherEnabled()) refreshWeather(false);
+          if (document.visibilityState === 'visible' && isWeatherEnabled() && !weatherPausedForChat) {
+            refreshWeather(false);
+          }
         });
       }
       if (!weatherState.reduced && !weatherState.raf) {
@@ -7759,7 +6086,9 @@
       }
       refreshWeather(false);
       if (weatherState.timer) clearInterval(weatherState.timer);
-      weatherState.timer = setInterval(() => refreshWeather(false), 30000);
+      weatherState.timer = setInterval(() => {
+        if (!weatherPausedForChat) refreshWeather(false);
+      }, 30000);
     }
 
     const weatherBadgeBtn = document.getElementById('weather-badge');
@@ -7814,14 +6143,6 @@
         }
       });
     }
-    const pushTestBtn = document.getElementById('push-test-btn');
-    if (pushTestBtn) {
-      pushTestBtn.addEventListener('click', () => {
-        closeDrawer();
-        testPushNotification();
-      });
-    }
-
     function isStandaloneApp() {
       try {
         return window.matchMedia('(display-mode: standalone)').matches
@@ -7931,8 +6252,6 @@
       document.documentElement.classList.toggle('standalone-app', standalone);
       document.documentElement.classList.toggle('is-pwa', standalone);
       document.documentElement.classList.toggle('is-browser', !standalone);
-      const hint = document.getElementById('homescreen-hint');
-      if (hint) hint.style.display = standalone ? 'none' : '';
 
       if (standalone) {
         const blockZoom = (e) => { e.preventDefault(); };
