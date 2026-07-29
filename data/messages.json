@@ -16,8 +16,10 @@
       "role": "viewer",
       "text": "Cc",
       "at": "2026-07-29T11:21:29.951Z",
-      "status": "sent"
+      "status": "read",
+      "deliveredAt": "2026-07-29T11:21:30.640Z",
+      "readAt": "2026-07-29T11:21:30.876Z"
     }
   ],
-  "updatedAt": "2026-07-29T11:21:29.951Z"
+  "updatedAt": "2026-07-29T11:21:30.876Z"
 }
