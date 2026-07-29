@@ -204,11 +204,24 @@
       "status": "read",
       "deliveredAt": "2026-07-29T14:36:15.463Z",
       "readAt": "2026-07-29T14:36:57.645Z"
+    },
+    {
+      "id": "ms6717zpimn6xt",
+      "from": "admin",
+      "role": "admin",
+      "text": "Cuộc gọi thoại · Đã hủy",
+      "at": "2026-07-29T14:42:06.901Z",
+      "status": "sent",
+      "kind": "call",
+      "callEvent": "cancelled",
+      "callMode": "audio",
+      "durationSec": 0,
+      "callId": "cms6713jtss4ge"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:36:57.645Z"
+  "updatedAt": "2026-07-29T14:42:06.901Z"
 }
