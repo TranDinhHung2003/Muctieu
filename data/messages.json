@@ -36,8 +36,9 @@
       "role": "admin",
       "text": "Em iu",
       "at": "2026-07-29T12:05:17.271Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T12:05:18.827Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T12:05:18.827Z",
+      "readAt": "2026-07-29T12:07:55.769Z"
     },
     {
       "id": "ms61iv37nm0r0x",
@@ -45,9 +46,18 @@
       "role": "admin",
       "text": "0",
       "at": "2026-07-29T12:07:52.291Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T12:07:55.072Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T12:07:55.072Z",
+      "readAt": "2026-07-29T12:07:55.769Z"
+    },
+    {
+      "id": "ms61j4lqs2rkru",
+      "from": "admin",
+      "role": "admin",
+      "text": "8",
+      "at": "2026-07-29T12:08:04.622Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T12:07:55.072Z"
+  "updatedAt": "2026-07-29T12:08:04.622Z"
 }
