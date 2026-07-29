@@ -2310,7 +2310,7 @@
         Số tiền chạy trên app
         <span class="hint">1 = 1000đ</span>
       </label>
-      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-app">0đ</strong> <button type="button" class="clear-field-btn" data-clear="app">Xóa mục này</button></div>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-app">0đ</strong></div>
       <div class="input-row">
         <div class="input-wrap">
           <input type="number" id="app-income" class="has-suffix money-input" min="0" step="1" placeholder="nhập vào đây..." inputmode="decimal">
@@ -2326,7 +2326,7 @@
         Số tiền chạy ngoài
         <span class="hint">1 = 1000đ</span>
       </label>
-      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-outside">0đ</strong> <button type="button" class="clear-field-btn" data-clear="outside">Xóa mục này</button></div>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-outside">0đ</strong></div>
       <div class="input-row">
         <div class="input-wrap">
           <input type="number" id="outside-income" class="has-suffix money-input" min="0" step="1" placeholder="nhập vào đây..." inputmode="decimal">
@@ -2342,7 +2342,7 @@
         Số điểm trừ trên Zoom
         <span class="hint">1 điểm = −80.000đ</span>
       </label>
-      <div class="locked-badge">🔒 Đã trừ: <strong class="deduct" id="locked-zoom">0 điểm</strong> <button type="button" class="clear-field-btn" data-clear="zoomPoints">Xóa mục này</button></div>
+      <div class="locked-badge">🔒 Đã trừ: <strong class="deduct" id="locked-zoom">0 điểm</strong></div>
       <div class="input-row">
         <div class="input-wrap">
           <input type="number" id="zoom-points" class="has-suffix" min="0" step="0.5" placeholder="nhập vào đây..." inputmode="decimal">
@@ -2357,7 +2357,7 @@
         Số tiền cao tốc phải trả
         <span class="hint">1 = 1000đ</span>
       </label>
-      <div class="locked-badge">🔒 Đã trừ: <strong class="deduct" id="locked-highway">0đ</strong> <button type="button" class="clear-field-btn" data-clear="highway">Xóa mục này</button></div>
+      <div class="locked-badge">🔒 Đã trừ: <strong class="deduct" id="locked-highway">0đ</strong></div>
       <div class="input-row">
         <div class="input-wrap">
           <input type="number" id="highway-fee" class="has-suffix money-input" min="0" step="1" placeholder="nhập vào đây..." inputmode="decimal">
@@ -2373,7 +2373,7 @@
         Khách hàng TIP (thái độ phục vụ)
         <span class="hint">1 = 1000đ</span>
       </label>
-      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-tip">0đ</strong> <button type="button" class="clear-field-btn" data-clear="tip">Xóa mục này</button></div>
+      <div class="locked-badge">🔒 Đã cộng: <strong id="locked-tip">0đ</strong></div>
       <div class="input-row">
         <div class="input-wrap">
           <input type="number" id="tip-income" class="has-suffix money-input" min="0" step="1" placeholder="nhập vào đây..." inputmode="decimal">
@@ -4429,46 +4429,6 @@
       showToast('Đã xóa lượt nhập sai');
     }
 
-    async function clearField(field) {
-      if (!isAdmin()) {
-        showToast('Tài khoản theo dõi không thể xóa dữ liệu');
-        return;
-      }
-      const config = FIELD_MAP[field];
-      const data = loadData();
-      const today = getTodayData(data);
-      if (!today[field]) {
-        showToast('Mục này đang bằng 0');
-        return;
-      }
-
-      const display = field === 'zoomPoints'
-        ? formatPoints(today[field]) + ' điểm'
-        : formatMoney(today[field]);
-      const ok = await askConfirm({
-        title: 'Xóa mục này?',
-        desc: 'Toàn bộ số liệu mục này trong hôm nay sẽ về 0.',
-        detailLabel: 'Mục sẽ xóa',
-        detailValue: config.label + ': ' + display,
-        confirmText: 'Xóa mục',
-        icon: '🧹',
-      });
-      if (!ok) return;
-
-      today.entries = (today.entries || []).filter(e => e.field !== field);
-      today[field] = 0;
-
-      try {
-        await saveData(data);
-      } catch (err) {
-        showToast('Lỗi lưu: ' + err.message);
-        return;
-      }
-
-      calculate();
-      showToast('Đã xóa ' + config.label);
-    }
-
     async function resetToday() {
       if (!isAdmin()) {
         showToast('Tài khoản theo dõi không thể đặt lại dữ liệu');
@@ -4539,10 +4499,6 @@
 
     document.querySelectorAll('.add-btn').forEach(btn => {
       btn.addEventListener('click', () => addEntry(btn.dataset.field));
-    });
-
-    document.querySelectorAll('.clear-field-btn').forEach(btn => {
-      btn.addEventListener('click', () => clearField(btn.dataset.clear));
     });
 
     Object.entries(FIELD_MAP).forEach(([field, config]) => {
