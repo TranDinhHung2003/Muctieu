@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms61p7z5uuel97",
-      "from": "admin",
-      "role": "admin",
-      "text": "Bú",
-      "at": "2026-07-29T12:12:48.929Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T12:12:50.714Z",
-      "readAt": "2026-07-29T12:16:54.688Z"
-    },
-    {
       "id": "ms61tqec7suw6b",
       "from": "admin",
       "role": "admin",
@@ -94,5 +84,5 @@
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬"
   },
-  "updatedAt": "2026-07-29T12:38:05.836Z"
+  "updatedAt": "2026-07-29T12:42:53.955Z"
 }
