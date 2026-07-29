@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5v2rqi5dcyf2",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "G",
-      "at": "2026-07-29T09:07:23.754Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T09:13:30.764Z",
-      "readAt": "2026-07-29T09:14:27.349Z"
-    },
-    {
       "id": "ms5vc6mnyti9wi",
       "from": "admin",
       "role": "admin",
@@ -25,7 +15,15 @@
       "text": "Hi",
       "at": "2026-07-29T09:18:35.974Z",
       "status": "sent"
+    },
+    {
+      "id": "ms5wbmkrnfki0o",
+      "from": "admin",
+      "role": "admin",
+      "text": "Alo",
+      "at": "2026-07-29T09:42:16.587Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T09:32:25.068Z"
+  "updatedAt": "2026-07-29T09:42:16.587Z"
 }
