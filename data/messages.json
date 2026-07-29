@@ -1,21 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms65dqm7vnmazf",
-      "from": "admin",
-      "role": "admin",
-      "text": "Cuộc gọi thoại · Đã hủy",
-      "at": "2026-07-29T13:55:51.679Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T13:55:53.116Z",
-      "readAt": "2026-07-29T13:55:53.394Z",
-      "kind": "call",
-      "callEvent": "cancelled",
-      "callMode": "audio",
-      "durationSec": 0,
-      "callId": "cms65do7p1bkp6"
-    },
-    {
       "id": "ms65dzlau7c59e",
       "from": "theodoi",
       "role": "viewer",
@@ -185,5 +170,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:24:16.066Z"
+  "updatedAt": "2026-07-29T14:25:51.686Z"
 }
