@@ -312,13 +312,34 @@ app.post('/api/push/unsubscribe', authMiddleware, (req, res) => {
 app.post('/api/push/test', authMiddleware, async (req, res) => {
   const title = String((req.body || {}).title || 'Mục tiêu chạy xe').trim() || 'Mục tiêu chạy xe';
   const body = String((req.body || {}).body || 'Đây là thông báo thử — tắt app vẫn nhận được').trim();
-  const result = await pushNotify.sendPushToUsernames([req.user.username], {
+  const delaySec = Math.max(0, Math.min(60, Number((req.body || {}).delaySec) || 0));
+
+  const send = async () => pushNotify.sendPushToUsernames([req.user.username], {
     title,
     body,
     tag: 'muctieu-test',
     page: 'home',
     type: 'test',
   });
+
+  if (delaySec > 0) {
+    // Cho phép bấm thử → vuốt tắt app → vẫn nhận sau vài giây
+    res.json({
+      ok: true,
+      delayed: true,
+      delaySec,
+      message: 'Sẽ gửi sau ' + delaySec + ' giây — hãy vuốt tắt app ngay',
+      stats: pushNotify.getStats(),
+    });
+    setTimeout(() => {
+      send().catch((err) => {
+        console.warn('Push test delay lỗi:', err && err.message ? err.message : err);
+      });
+    }, delaySec * 1000);
+    return;
+  }
+
+  const result = await send();
   res.json({
     ok: true,
     attempted: result.attempted || 0,

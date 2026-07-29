@@ -276,9 +276,12 @@ function listOtherUsernames(allUsernames, exceptUsername) {
 
 async function sendToSubscription(sub, payload) {
   try {
+      const isApple = sub && String(sub.endpoint || '').includes('web.push.apple.com');
     await webpush.sendNotification(sub, JSON.stringify(payload), {
-      TTL: 60 * 60 * 6,
+      // Apple giữ thông báo lâu hơn khi máy/PWA bị kill
+      TTL: isApple ? 60 * 60 * 24 : 60 * 60 * 12,
       urgency: 'high',
+      headers: isApple ? { Urgency: 'high', TTL: String(60 * 60 * 24) } : undefined,
     });
     return { ok: true };
   } catch (err) {

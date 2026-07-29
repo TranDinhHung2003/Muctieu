@@ -2634,10 +2634,12 @@
         <span class="knob"></span>
       </button>
     </div>
-    <button type="button" class="drawer-item" id="push-test-btn">📨 Thử thông báo (tắt app vẫn nhận)</button>
+    <button type="button" class="drawer-item" id="push-test-btn">📨 Thử thông báo (kể cả khi vuốt tắt)</button>
     <p class="drawer-hint" id="push-status-hint">Thông báo đẩy: chưa kiểm tra</p>
     <p class="drawer-hint" id="homescreen-hint">
-      iPhone: phải mở bằng <strong>icon Màn hình chính</strong> (Safari → Chia sẻ → Thêm vào Màn hình chính) rồi cho phép thông báo. Tắt app vẫn nhận tin nhắn / tiền nhập.
+      iPhone: mở bằng <strong>icon Màn hình chính</strong> → Menu → <strong>Thử thông báo</strong>.
+      Sau khi vuốt tắt app, vẫn nhận được nếu đã đăng ký đúng (nếu mất, mở app 1 lần rồi tắt lại).
+      Android: vào Pin/Battery → cho app chạy nền không hạn chế.
     </p>
   </nav>
 
@@ -4772,11 +4774,42 @@
       return output;
     }
 
+    async function ensureServiceWorkerControlling(reg) {
+      if (!reg) return null;
+      try {
+        await reg.update();
+      } catch { /* ignore */ }
+      await navigator.serviceWorker.ready;
+      if (navigator.serviceWorker.controller) return reg;
+      // iOS PWA lần đầu: SW đã active nhưng chưa control trang → chờ claim
+      await new Promise((resolve) => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          resolve();
+        };
+        const timer = setTimeout(finish, 4000);
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          clearTimeout(timer);
+          finish();
+        }, { once: true });
+        // Ép activate lại nếu cần
+        if (reg.waiting) {
+          try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch { /* ignore */ }
+        }
+      });
+      return reg;
+    }
+
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=7', { scope: '/' });
-        await navigator.serviceWorker.ready;
+        const reg = await navigator.serviceWorker.register('/sw.js?v=8', {
+          scope: '/',
+          updateViaCache: 'none',
+        });
+        await ensureServiceWorkerControlling(reg);
         return reg;
       } catch {
         return null;
@@ -4790,6 +4823,13 @@
       if (!supportsDeviceNotify() || Notification.permission !== 'granted') return false;
       if (!isDeviceNotifyEnabled()) return false;
       try {
+        await ensureServiceWorkerControlling(reg);
+        // Chỉ subscribe khi SW đang control trang (quan trọng trên iOS)
+        if (!navigator.serviceWorker.controller) {
+          updatePushStatusHint('Đang kích hoạt service worker… mở lại app một lần');
+          return false;
+        }
+
         const keyRes = await api('/push/vapid-public-key');
         const publicKey = keyRes && keyRes.publicKey;
         if (!publicKey) return false;
@@ -4816,7 +4856,7 @@
           body: { subscription: sub.toJSON() },
         });
         try { localStorage.setItem(VAPID_KEY_CACHE, publicKey); } catch { /* ignore */ }
-        updatePushStatusHint('Đã đăng ký thông báo đẩy ✓');
+        updatePushStatusHint('Đã đăng ký thông báo đẩy ✓ (cả khi vuốt tắt app)');
         return true;
       } catch (err) {
         console.warn('Không đăng ký Web Push:', err);
