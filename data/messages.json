@@ -16,18 +16,32 @@
       "role": "admin",
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T12:57:57.172Z",
-      "status": "delivered",
+      "status": "read",
       "deliveredAt": "2026-07-29T12:58:21.541Z",
+      "readAt": "2026-07-29T12:58:21.805Z",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
       "durationSec": 0,
       "callId": "cms63arrir0zbl"
+    },
+    {
+      "id": "ms63c23o5fqjss",
+      "from": "admin",
+      "role": "admin",
+      "text": "Cuộc gọi thoại · Đã hủy",
+      "at": "2026-07-29T12:58:34.020Z",
+      "status": "sent",
+      "kind": "call",
+      "callEvent": "cancelled",
+      "callMode": "audio",
+      "durationSec": 0,
+      "callId": "cms63bcd93xxuo"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T12:58:21.541Z"
+  "updatedAt": "2026-07-29T12:58:34.020Z"
 }
