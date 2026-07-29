@@ -156,17 +156,18 @@
       "role": "admin",
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T14:35:19.802Z",
-      "status": "sent",
+      "status": "delivered",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms66sfl4kvde0"
+      "callId": "cms66sfl4kvde0",
+      "deliveredAt": "2026-07-29T14:35:21.420Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:35:19.802Z"
+  "updatedAt": "2026-07-29T14:35:21.420Z"
 }
