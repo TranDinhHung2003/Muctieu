@@ -27,7 +27,15 @@
       "role": "admin",
       "text": "30 phút tự xóa tin nhắn",
       "at": "2026-07-29T05:45:09.572Z"
+    },
+    {
+      "id": "ms5ny4jaua0onc",
+      "from": "admin",
+      "role": "admin",
+      "text": "",
+      "imageId": "ms5ny4jaua0onc",
+      "at": "2026-07-29T05:47:49.751Z"
     }
   ],
-  "updatedAt": "2026-07-29T05:45:09.572Z"
+  "updatedAt": "2026-07-29T05:47:49.751Z"
 }
