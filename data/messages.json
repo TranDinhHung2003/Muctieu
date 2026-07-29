@@ -1,15 +1,4 @@
 {
-  "messages": [
-    {
-      "id": "ms5tg0fwvci74u",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "I",
-      "at": "2026-07-29T08:21:42.332Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T08:24:19.242Z",
-      "readAt": "2026-07-29T08:24:55.662Z"
-    }
-  ],
-  "updatedAt": "2026-07-29T08:51:15.525Z"
+  "messages": [],
+  "updatedAt": "2026-07-29T08:51:55.443Z"
 }
