@@ -59,11 +59,24 @@
       "callMode": "audio",
       "durationSec": 0,
       "callId": "cms65f3kz257bh"
+    },
+    {
+      "id": "ms65gelvb3w04e",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "Cuộc gọi thoại · Đã hủy",
+      "at": "2026-07-29T13:57:56.083Z",
+      "status": "sent",
+      "kind": "call",
+      "callEvent": "cancelled",
+      "callMode": "audio",
+      "durationSec": 0,
+      "callId": "cms65g2o0ed9oy"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T13:57:39.956Z"
+  "updatedAt": "2026-07-29T13:57:56.083Z"
 }
