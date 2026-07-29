@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5t12cu1opgls",
-      "from": "admin",
-      "role": "admin",
-      "text": "8",
-      "at": "2026-07-29T08:10:04.974Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T08:10:14.144Z",
-      "readAt": "2026-07-29T08:18:58.910Z"
-    },
-    {
       "id": "ms5tck6gtlkv7b",
       "from": "theodoi",
       "role": "viewer",
@@ -51,5 +41,5 @@
       "readAt": "2026-07-29T08:24:55.662Z"
     }
   ],
-  "updatedAt": "2026-07-29T08:38:21.836Z"
+  "updatedAt": "2026-07-29T08:40:22.139Z"
 }
