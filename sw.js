@@ -1,5 +1,5 @@
-/* Service worker v3: thông báo hệ thống — tên app Mục tiêu chạy xe */
-const SW_VERSION = 'muctieu-sw-v3';
+/* Service worker v4: icon cá mập */
+const SW_VERSION = 'muctieu-sw-v4';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
