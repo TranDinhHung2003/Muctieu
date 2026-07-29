@@ -129,7 +129,15 @@
       "status": "read",
       "deliveredAt": "2026-07-29T12:24:33.164Z",
       "readAt": "2026-07-29T12:24:33.429Z"
+    },
+    {
+      "id": "ms6258hbalkm3i",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "O",
+      "at": "2026-07-29T12:25:16.079Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T12:24:33.429Z"
+  "updatedAt": "2026-07-29T12:25:16.079Z"
 }
