@@ -97,13 +97,13 @@
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T14:22:31.970Z",
       "status": "read",
+      "deliveredAt": "2026-07-29T14:22:33.311Z",
+      "readAt": "2026-07-29T14:22:33.540Z",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms66bnqze7kr2",
-      "deliveredAt": "2026-07-29T14:22:33.311Z",
-      "readAt": "2026-07-29T14:22:33.540Z"
+      "callId": "cms66bnqze7kr2"
     },
     {
       "id": "ms66camxvxghpu",
@@ -112,13 +112,13 @@
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T14:22:43.929Z",
       "status": "read",
+      "deliveredAt": "2026-07-29T14:22:45.417Z",
+      "readAt": "2026-07-29T14:22:45.701Z",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms66c84l5qbls",
-      "deliveredAt": "2026-07-29T14:22:45.417Z",
-      "readAt": "2026-07-29T14:22:45.701Z"
+      "callId": "cms66c84l5qbls"
     },
     {
       "id": "ms66ch0c2ufqac",
@@ -126,18 +126,19 @@
       "role": "viewer",
       "text": "Cuộc gọi thoại · Đã từ chối",
       "at": "2026-07-29T14:22:52.188Z",
-      "status": "delivered",
+      "status": "read",
+      "deliveredAt": "2026-07-29T14:22:54.692Z",
+      "readAt": "2026-07-29T14:23:00.976Z",
       "kind": "call",
       "callEvent": "rejected",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms66c84l5qbls",
-      "deliveredAt": "2026-07-29T14:22:54.692Z"
+      "callId": "cms66c84l5qbls"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:22:54.692Z"
+  "updatedAt": "2026-07-29T14:23:00.976Z"
 }
