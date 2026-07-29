@@ -21,17 +21,18 @@
       "role": "admin",
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T13:55:51.679Z",
-      "status": "sent",
+      "status": "delivered",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms65do7p1bkp6"
+      "callId": "cms65do7p1bkp6",
+      "deliveredAt": "2026-07-29T13:55:53.116Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T13:55:51.679Z"
+  "updatedAt": "2026-07-29T13:55:53.116Z"
 }
