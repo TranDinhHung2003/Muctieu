@@ -336,6 +336,23 @@
       font-weight: 700;
     }
 
+    .chat-bubble.pending {
+      opacity: 0.78;
+    }
+
+    .chat-bubble.failed {
+      border-color: rgba(239, 68, 68, 0.55);
+    }
+
+    .chat-status.sending {
+      opacity: 0.75;
+    }
+
+    .chat-status.failed {
+      color: #fca5a5;
+      font-weight: 700;
+    }
+
     .live-clock {
       display: inline-flex;
       flex-direction: column;
@@ -4288,11 +4305,14 @@
     function chatListKey(list) {
       return (list || []).map((m) => [
         m.id,
+        m.localId || '',
         m.from || '',
         m.text || '',
         m.imageId || '',
+        m.localImage ? '1' : '0',
         m.at || '',
         m.status || 'sent',
+        m.pending ? '1' : '0',
         displayNameFor(m.from),
       ].join(':')).join('|') + '::' + JSON.stringify(chatNicknames);
     }
@@ -4300,6 +4320,8 @@
     function messageStatusLabel(status) {
       if (status === 'read') return 'Đã đọc';
       if (status === 'delivered') return 'Đã nhận';
+      if (status === 'failed') return 'Gửi lỗi';
+      if (status === 'sending') return 'Đang gửi';
       return 'Đã gửi';
     }
 
@@ -4439,13 +4461,19 @@
           : '';
         const imageHtml = m.imageId
           ? `<img class="chat-image" src="/api/messages/media/${encodeURIComponent(m.imageId)}" alt="Ảnh đính kèm" loading="lazy">`
-          : '';
+          : (m.localImage
+            ? `<img class="chat-image" src="${m.localImage}" alt="Ảnh đính kèm">`
+            : '');
         const status = m.status || 'sent';
+        const statusClass = status === 'read'
+          ? ' read'
+          : (status === 'failed' ? ' failed' : (status === 'sending' ? ' sending' : ''));
         const statusHtml = mine
-          ? `<div class="chat-status${status === 'read' ? ' read' : ''}">${escapeHtml(messageStatusLabel(status))}</div>`
+          ? `<div class="chat-status${statusClass}">${escapeHtml(messageStatusLabel(status))}</div>`
           : '';
+        const bubbleClass = `chat-bubble${mine ? ' mine' : ''}${m.pending ? ' pending' : ''}${status === 'failed' ? ' failed' : ''}`;
         return `
-          <div class="chat-bubble${mine ? ' mine' : ''}">
+          <div class="${bubbleClass}" data-id="${escapeHtml(m.id)}"${m.localId ? ` data-local-id="${escapeHtml(m.localId)}"` : ''}>
             <div class="chat-name">${escapeHtml(nick)}</div>
             <div class="chat-meta">
               <span>${time}</span>
@@ -4480,6 +4508,9 @@
         const prevLatest = chatMessages.length ? chatMessages[chatMessages.length - 1].id : null;
         const prevKey = chatListKey(chatMessages);
         chatMessages = list;
+        // Giữ tin đang gửi optimistic chưa có trên server
+        const pendingLocals = (chatMessagesBefore || []).filter((m) => m.pending && m.localId);
+        // note: we'll set chatMessagesBefore below
         const nextKey = chatListKey(list);
         lastMessagesAt = result.updatedAt || lastMessagesAt;
         const onChat = els.pageChat && els.pageChat.classList.contains('active');
