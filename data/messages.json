@@ -16,8 +16,9 @@
       "role": "admin",
       "text": "Đang Test 12345",
       "at": "2026-07-29T08:54:17.385Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T08:54:29.656Z"
     }
   ],
-  "updatedAt": "2026-07-29T08:54:17.385Z"
+  "updatedAt": "2026-07-29T08:54:29.656Z"
 }
