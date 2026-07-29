@@ -26,9 +26,18 @@
       "role": "viewer",
       "text": "S",
       "at": "2026-07-29T10:21:55.575Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T10:21:58.403Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T10:21:58.403Z",
+      "readAt": "2026-07-29T10:21:58.789Z"
+    },
+    {
+      "id": "ms5xr4mxnfs5st",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "S",
+      "at": "2026-07-29T10:22:19.449Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T10:21:58.403Z"
+  "updatedAt": "2026-07-29T10:22:19.449Z"
 }
