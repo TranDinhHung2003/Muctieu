@@ -134,11 +134,24 @@
       "callMode": "audio",
       "durationSec": 0,
       "callId": "cms66c84l5qbls"
+    },
+    {
+      "id": "ms66d31kn76eyd",
+      "from": "admin",
+      "role": "admin",
+      "text": "Cuộc gọi nhỡ · Cuộc gọi thoại",
+      "at": "2026-07-29T14:23:20.744Z",
+      "status": "sent",
+      "kind": "call",
+      "callEvent": "missed",
+      "callMode": "audio",
+      "durationSec": 0,
+      "callId": "cms66clbh05ubv"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:23:00.976Z"
+  "updatedAt": "2026-07-29T14:23:20.744Z"
 }
