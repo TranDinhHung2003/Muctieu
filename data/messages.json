@@ -66,9 +66,10 @@
       "role": "viewer",
       "text": "Ff",
       "at": "2026-07-29T10:49:00.692Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T10:49:03.509Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T10:49:03.509Z",
+      "readAt": "2026-07-29T10:49:18.782Z"
     }
   ],
-  "updatedAt": "2026-07-29T10:49:03.509Z"
+  "updatedAt": "2026-07-29T10:49:18.782Z"
 }
