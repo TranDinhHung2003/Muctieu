@@ -80,12 +80,13 @@
       "role": "admin",
       "text": "Ii",
       "at": "2026-07-29T15:07:46.448Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T15:07:47.816Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:07:46.448Z"
+  "updatedAt": "2026-07-29T15:07:47.816Z"
 }
