@@ -106,7 +106,15 @@
       "at": "2026-07-29T11:35:55.725Z",
       "status": "delivered",
       "deliveredAt": "2026-07-29T11:36:01.756Z"
+    },
+    {
+      "id": "ms60dyoorkb6nt",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "Rtui",
+      "at": "2026-07-29T11:36:04.056Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T11:36:01.756Z"
+  "updatedAt": "2026-07-29T11:36:04.056Z"
 }
