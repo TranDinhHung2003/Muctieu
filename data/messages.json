@@ -49,7 +49,15 @@
       "status": "read",
       "deliveredAt": "2026-07-29T10:46:51.763Z",
       "readAt": "2026-07-29T10:46:53.346Z"
+    },
+    {
+      "id": "ms5ypel9zipv93",
+      "from": "admin",
+      "role": "admin",
+      "text": "Bấm gửi",
+      "at": "2026-07-29T10:48:58.653Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T10:46:53.346Z"
+  "updatedAt": "2026-07-29T10:48:58.653Z"
 }
