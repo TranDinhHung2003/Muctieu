@@ -16,7 +16,8 @@
       "role": "admin",
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T12:57:57.172Z",
-      "status": "sent",
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T12:58:21.541Z",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
@@ -28,5 +29,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T12:57:57.172Z"
+  "updatedAt": "2026-07-29T12:58:21.541Z"
 }
