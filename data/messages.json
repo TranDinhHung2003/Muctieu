@@ -1,26 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms61uhjrgu3fsr",
-      "from": "admin",
-      "role": "admin",
-      "text": "8",
-      "at": "2026-07-29T12:16:54.615Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T12:16:54.688Z",
-      "readAt": "2026-07-29T12:16:54.688Z"
-    },
-    {
-      "id": "ms61ulxokzse7r",
-      "from": "admin",
-      "role": "admin",
-      "text": "8",
-      "at": "2026-07-29T12:17:00.300Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T12:17:02.181Z",
-      "readAt": "2026-07-29T12:19:39.528Z"
-    },
-    {
       "id": "ms61y2iqwu9h1f",
       "from": "theodoi",
       "role": "viewer",
@@ -72,7 +52,8 @@
     }
   ],
   "nicknames": {
-    "theodoi": "Mẹ Cá 🐬"
+    "theodoi": "Mẹ Cá 🐬",
+    "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T12:46:21.408Z"
+  "updatedAt": "2026-07-29T12:49:24.684Z"
 }
