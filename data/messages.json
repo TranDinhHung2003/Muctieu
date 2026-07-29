@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms624auu5urdpr",
-      "from": "admin",
-      "role": "admin",
-      "text": "O",
-      "at": "2026-07-29T12:24:32.502Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T12:24:33.164Z",
-      "readAt": "2026-07-29T12:24:33.429Z"
-    },
-    {
       "id": "ms6258hbalkm3i",
       "from": "theodoi",
       "role": "viewer",
@@ -35,5 +25,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T12:49:48.222Z"
+  "updatedAt": "2026-07-29T12:54:33.667Z"
 }
