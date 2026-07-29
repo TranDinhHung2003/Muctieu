@@ -67,13 +67,13 @@
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T14:22:03.713Z",
       "status": "read",
+      "deliveredAt": "2026-07-29T14:22:05.811Z",
+      "readAt": "2026-07-29T14:22:06.176Z",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms66bb45i3i9g",
-      "deliveredAt": "2026-07-29T14:22:05.811Z",
-      "readAt": "2026-07-29T14:22:06.176Z"
+      "callId": "cms66bb45i3i9g"
     },
     {
       "id": "ms66bl422zzbw2",
@@ -82,18 +82,31 @@
       "text": "Cuộc gọi thoại · Đã từ chối",
       "at": "2026-07-29T14:22:10.850Z",
       "status": "read",
+      "deliveredAt": "2026-07-29T14:22:11.611Z",
+      "readAt": "2026-07-29T14:22:11.870Z",
       "kind": "call",
       "callEvent": "rejected",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms66bb45i3i9g",
-      "deliveredAt": "2026-07-29T14:22:11.611Z",
-      "readAt": "2026-07-29T14:22:11.870Z"
+      "callId": "cms66bb45i3i9g"
+    },
+    {
+      "id": "ms66c1epkoxkag",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "Cuộc gọi thoại · Đã hủy",
+      "at": "2026-07-29T14:22:31.970Z",
+      "status": "sent",
+      "kind": "call",
+      "callEvent": "cancelled",
+      "callMode": "audio",
+      "durationSec": 0,
+      "callId": "cms66bnqze7kr2"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:22:11.870Z"
+  "updatedAt": "2026-07-29T14:22:31.970Z"
 }
