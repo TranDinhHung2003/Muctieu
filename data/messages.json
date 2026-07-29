@@ -46,9 +46,10 @@
       "role": "viewer",
       "text": "Vug",
       "at": "2026-07-29T11:22:43.505Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T11:23:32.558Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T11:23:32.558Z",
+      "readAt": "2026-07-29T11:24:09.020Z"
     }
   ],
-  "updatedAt": "2026-07-29T11:23:32.558Z"
+  "updatedAt": "2026-07-29T11:24:09.020Z"
 }
