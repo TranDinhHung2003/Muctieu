@@ -119,11 +119,24 @@
       "callMode": "audio",
       "durationSec": 0,
       "callId": "cms66dhnsnumqj"
+    },
+    {
+      "id": "ms66sbg8gc4rmd",
+      "from": "admin",
+      "role": "admin",
+      "text": "Cuộc gọi thoại · Đã hủy",
+      "at": "2026-07-29T14:35:11.480Z",
+      "status": "sent",
+      "kind": "call",
+      "callEvent": "cancelled",
+      "callMode": "audio",
+      "durationSec": 0,
+      "callId": "cms66s82m0accp"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:27:57.103Z"
+  "updatedAt": "2026-07-29T14:35:11.480Z"
 }
