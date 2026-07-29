@@ -66,8 +66,9 @@
       "role": "admin",
       "text": "Bú",
       "at": "2026-07-29T12:12:48.929Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T12:12:50.714Z"
     }
   ],
-  "updatedAt": "2026-07-29T12:12:48.929Z"
+  "updatedAt": "2026-07-29T12:12:50.714Z"
 }
