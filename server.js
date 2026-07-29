@@ -101,13 +101,22 @@ function initUsers() {
   if (changed) saveUsersStore(usersStore);
 }
 
-/** Biệt danh dùng chung — cả hai tài khoản thấy cùng một tên */
+/** Biệt danh dùng chung — lưu bền trong messages store (GitHub), cả hai cùng thấy */
 function getNicknamesMap() {
+  const stored = storage.getStoredNicknames ? storage.getStoredNicknames() : {};
   const store = loadUsersStore();
   const map = {};
   (store.users || []).forEach((u) => {
     if (!u || !u.username) return;
-    map[u.username] = normalizeNickname(u.nickname, defaultNickname(u.username, u.role));
+    map[u.username] = normalizeNickname(
+      stored[u.username] || u.nickname,
+      defaultNickname(u.username, u.role)
+    );
+  });
+  Object.keys(stored).forEach((username) => {
+    if (!map[username]) {
+      map[username] = normalizeNickname(stored[username], username);
+    }
   });
   return map;
 }
@@ -115,17 +124,23 @@ function getNicknamesMap() {
 /** Tên hiển thị trong chat: bản thân = "Bạn", người khác = biệt danh chung */
 function getDisplayNamesForViewer(viewerUsername) {
   const map = getNicknamesMap();
-  if (viewerUsername && map[viewerUsername] !== undefined) {
+  if (viewerUsername && Object.prototype.hasOwnProperty.call(map, viewerUsername)) {
+    map[viewerUsername] = 'Bạn';
+  } else if (viewerUsername) {
     map[viewerUsername] = 'Bạn';
   }
   return map;
 }
 
 function publicUserPayload(user) {
+  const stored = storage.getStoredNicknames ? storage.getStoredNicknames() : {};
   return {
     username: user.username,
     role: user.role,
-    nickname: normalizeNickname(user.nickname, defaultNickname(user.username, user.role)),
+    nickname: normalizeNickname(
+      stored[user.username] || user.nickname,
+      defaultNickname(user.username, user.role)
+    ),
   };
 }
 
@@ -240,8 +255,8 @@ app.get('/api/me', (req, res) => {
   }
 });
 
-app.post('/api/nickname', authMiddleware, (req, res) => {
-  // Đặt biệt danh CHO ĐỐI PHƯƠNG — lưu chung, cả hai cùng thấy
+app.post('/api/nickname', authMiddleware, async (req, res) => {
+  // Đặt biệt danh CHO ĐỐI PHƯƠNG — lưu bền (GitHub), cả hai cùng thấy
   const body = req.body || {};
   const rawNick = String(body.nickname || '');
   const nickname = normalizeNickname(rawNick, '');
@@ -269,16 +284,23 @@ app.post('/api/nickname', authMiddleware, (req, res) => {
     return res.status(404).json({ error: 'Không tìm thấy đối phương' });
   }
 
+  // Đồng bộ local users.json (best-effort) + lưu bền qua messages store / GitHub
   target.nickname = nickname;
   target.updated_at = nowIso();
   saveUsersStore(store);
 
-  res.json({
-    ok: true,
-    peerUsername: targetUsername,
-    peerNickname: nickname,
-    nicknames: getDisplayNamesForViewer(req.user.username),
-  });
+  try {
+    const saved = await storage.setPeerNickname(targetUsername, nickname);
+    res.json({
+      ok: true,
+      peerUsername: targetUsername,
+      peerNickname: nickname,
+      nicknames: getDisplayNamesForViewer(req.user.username),
+      updatedAt: saved && saved.updatedAt,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || 'Không lưu được biệt danh' });
+  }
 });
 
 function getAllUsernames() {
@@ -628,6 +650,21 @@ async function start() {
   initUsers();
   await storage.initAppStore();
   await storage.initMessagesStore();
+  // Migrate biệt danh từ users.json (local) → messages store bền nếu chưa có
+  try {
+    const stored = storage.getStoredNicknames() || {};
+    const users = loadUsersStore().users || [];
+    for (const u of users) {
+      if (!u || !u.username || !u.nickname) continue;
+      const def = defaultNickname(u.username, u.role);
+      const nick = normalizeNickname(u.nickname, '');
+      if (nick && nick !== def && !stored[u.username]) {
+        await storage.setPeerNickname(u.username, nick);
+      }
+    }
+  } catch (err) {
+    console.warn('Migrate biệt danh:', err && err.message ? err.message : err);
+  }
   await pushNotify.init();
   startKeepAlive();
 

@@ -202,7 +202,23 @@ async function setAppStore(data) {
 }
 
 function emptyMessagesStore() {
-  return { messages: [], updatedAt: nowIso() };
+  return { messages: [], nicknames: {}, updatedAt: nowIso() };
+}
+
+function normalizeNicknamesMap(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  Object.keys(raw).forEach((key) => {
+    const username = String(key || '').trim().slice(0, 32);
+    if (!username) return;
+    const val = String(raw[key] || '')
+      .replace(/[\u0000-\u001F\u007F]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 24);
+    if (val) out[username] = val;
+  });
+  return out;
 }
 
 function isFreshMessage(m, now = Date.now()) {
@@ -250,6 +266,7 @@ function normalizeMessagesStore(raw) {
   }
   return {
     messages: kept.slice(-MAX_MESSAGES),
+    nicknames: normalizeNicknamesMap(raw.nicknames),
     updatedAt: raw.updatedAt || nowIso(),
   };
 }
@@ -273,8 +290,36 @@ function pruneExpiredMessages(persist = true) {
       saveMessagesToDisk(next);
       saveMessagesToGitHub(next).catch(() => {});
     }
+  } else if (!store.nicknames) {
+    // Đảm bảo luôn có field nicknames trên memory store
+    store.nicknames = next.nicknames || {};
   }
   return memoryMessages;
+}
+
+function getStoredNicknames() {
+  const store = getMessagesStore();
+  return normalizeNicknamesMap(store && store.nicknames);
+}
+
+async function setPeerNickname(username, nickname) {
+  const user = String(username || '').trim().slice(0, 32);
+  const nick = String(nickname || '')
+    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 24);
+  if (!user || !nick) throw new Error('Biệt danh không hợp lệ');
+
+  const store = getMessagesStore();
+  const nicknames = normalizeNicknamesMap(store.nicknames);
+  nicknames[user] = nick;
+  store.nicknames = nicknames;
+  store.updatedAt = nowIso();
+  memoryMessages = store;
+  saveMessagesToDisk(store);
+  await saveMessagesToGitHub(store);
+  return { nicknames: store.nicknames, updatedAt: store.updatedAt };
 }
 
 function getMessagesStore() {
@@ -481,6 +526,8 @@ module.exports = {
   nowIso,
   initMessagesStore,
   getMessagesStore,
+  getStoredNicknames,
+  setPeerNickname,
   addMessage,
   markMessagesDelivered,
   markMessagesRead,
