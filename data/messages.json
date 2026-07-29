@@ -36,9 +36,18 @@
       "role": "admin",
       "text": "Hi",
       "at": "2026-07-29T09:01:30.921Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T09:01:33.746Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T09:01:33.746Z",
+      "readAt": "2026-07-29T09:01:34.057Z"
+    },
+    {
+      "id": "ms5uvtqnaxj6wn",
+      "from": "admin",
+      "role": "admin",
+      "text": "Ping",
+      "at": "2026-07-29T09:01:59.759Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T09:01:33.746Z"
+  "updatedAt": "2026-07-29T09:01:59.759Z"
 }
