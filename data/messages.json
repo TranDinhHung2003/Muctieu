@@ -1,14 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5vc6mnyti9wi",
-      "from": "admin",
-      "role": "admin",
-      "text": "Em có nhận được tin nhắn không",
-      "at": "2026-07-29T09:14:42.959Z",
-      "status": "sent"
-    },
-    {
       "id": "ms5vh6fai9pdo1",
       "from": "admin",
       "role": "admin",
@@ -23,7 +15,15 @@
       "text": "Alo",
       "at": "2026-07-29T09:42:16.587Z",
       "status": "sent"
+    },
+    {
+      "id": "ms5wgso85ggvg1",
+      "from": "admin",
+      "role": "admin",
+      "text": "O",
+      "at": "2026-07-29T09:46:17.768Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T09:42:16.587Z"
+  "updatedAt": "2026-07-29T09:46:17.768Z"
 }
