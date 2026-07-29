@@ -567,6 +567,60 @@ app.get('/api/messages/media/:id', authMiddleware, (req, res) => {
   res.send(image.buffer);
 });
 
+/** Ticket ngắn hạn để mở WebSocket gọi điện (iOS/PWA đôi khi không gửi cookie WS) */
+app.get('/api/call/ticket', authMiddleware, (req, res) => {
+  const ticket = jwt.sign(
+    {
+      purpose: 'call-ws',
+      username: req.user.username,
+      role: req.user.role,
+    },
+    JWT_SECRET,
+    { expiresIn: '10m' }
+  );
+  res.json({ ticket, expiresIn: 600 });
+});
+
+/** Ghi sự kiện cuộc gọi vào khung chat (kiểu Zalo) */
+app.post('/api/call/log', authMiddleware, async (req, res) => {
+  const body = req.body || {};
+  const callEvent = String(body.event || body.callEvent || '').trim();
+  if (!['ended', 'cancelled', 'rejected', 'missed'].includes(callEvent)) {
+    return res.status(400).json({ error: 'Loại sự kiện cuộc gọi không hợp lệ' });
+  }
+  const callMode = body.mode === 'video' || body.callMode === 'video' ? 'video' : 'audio';
+  const durationSec = Math.max(0, Math.min(86400, Number(body.durationSec) || 0));
+  const callId = String(body.callId || '').trim().slice(0, 64);
+  try {
+    const result = await storage.addMessage({
+      from: req.user.username,
+      role: req.user.role,
+      kind: 'call',
+      callEvent,
+      callMode,
+      durationSec,
+      callId: callId || undefined,
+      text: '',
+    });
+    if (result.duplicate) {
+      return res.json({
+        ok: true,
+        duplicate: true,
+        nicknames: getDisplayNamesForViewer(req.user.username),
+        updatedAt: result.updatedAt,
+      });
+    }
+    res.json({
+      ok: true,
+      message: result.message,
+      nicknames: getDisplayNamesForViewer(req.user.username),
+      updatedAt: result.updatedAt,
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Không ghi được cuộc gọi' });
+  }
+});
+
 app.post('/api/messages', authMiddleware, async (req, res) => {
   const text = String((req.body || {}).text || '').trim();
   const imageDataUrl = (req.body || {}).image || null;

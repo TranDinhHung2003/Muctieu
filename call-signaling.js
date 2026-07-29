@@ -63,6 +63,16 @@ function attachCallSignaling(httpServer, options = {}) {
 
   function parseUserFromRequest(req) {
     try {
+      const url = new URL(req.url || '', 'http://localhost');
+      const ticket = url.searchParams.get('ticket') || url.searchParams.get('token');
+      if (ticket) {
+        const payload = jwt.verify(ticket, jwtSecret);
+        if (!payload || payload.purpose !== 'call-ws' || !payload.username) return null;
+        return {
+          username: String(payload.username),
+          role: payload.role || 'admin',
+        };
+      }
       const raw = req.headers.cookie || '';
       const parsed = cookie.parse(raw || '');
       const token = parsed[cookieName];

@@ -201,6 +201,17 @@ async function setAppStore(data) {
   return store.updatedAt;
 }
 
+function normalizeCallFields(m) {
+  if (!m || m.kind !== 'call') return {};
+  const callEvent = ['ended', 'cancelled', 'rejected', 'missed'].includes(m.callEvent)
+    ? m.callEvent
+    : 'ended';
+  const callMode = m.callMode === 'video' ? 'video' : 'audio';
+  const durationSec = Math.max(0, Math.min(86400, Number(m.durationSec) || 0));
+  const callId = m.callId ? String(m.callId).slice(0, 64) : undefined;
+  return { kind: 'call', callEvent, callMode, durationSec, callId };
+}
+
 function emptyMessagesStore() {
   return { messages: [], nicknames: {}, updatedAt: nowIso() };
 }
@@ -251,17 +262,21 @@ function normalizeMessagesStore(raw) {
     }
     const text = typeof m.text === 'string' ? m.text.trim().slice(0, 1000) : '';
     const imageId = m.imageId ? String(m.imageId).replace(/[^a-zA-Z0-9_-]/g, '') : '';
-    if (!text && !imageId) continue;
+    const callFields = normalizeCallFields(m);
+    if (!text && !imageId && callFields.kind !== 'call') continue;
     kept.push({
       id: String(m.id),
       from: String(m.from),
       role: m.role === 'viewer' ? 'viewer' : 'admin',
-      text,
+      text: callFields.kind === 'call'
+        ? (text || buildCallMessageText(callFields.callEvent, callFields.callMode, callFields.durationSec))
+        : text,
       imageId: imageId || undefined,
       at: m.at || nowIso(),
       status: normalizeMessageStatus(m.status),
       deliveredAt: m.deliveredAt || undefined,
       readAt: m.readAt || undefined,
+      ...callFields,
     });
   }
   return {
@@ -437,12 +452,51 @@ async function initMessagesStore() {
   return memoryMessages;
 }
 
-async function addMessage({ from, role, text, imageDataUrl }) {
+function buildCallMessageText(callEvent, callMode, durationSec) {
+  const kind = callMode === 'video' ? 'Cuộc gọi video' : 'Cuộc gọi thoại';
+  const sec = Math.max(0, Math.floor(Number(durationSec) || 0));
+  if (callEvent === 'ended') {
+    return kind + ' · ' + formatDurationVi(sec);
+  }
+  if (callEvent === 'cancelled') return kind + ' · Đã hủy';
+  if (callEvent === 'rejected') return kind + ' · Đã từ chối';
+  if (callEvent === 'missed') return 'Cuộc gọi nhỡ · ' + kind;
+  return kind;
+}
+
+function formatDurationVi(totalSec) {
+  const s = Math.max(0, Math.floor(Number(totalSec) || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) {
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  }
+  return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+async function addMessage({ from, role, text, imageDataUrl, kind, callEvent, callMode, durationSec, callId }) {
+  const callFields = kind === 'call'
+    ? normalizeCallFields({ kind, callEvent, callMode, durationSec, callId })
+    : {};
   const clean = String(text || '').trim().slice(0, 1000);
   const hasImage = !!(imageDataUrl && String(imageDataUrl).startsWith('data:image/'));
-  if (!clean && !hasImage) throw new Error('Nội dung trống');
+  if (callFields.kind === 'call') {
+    // ok
+  } else if (!clean && !hasImage) {
+    throw new Error('Nội dung trống');
+  }
 
   const store = getMessagesStore();
+  if (callFields.kind === 'call' && callFields.callId) {
+    const dup = (store.messages || []).some((m) => (
+      m && m.kind === 'call' && m.callId === callFields.callId && m.callEvent === callFields.callEvent
+    ));
+    if (dup) {
+      return { message: null, updatedAt: store.updatedAt, duplicate: true };
+    }
+  }
+
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   let imageId;
   if (hasImage) {
@@ -453,10 +507,13 @@ async function addMessage({ from, role, text, imageDataUrl }) {
     id,
     from: String(from || ''),
     role: role === 'viewer' ? 'viewer' : 'admin',
-    text: clean,
+    text: callFields.kind === 'call'
+      ? buildCallMessageText(callFields.callEvent, callFields.callMode, callFields.durationSec)
+      : clean,
     imageId,
     at: nowIso(),
     status: 'sent',
+    ...callFields,
   };
   store.messages = [...store.messages, msg].slice(-MAX_MESSAGES);
   store.updatedAt = nowIso();
