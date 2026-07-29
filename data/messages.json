@@ -26,8 +26,9 @@
       "role": "viewer",
       "text": "Lại qq 😂",
       "at": "2026-07-29T11:21:53.719Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T11:21:54.674Z"
     }
   ],
-  "updatedAt": "2026-07-29T11:21:53.719Z"
+  "updatedAt": "2026-07-29T11:21:54.674Z"
 }
