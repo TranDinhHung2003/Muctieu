@@ -66,8 +66,9 @@
       "role": "viewer",
       "text": "Uty",
       "at": "2026-07-29T11:30:12.172Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T11:30:55.426Z"
     }
   ],
-  "updatedAt": "2026-07-29T11:30:12.172Z"
+  "updatedAt": "2026-07-29T11:30:55.426Z"
 }
