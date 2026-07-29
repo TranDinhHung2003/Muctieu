@@ -2649,8 +2649,7 @@
 
     async function refreshFromServer(notify) {
       const beforeKey = getTodayKey();
-      const beforeDay = appData && appData.days ? appData.days[beforeKey] : null;
-      const beforeNet = beforeDay ? calcNet(beforeDay) : null;
+      const beforeDay = appData && appData.days ? normalizeDay(appData.days[beforeKey]) : null;
       const result = await api('/data');
       appData = stripLogsFromData(result.data || { days: {} });
       lastUpdatedAt = result.updatedAt || null;
@@ -2660,20 +2659,47 @@
       calculate();
       updateSyncTime(result.updatedAt);
       if (notify) {
-        showToast('Có dữ liệu mới từ admin');
-        const afterNet = calcNet((appData.days || {})[beforeKey]);
-        let detail = 'Admin vừa cập nhật doanh thu hôm nay';
-        if (beforeNet != null && afterNet !== beforeNet) {
-          const delta = afterNet - beforeNet;
-          detail = (delta >= 0 ? 'Doanh thu +' : 'Doanh thu ') + formatMoney(delta)
-            + ' · hiện tại ' + formatMoney(afterNet);
+        const afterDay = normalizeDay((appData.days || {})[beforeKey]);
+        const totalNet = calcNet(afterDay);
+        const deltaField = detectMoneyFieldDelta(beforeDay, afterDay);
+        if (deltaField) {
+          const moneyNotify = buildMoneyEntryNotify(deltaField.field, deltaField.value, totalNet);
+          showToast(moneyNotify.toast);
+          showDeviceNotify(moneyNotify.title, moneyNotify.body, {
+            tag: 'muctieu-money',
+            renotify: true,
+            data: { page: 'home' },
+          });
+        } else {
+          showToast('Có dữ liệu mới từ admin · Tổng đã chạy được: ' + formatMoney(totalNet));
+          showDeviceNotify('Cập nhật doanh thu', 'Tổng đã chạy được: ' + formatMoney(totalNet), {
+            tag: 'muctieu-money',
+            renotify: true,
+            data: { page: 'home' },
+          });
         }
-        showDeviceNotify('💰 Dữ liệu tiền mới', detail, {
-          tag: 'muctieu-money',
-          renotify: true,
-          data: { page: 'home' },
-        });
       }
+    }
+
+    function detectMoneyFieldDelta(beforeDay, afterDay) {
+      const before = normalizeDay(beforeDay);
+      const after = normalizeDay(afterDay);
+      const fields = ['app', 'outside', 'tip', 'zoomPoints', 'highway'];
+      const changed = [];
+      for (const field of fields) {
+        const diff = (after[field] || 0) - (before[field] || 0);
+        if (diff > 0) changed.push({ field, value: diff });
+      }
+      if (changed.length === 1) return changed[0];
+      // Nhiều mục đổi cùng lúc: ưu tiên lượt nhập mới nhất nếu có
+      const entries = Array.isArray(after.entries) ? after.entries : [];
+      if (entries.length) {
+        const last = entries[entries.length - 1];
+        if (last && last.field && last.value > 0) {
+          return { field: last.field, value: last.value };
+        }
+      }
+      return changed[0] || null;
     }
 
     function updateSyncTime(updatedAt) {
@@ -3861,12 +3887,53 @@
       const displayVal = field === 'zoomPoints'
         ? formatPoints(value) + ' điểm'
         : formatMoney(value);
-      showToast('Đã cộng ' + displayVal + ' · ' + config.label);
-      showDeviceNotify(
-        '💰 Đã nhập ' + config.label,
-        'Cộng ' + displayVal,
-        { tag: 'muctieu-money', renotify: true, data: { page: 'home' } }
-      );
+      const totalNet = calcNet(today);
+      const moneyNotify = buildMoneyEntryNotify(field, value, totalNet);
+      showToast(moneyNotify.toast);
+      showDeviceNotify(moneyNotify.title, moneyNotify.body, {
+        tag: 'muctieu-money',
+        renotify: true,
+        data: { page: 'home' },
+      });
+    }
+
+    function buildMoneyEntryNotify(field, value, totalNet) {
+      const amount = field === 'zoomPoints'
+        ? formatPoints(value) + ' điểm'
+        : formatMoney(value);
+      const totalLine = 'Tổng đã chạy được: ' + formatMoney(totalNet);
+      const map = {
+        app: {
+          title: 'Đã nhận được tiền App',
+          body: amount + '\n' + totalLine,
+          toast: 'Đã nhận được tiền App: ' + amount + ' · ' + totalLine,
+        },
+        outside: {
+          title: 'Đã nhận được Chạy Ngoài',
+          body: amount + '\n' + totalLine,
+          toast: 'Đã nhận được Chạy Ngoài: ' + amount + ' · ' + totalLine,
+        },
+        tip: {
+          title: 'Đã nhận được Tiền Tip',
+          body: amount + '\n' + totalLine,
+          toast: 'Đã nhận được Tiền Tip: ' + amount + ' · ' + totalLine,
+        },
+        zoomPoints: {
+          title: 'Đã trừ Điểm Zoom',
+          body: amount + '\n' + totalLine,
+          toast: 'Đã trừ Điểm Zoom: ' + amount + ' · ' + totalLine,
+        },
+        highway: {
+          title: 'Đã trừ tiền Cao Tốc',
+          body: amount + '\n' + totalLine,
+          toast: 'Đã trừ tiền Cao Tốc: ' + amount + ' · ' + totalLine,
+        },
+      };
+      return map[field] || {
+        title: 'Cập nhật doanh thu',
+        body: amount + '\n' + totalLine,
+        toast: amount + ' · ' + totalLine,
+      };
     }
 
     function openGoalModal() {
