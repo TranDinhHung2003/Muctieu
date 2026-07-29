@@ -90,12 +90,13 @@
       "role": "admin",
       "text": "U",
       "at": "2026-07-29T15:17:55.918Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T15:17:57.434Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T15:17:55.918Z"
+  "updatedAt": "2026-07-29T15:17:57.434Z"
 }
