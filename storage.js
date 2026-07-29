@@ -279,12 +279,18 @@ function normalizeMessagesStore(raw) {
       ...callFields,
     });
   }
-  return {
-    messages: kept.slice(-MAX_MESSAGES),
-    nicknames: normalizeNicknamesMap(raw.nicknames),
-    updatedAt: raw.updatedAt || nowIso(),
-  };
-}
+    kept.sort((a, b) => {
+      const ta = new Date(a.at).getTime() || 0;
+      const tb = new Date(b.at).getTime() || 0;
+      if (ta !== tb) return ta - tb;
+      return String(a.id).localeCompare(String(b.id));
+    });
+    return {
+      messages: kept.slice(-MAX_MESSAGES),
+      nicknames: normalizeNicknamesMap(raw.nicknames),
+      updatedAt: raw.updatedAt || nowIso(),
+    };
+  }
 
 function normalizeMessageStatus(status) {
   if (status === 'delivered' || status === 'read' || status === 'sent') return status;
@@ -515,7 +521,14 @@ async function addMessage({ from, role, text, imageDataUrl, kind, callEvent, cal
     status: 'sent',
     ...callFields,
   };
-  store.messages = [...store.messages, msg].slice(-MAX_MESSAGES);
+  store.messages = [...store.messages, msg]
+    .sort((a, b) => {
+      const ta = new Date(a.at).getTime() || 0;
+      const tb = new Date(b.at).getTime() || 0;
+      if (ta !== tb) return ta - tb;
+      return String(a.id).localeCompare(String(b.id));
+    })
+    .slice(-MAX_MESSAGES);
   store.updatedAt = nowIso();
   memoryMessages = store;
   saveMessagesToDisk(store);
