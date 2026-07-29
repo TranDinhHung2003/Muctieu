@@ -36,7 +36,9 @@
       "role": "admin",
       "text": "Cuộc gọi video · Đã hủy",
       "at": "2026-07-29T13:06:54.742Z",
-      "status": "sent",
+      "status": "read",
+      "deliveredAt": "2026-07-29T13:22:10.319Z",
+      "readAt": "2026-07-29T13:22:10.319Z",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "video",
@@ -48,5 +50,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T13:06:54.742Z"
+  "updatedAt": "2026-07-29T13:22:10.319Z"
 }
