@@ -66,17 +66,19 @@
       "role": "viewer",
       "text": "Cuộc gọi thoại · Đã hủy",
       "at": "2026-07-29T13:57:56.083Z",
-      "status": "sent",
+      "status": "read",
       "kind": "call",
       "callEvent": "cancelled",
       "callMode": "audio",
       "durationSec": 0,
-      "callId": "cms65g2o0ed9oy"
+      "callId": "cms65g2o0ed9oy",
+      "deliveredAt": "2026-07-29T13:57:56.853Z",
+      "readAt": "2026-07-29T13:57:57.066Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T13:57:56.083Z"
+  "updatedAt": "2026-07-29T13:57:57.066Z"
 }
