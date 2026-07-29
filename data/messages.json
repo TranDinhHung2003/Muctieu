@@ -1,20 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5nttz8inetav",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "Có",
-      "at": "2026-07-29T05:44:29.444Z"
-    },
-    {
-      "id": "ms5nu2p1tir0da",
-      "from": "admin",
-      "role": "admin",
-      "text": "Haha",
-      "at": "2026-07-29T05:44:40.741Z"
-    },
-    {
       "id": "ms5nuoxwy2akfw",
       "from": "admin",
       "role": "admin",
@@ -58,5 +44,5 @@
       "at": "2026-07-29T05:58:05.801Z"
     }
   ],
-  "updatedAt": "2026-07-29T06:08:36.550Z"
+  "updatedAt": "2026-07-29T06:15:00.780Z"
 }
