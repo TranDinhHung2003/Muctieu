@@ -9,7 +9,15 @@
       "status": "read",
       "deliveredAt": "2026-07-29T08:53:22.114Z",
       "readAt": "2026-07-29T08:54:11.344Z"
+    },
+    {
+      "id": "ms5ulwyx6kthda",
+      "from": "admin",
+      "role": "admin",
+      "text": "Đang Test 12345",
+      "at": "2026-07-29T08:54:17.385Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T08:54:11.344Z"
+  "updatedAt": "2026-07-29T08:54:17.385Z"
 }
