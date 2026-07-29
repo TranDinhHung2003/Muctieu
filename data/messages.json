@@ -17,7 +17,15 @@
       "at": "2026-07-29T09:46:17.768Z",
       "status": "delivered",
       "deliveredAt": "2026-07-29T09:48:45.420Z"
+    },
+    {
+      "id": "ms5wlehbxjdrpx",
+      "from": "admin",
+      "role": "admin",
+      "text": "Test",
+      "at": "2026-07-29T09:49:52.655Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T09:48:45.420Z"
+  "updatedAt": "2026-07-29T09:49:52.655Z"
 }
