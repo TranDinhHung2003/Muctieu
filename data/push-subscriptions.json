@@ -10,16 +10,7 @@
         "updatedAt": "2026-07-29T08:02:11.311Z"
       }
     ],
-    "theodoi": [
-      {
-        "endpoint": "https://web.push.apple.com/QMkj5Qv3qIg5sTFHnhBM5ozYnr1mrRKTUuNRhL4zA7C3Z1d2FyXj3GiDOD5yu9ZMVDwneFM8OtqDz48ajSx53EJXdLNjZ9tc0o_NqYmVO70jucZOB9PM5glmUzDOYQM2Y9AWclDcfSYBWvrW3mL_Zbe3ww0pIAef21uOFwTyQ3g",
-        "keys": {
-          "p256dh": "BBpzGSLbjMI8p9UgS8nFjmdaHPcVOZedHXh3h3dm8q1JWXjCzR694hanOxdT0M8pTDTS0tBPjh7SdzjhbVKa5_8",
-          "auth": "K-WrOLyLdVCG3m2FwwEzsA"
-        },
-        "updatedAt": "2026-07-29T08:04:33.672Z"
-      }
-    ]
+    "theodoi": []
   },
-  "updatedAt": "2026-07-29T08:04:33.672Z"
+  "updatedAt": "2026-07-29T08:04:38.682Z"
 }
