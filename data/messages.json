@@ -1,26 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms5ulwyx6kthda",
-      "from": "admin",
-      "role": "admin",
-      "text": "Đang Test 12345",
-      "at": "2026-07-29T08:54:17.385Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T08:54:29.656Z",
-      "readAt": "2026-07-29T08:54:31.891Z"
-    },
-    {
-      "id": "ms5umdaauv0tgd",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "Đang Tét",
-      "at": "2026-07-29T08:54:38.530Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T08:55:37.897Z",
-      "readAt": "2026-07-29T08:55:42.401Z"
-    },
-    {
       "id": "ms5uv7hlra6fn2",
       "from": "admin",
       "role": "admin",
@@ -67,5 +47,5 @@
       "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T09:23:33.173Z"
+  "updatedAt": "2026-07-29T09:24:59.573Z"
 }
