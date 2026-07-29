@@ -56,9 +56,18 @@
       "role": "viewer",
       "text": "Ut",
       "at": "2026-07-29T11:29:50.394Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T11:29:52.645Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T11:29:52.645Z",
+      "readAt": "2026-07-29T11:29:52.879Z"
+    },
+    {
+      "id": "ms606f64dgyau9",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "Uty",
+      "at": "2026-07-29T11:30:12.172Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T11:29:52.645Z"
+  "updatedAt": "2026-07-29T11:30:12.172Z"
 }
