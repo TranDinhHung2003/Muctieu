@@ -66,8 +66,9 @@
       "role": "viewer",
       "text": "Uty",
       "at": "2026-07-29T11:30:12.172Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T11:30:55.426Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T11:30:55.426Z",
+      "readAt": "2026-07-29T11:34:50.644Z"
     },
     {
       "id": "ms607cuw7cfq36",
@@ -75,9 +76,10 @@
       "role": "viewer",
       "text": "Utyuuu",
       "at": "2026-07-29T11:30:55.832Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T11:30:58.707Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T11:30:58.707Z",
+      "readAt": "2026-07-29T11:34:50.644Z"
     }
   ],
-  "updatedAt": "2026-07-29T11:30:58.707Z"
+  "updatedAt": "2026-07-29T11:34:50.644Z"
 }
