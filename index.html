@@ -2,17 +2,22 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no">
   <meta name="application-name" content="Mục tiêu chạy xe">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Mục tiêu">
-  <meta name="theme-color" content="#22c55e">
-  <link rel="manifest" href="/manifest.webmanifest?v=4">
-  <link rel="icon" href="/icons/icon-192.png?v=4" type="image/png" sizes="192x192">
-  <link rel="apple-touch-icon" href="/icons/icon-180.png?v=4" sizes="180x180">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png?v=4" sizes="192x192">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="theme-color" content="#0f1419" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#0f1419">
+  <meta name="msapplication-TileColor" content="#0f1419">
+  <meta name="msapplication-tap-highlight" content="no">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png" sizes="180x180">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" sizes="192x192">
   <title>Mục tiêu chạy xe hôm nay</title>
   <style>
     :root {
@@ -28,6 +33,27 @@
       --text-muted: #94a3b8;
       --border: #334155;
       --radius: 16px;
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+      --sar: env(safe-area-inset-right, 0px);
+    }
+
+    html, body {
+      overscroll-behavior: none;
+    }
+
+    /* Chế độ app từ màn hình chính: không còn giao diện Safari */
+    html.standalone-app,
+    html.standalone-app body {
+      min-height: 100dvh;
+      background: var(--bg);
+    }
+
+    html.standalone-app body {
+      /* Tránh kéo lộ vùng trình duyệt trên iOS */
+      position: relative;
+      overflow-x: hidden;
     }
 
     * {
@@ -2084,6 +2110,18 @@
   </style>
 </head>
 <body class="logged-out">
+  <script>
+    (function () {
+      var standalone = false;
+      try {
+        standalone = window.matchMedia('(display-mode: standalone)').matches
+          || window.matchMedia('(display-mode: fullscreen)').matches
+          || window.navigator.standalone === true;
+      } catch (e) { /* ignore */ }
+      if (standalone) document.documentElement.classList.add('standalone-app');
+      document.documentElement.classList.add(standalone ? 'is-pwa' : 'is-browser');
+    })();
+  </script>
   <div class="weather-fx" id="weather-fx" data-mode="none" aria-hidden="true">
     <div class="weather-glow"></div>
     <canvas id="weather-canvas"></canvas>
@@ -2145,7 +2183,7 @@
       </button>
     </div>
     <p class="drawer-hint" id="homescreen-hint">
-      Trên iPhone: xóa icon cũ trên màn hình chính, mở Safari → Chia sẻ → <strong>Thêm vào Màn hình chính</strong> (tên <strong>Mục tiêu</strong>, icon cá mập) để hết chữ M đen / “from Dasborad”.
+      Để dùng như app (không còn thanh Safari): xóa icon cũ → mở bằng <strong>Safari</strong> → Chia sẻ → <strong>Thêm vào Màn hình chính</strong> → mở bằng <strong>icon trên màn hình chính</strong> (không mở từ tab Safari).
     </p>
   </nav>
 
@@ -3993,8 +4031,8 @@
         requireInteraction: true,
         // App đang mở: im lặng trên hệ thống để tránh heads-up hiện "from …"
         silent: !document.hidden,
-        icon: '/icons/icon-192.png?v=4',
-        badge: '/icons/icon-96.png?v=4',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-96.png',
         data: Object.assign({}, options.data || {}),
       };
 
@@ -4030,7 +4068,7 @@
       const el = document.createElement('div');
       el.className = 'app-notify';
       el.innerHTML =
-        '<img class="app-notify-icon" src="/icons/icon-192.png?v=4" alt="">' +
+        '<img class="app-notify-icon" src="/icons/icon-192.png" alt="">' +
         '<div class="app-notify-main">' +
           '<div class="app-notify-title"></div>' +
           '<div class="app-notify-body"></div>' +
@@ -4063,7 +4101,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=4', { scope: '/' });
+        const reg = await navigator.serviceWorker.register('/sw.js?v=5', { scope: '/' });
         await navigator.serviceWorker.ready;
         return reg;
       } catch {
@@ -4972,7 +5010,48 @@
       });
     }
 
+    function isStandaloneApp() {
+      try {
+        return window.matchMedia('(display-mode: standalone)').matches
+          || window.matchMedia('(display-mode: fullscreen)').matches
+          || window.navigator.standalone === true;
+      } catch {
+        return false;
+      }
+    }
+
+    function setupStandaloneAppMode() {
+      const standalone = isStandaloneApp();
+      document.documentElement.classList.toggle('standalone-app', standalone);
+      document.documentElement.classList.toggle('is-pwa', standalone);
+      document.documentElement.classList.toggle('is-browser', !standalone);
+      const hint = document.getElementById('homescreen-hint');
+      if (hint) hint.style.display = standalone ? 'none' : '';
+
+      // Giữ điều hướng trong app — tránh bật lại Safari
+      document.addEventListener('click', (e) => {
+        const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!a) return;
+        const href = a.getAttribute('href') || '';
+        if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+        let url;
+        try { url = new URL(href, window.location.href); } catch { return; }
+        if (url.origin === window.location.origin) {
+          // cùng origin: để SPA/server xử lý trong cửa sổ hiện tại
+          if (a.target === '_blank') {
+            e.preventDefault();
+            window.location.assign(url.pathname + url.search + url.hash);
+          }
+          return;
+        }
+        // link ngoài: mở riêng, không phá PWA
+        e.preventDefault();
+        window.open(url.href, '_blank', 'noopener,noreferrer');
+      }, true);
+    }
+
     startLiveClock();
+    setupStandaloneAppMode();
     initApp();
   </script>
 </body>

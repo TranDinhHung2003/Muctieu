@@ -1,5 +1,5 @@
-/* Service worker v4: icon cá mập */
-const SW_VERSION = 'muctieu-sw-v4';
+/* Service worker v5: PWA standalone / màn hình chính */
+const SW_VERSION = 'muctieu-sw-v5';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

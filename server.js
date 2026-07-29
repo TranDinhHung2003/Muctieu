@@ -309,8 +309,18 @@ app.get('/sw.js', (_req, res) => {
 
 app.get('/manifest.webmanifest', (_req, res) => {
   res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(__dirname, 'manifest.webmanifest'));
+});
+
+app.get('/apple-touch-icon.png', (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.sendFile(path.join(__dirname, 'icons', 'icon-180.png'));
+});
+
+app.get('/apple-touch-icon-precomposed.png', (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.sendFile(path.join(__dirname, 'icons', 'icon-180.png'));
 });
 
 app.use(express.static(__dirname));
