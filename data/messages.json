@@ -139,10 +139,18 @@
       "status": "read",
       "deliveredAt": "2026-07-29T12:25:17.724Z",
       "readAt": "2026-07-29T12:25:42.078Z"
+    },
+    {
+      "id": "ms62dn0rbel8w8",
+      "from": "admin",
+      "role": "admin",
+      "text": "Mẹ cá vào lưu biệt danh đi",
+      "at": "2026-07-29T12:31:48.171Z",
+      "status": "sent"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬"
   },
-  "updatedAt": "2026-07-29T12:30:58.285Z"
+  "updatedAt": "2026-07-29T12:31:48.171Z"
 }
