@@ -39,7 +39,15 @@
       "status": "read",
       "deliveredAt": "2026-07-29T11:23:32.558Z",
       "readAt": "2026-07-29T11:24:09.020Z"
+    },
+    {
+      "id": "ms605v70l10ray",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "U",
+      "at": "2026-07-29T11:29:46.284Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T11:27:58.289Z"
+  "updatedAt": "2026-07-29T11:29:46.284Z"
 }
