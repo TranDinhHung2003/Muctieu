@@ -9,7 +9,15 @@
       "status": "read",
       "deliveredAt": "2026-07-29T10:19:44.817Z",
       "readAt": "2026-07-29T10:20:36.208Z"
+    },
+    {
+      "id": "ms5xoyakzjnt65",
+      "from": "admin",
+      "role": "admin",
+      "text": "Ê",
+      "at": "2026-07-29T10:20:37.916Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T10:20:36.208Z"
+  "updatedAt": "2026-07-29T10:20:37.916Z"
 }
