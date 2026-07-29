@@ -319,6 +319,10 @@
       height: 100%;
     }
 
+    body.chat-mode .app-notify-stack {
+      bottom: max(78px, calc(env(safe-area-inset-bottom, 0px) + 72px));
+    }
+
     .chat-status {
       margin-top: 4px;
       font-size: 0.68rem;
@@ -1034,17 +1038,19 @@
       opacity: 1;
     }
 
-    /* Thông báo trong trang: góc phải trên, trượt ngang, tự tắt 3s */
+    /* Thông báo trong trang: góc dưới trái, kéo trái→phải, không kéo hết màn hình */
     .app-notify-stack {
       position: fixed;
-      top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px));
-      right: max(10px, env(safe-area-inset-right, 0px));
-      left: auto;
-      width: min(300px, calc(100vw - 20px));
+      top: auto;
+      bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 14px));
+      left: max(10px, env(safe-area-inset-left, 0px));
+      right: auto;
+      width: auto;
+      max-width: min(260px, calc(100vw - 72px));
       z-index: 450;
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
+      align-items: flex-start;
       gap: 8px;
       pointer-events: none;
     }
@@ -1052,10 +1058,12 @@
     .app-notify {
       pointer-events: none;
       display: grid;
-      grid-template-columns: 36px 1fr;
+      grid-template-columns: 36px minmax(0, 1fr);
       gap: 10px;
       align-items: start;
-      width: 100%;
+      width: max-content;
+      max-width: 100%;
+      box-sizing: border-box;
       padding: 11px 12px;
       border-radius: 14px;
       background: rgba(28, 35, 51, 0.96);
@@ -1063,7 +1071,7 @@
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
       color: #f1f5f9;
       backdrop-filter: blur(10px);
-      transform: translateX(-130%);
+      transform: translateX(calc(-100% - 16px));
       opacity: 0;
       animation: app-notify-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
@@ -1073,13 +1081,13 @@
     }
 
     @keyframes app-notify-in {
-      from { transform: translateX(-130%); opacity: 0; }
+      from { transform: translateX(calc(-100% - 16px)); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
 
     @keyframes app-notify-out {
       from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(-130%); opacity: 0; }
+      to { transform: translateX(calc(-100% - 16px)); opacity: 0; }
     }
 
     .app-notify-icon {
@@ -4815,7 +4823,7 @@
       el.querySelector('.app-notify-title').textContent = title || '';
       el.querySelector('.app-notify-body').textContent = body || '';
       stack.prepend(el);
-      // Hiện 3s → trượt về trái rồi tắt (không cần nút X)
+      // Hiện 3s → kéo về trái rồi tắt (không cần nút X)
       window.setTimeout(() => {
         el.classList.add('closing');
         window.setTimeout(() => el.remove(), 420);
