@@ -1,16 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms61ebks6polph",
-      "from": "admin",
-      "role": "admin",
-      "text": "Heloo em yêu",
-      "at": "2026-07-29T12:04:20.380Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T12:04:22.584Z",
-      "readAt": "2026-07-29T12:05:11.741Z"
-    },
-    {
       "id": "ms61fdbw302cxf",
       "from": "admin",
       "role": "admin",
@@ -144,5 +134,5 @@
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬"
   },
-  "updatedAt": "2026-07-29T12:33:53.775Z"
+  "updatedAt": "2026-07-29T12:34:20.782Z"
 }
