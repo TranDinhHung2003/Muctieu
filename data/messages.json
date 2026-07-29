@@ -76,9 +76,18 @@
       "role": "admin",
       "text": "Uu",
       "at": "2026-07-29T08:19:25.849Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T08:20:06.143Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T08:20:06.143Z",
+      "readAt": "2026-07-29T08:20:06.420Z"
+    },
+    {
+      "id": "ms5tefjkym4mf9",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "O",
+      "at": "2026-07-29T08:20:28.592Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T08:20:06.143Z"
+  "updatedAt": "2026-07-29T08:20:28.592Z"
 }
