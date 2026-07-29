@@ -48,11 +48,15 @@
       max-width: 480px;
       margin: 0 auto;
       padding: 16px 16px 40px;
+      padding-top: max(16px, calc(env(safe-area-inset-top, 0px) + 10px));
+      padding-left: max(16px, env(safe-area-inset-left, 0px));
+      padding-right: max(16px, env(safe-area-inset-right, 0px));
+      padding-bottom: max(40px, calc(env(safe-area-inset-bottom, 0px) + 24px));
     }
 
     .top-bar {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 12px;
       margin-bottom: 16px;
@@ -61,6 +65,7 @@
     .menu-btn {
       width: 42px;
       height: 42px;
+      margin-top: 2px;
       border-radius: 12px;
       border: 1px solid var(--border);
       background: var(--surface);
@@ -105,18 +110,19 @@
       flex: 1;
       text-align: center;
       min-width: 0;
+      padding-top: 2px;
     }
 
     .top-bar-title h1 {
       font-size: 1.05rem;
       font-weight: 700;
       margin: 0;
+      line-height: 1.25;
     }
 
-    .top-bar-title p {
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      margin: 2px 0 0;
+    /* Đồng hồ đã hiện ngày — ẩn dòng ngày dài để tránh bị Dynamic Island che */
+    .top-bar-title > p {
+      display: none;
     }
 
     .top-bar-spacer {
@@ -129,7 +135,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin-top: 6px;
+      margin-top: 8px;
       padding: 6px 12px;
       border-radius: 999px;
       border: 1px solid rgba(34, 197, 94, 0.35);
@@ -749,44 +755,58 @@
       opacity: 1;
     }
 
-    /* Banner thông báo trong app — không có dòng "from …" */
+    /* Thông báo trong trang: góc phải trên, trượt ngang, tự tắt 3s */
     .app-notify-stack {
       position: fixed;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(420px, calc(100vw - 20px));
+      top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px));
+      right: max(10px, env(safe-area-inset-right, 0px));
+      left: auto;
+      width: min(300px, calc(100vw - 20px));
       z-index: 450;
       display: flex;
       flex-direction: column;
+      align-items: flex-end;
       gap: 8px;
       pointer-events: none;
     }
 
     .app-notify {
-      pointer-events: auto;
+      pointer-events: none;
       display: grid;
-      grid-template-columns: 40px 1fr auto;
+      grid-template-columns: 36px 1fr;
       gap: 10px;
       align-items: start;
-      padding: 12px 12px 12px 10px;
-      border-radius: 16px;
-      background: #1c2333;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 14px;
+      background: rgba(28, 35, 51, 0.96);
+      border: 1px solid rgba(34, 197, 94, 0.35);
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
       color: #f1f5f9;
-      animation: app-notify-in 0.28s ease;
+      backdrop-filter: blur(10px);
+      transform: translateX(-130%);
+      opacity: 0;
+      animation: app-notify-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .app-notify.closing {
+      animation: app-notify-out 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
     @keyframes app-notify-in {
-      from { opacity: 0; transform: translateY(-12px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      from { transform: translateX(-130%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes app-notify-out {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(-130%); opacity: 0; }
     }
 
     .app-notify-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
       object-fit: cover;
       background: #14532d;
     }
@@ -796,31 +816,17 @@
     }
 
     .app-notify-title {
-      font-size: 0.92rem;
+      font-size: 0.86rem;
       font-weight: 800;
       line-height: 1.25;
-      margin: 0 0 4px;
+      margin: 0 0 3px;
     }
 
     .app-notify-body {
-      font-size: 0.84rem;
+      font-size: 0.78rem;
       color: #cbd5e1;
       white-space: pre-line;
-      line-height: 1.4;
-    }
-
-    .app-notify-close {
-      border: 0;
-      background: transparent;
-      color: #94a3b8;
-      font-size: 1.1rem;
-      line-height: 1;
-      cursor: pointer;
-      padding: 2px 4px;
-    }
-
-    .app-notify-close:hover {
-      color: #fff;
+      line-height: 1.35;
     }
 
     .modal-overlay {
@@ -1838,8 +1844,8 @@
     .weather-badge {
       position: fixed;
       top: auto;
-      bottom: 18px;
-      right: 14px;
+      bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+      right: max(14px, env(safe-area-inset-right, 0px));
       left: auto;
       z-index: 50;
       display: flex;
@@ -3903,7 +3909,7 @@
         .join('\n');
 
       // Banner trong app: không có dòng "from …"
-      showAppNotifyBanner(notifyTitle, notifyBody, options);
+      showAppNotifyBanner(notifyTitle, notifyBody);
 
       if (!supportsDeviceNotify() || Notification.permission !== 'granted') return null;
 
@@ -3945,7 +3951,7 @@
       return true;
     }
 
-    function showAppNotifyBanner(title, body, options = {}) {
+    function showAppNotifyBanner(title, body) {
       const stack = document.getElementById('app-notify-stack');
       if (!stack) return;
       const el = document.createElement('div');
@@ -3955,20 +3961,15 @@
         '<div class="app-notify-main">' +
           '<div class="app-notify-title"></div>' +
           '<div class="app-notify-body"></div>' +
-        '</div>' +
-        '<button type="button" class="app-notify-close" aria-label="Đóng">×</button>';
+        '</div>';
       el.querySelector('.app-notify-title').textContent = title || '';
       el.querySelector('.app-notify-body').textContent = body || '';
-      const close = () => el.remove();
-      el.querySelector('.app-notify-close').addEventListener('click', close);
-      el.addEventListener('click', (e) => {
-        if (e.target.closest('.app-notify-close')) return;
-        if (options.data && options.data.page) {
-          try { navigateTo(options.data.page); } catch { /* ignore */ }
-        }
-      });
       stack.prepend(el);
-      // Giữ trên màn hình; chỉ mất khi bấm × (giống xóa trên thanh thông báo)
+      // Hiện 3s → trượt về trái rồi tắt (không cần nút X)
+      window.setTimeout(() => {
+        el.classList.add('closing');
+        window.setTimeout(() => el.remove(), 420);
+      }, 3000);
     }
 
     function createPageNotification(notifyTitle, payload, options = {}) {
