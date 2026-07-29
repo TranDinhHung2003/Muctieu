@@ -1,13 +1,36 @@
-/* Service worker v10: Web Push + đồng bộ tin nhắn khi app đang mở */
-const SW_VERSION = 'muctieu-sw-v10';
+/* Service worker v11: Push hệ thống chỉ khi app ở nền / đã tắt */
+const SW_VERSION = 'muctieu-sw-v11';
 
-self.addEventListener('install', (event) => {
+/** clientId → last foreground ping (ms) */
+const foregroundClients = new Map();
+const FOREGROUND_TTL_MS = 20000;
+
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  const data = event.data || {};
+  const source = event.source;
+  const clientId = source && source.id;
+
+  if (data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+    return;
+  }
+
+  if (data.type === 'APP_FOREGROUND' && clientId) {
+    foregroundClients.set(clientId, Date.now());
+    return;
+  }
+
+  if (data.type === 'APP_BACKGROUND' && clientId) {
+    foregroundClients.delete(clientId);
+    return;
+  }
+
+  if (data.type === 'APP_HEARTBEAT' && clientId) {
+    foregroundClients.set(clientId, Date.now());
   }
 });
 
@@ -54,25 +77,55 @@ function buildPushPayload(data) {
   };
 }
 
-async function showPushNotification(data) {
-  const payload = buildPushPayload(data);
+function pruneForegroundMap() {
+  const now = Date.now();
+  foregroundClients.forEach((ts, id) => {
+    if (now - ts > FOREGROUND_TTL_MS) foregroundClients.delete(id);
+  });
+}
 
-  let visibleClients = [];
+async function isAppInForeground() {
+  pruneForegroundMap();
   try {
     const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    visibleClients = allClients.filter((c) => c && c.visibilityState === 'visible');
-    // Mọi client (kể cả nền) đều nhận tin để cập nhật khung chat
+    // Không còn cửa sổ nào → app đã tắt
+    if (!allClients.length) return false;
+
+    for (const client of allClients) {
+      if (!client) continue;
+      // Tab/app đang hiện hoặc đang focus
+      if (client.visibilityState === 'visible' || client.focused) return true;
+      // Client vừa báo đang dùng app (heartbeat) — tin cậy hơn trên iOS
+      const ping = foregroundClients.get(client.id);
+      if (ping && Date.now() - ping <= FOREGROUND_TTL_MS) return true;
+    }
+  } catch { /* ignore */ }
+
+  // Heartbeat còn sống dù matchAll lỗi
+  return foregroundClients.size > 0;
+}
+
+async function notifyClients(payload) {
+  try {
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     allClients.forEach((client) => {
       try {
         client.postMessage({ type: 'PUSH_NOTIFY', payload });
       } catch { /* ignore */ }
     });
   } catch { /* ignore */ }
+}
 
-  // App đang mở → không hiện OS (tránh trùng); chỉ banner + sync trong app
-  if (visibleClients.length) return;
+async function showPushNotification(data) {
+  const payload = buildPushPayload(data);
 
-  // App đã vuốt tắt / không có tab hiện → hiện thông báo hệ thống (1 lần)
+  // Luôn đồng bộ khung chat trong app (nếu còn sống)
+  await notifyClients(payload);
+
+  // Đang trong app → KHÔNG hiện thông báo đẩy lên máy
+  if (await isAppInForeground()) return;
+
+  // Ngoài màn hình chính / đã vuốt tắt → hiện 1 thông báo hệ thống
   await self.registration.showNotification(payload.title, {
     body: payload.body,
     tag: payload.tag,
@@ -108,14 +161,16 @@ self.addEventListener('push', (event) => {
     try {
       await showPushNotification(data);
     } catch (err) {
-      // Fallback tối giản — vẫn phải show để tránh iOS cắt subscription
+      // Chỉ fallback OS khi chắc chắn không đang trong app
       try {
-        await self.registration.showNotification('Mục tiêu chạy xe', {
-          body: 'Có cập nhật mới',
-          tag: 'muctieu-push-fallback',
-          renotify: true,
-          silent: false,
-        });
+        if (!(await isAppInForeground())) {
+          await self.registration.showNotification('Mục tiêu chạy xe', {
+            body: 'Có cập nhật mới',
+            tag: 'muctieu-push-fallback',
+            renotify: true,
+            silent: false,
+          });
+        }
       } catch {
         /* ignore */
       }

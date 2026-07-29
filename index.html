@@ -4896,7 +4896,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=10', {
+        const reg = await navigator.serviceWorker.register('/sw.js?v=11', {
           scope: '/',
           updateViaCache: 'none',
         });
@@ -5088,6 +5088,48 @@
       refreshPushStatusHint();
     }
 
+    // Báo service worker: đang trong app hay đã ra ngoài — để không bắn OS notify khi đang dùng
+    let appForegroundHeartbeat = 0;
+
+    function postToServiceWorker(message) {
+      if (!('serviceWorker' in navigator)) return;
+      const ctrl = navigator.serviceWorker.controller;
+      if (ctrl) {
+        try { ctrl.postMessage(message); } catch { /* ignore */ }
+        return;
+      }
+      navigator.serviceWorker.ready.then((reg) => {
+        if (reg.active) {
+          try { reg.active.postMessage(message); } catch { /* ignore */ }
+        }
+      }).catch(() => {});
+    }
+
+    function setAppForegroundState(active) {
+      postToServiceWorker({ type: active ? 'APP_FOREGROUND' : 'APP_BACKGROUND' });
+    }
+
+    function startAppForegroundHeartbeat() {
+      if (appForegroundHeartbeat) return;
+      setAppForegroundState(document.visibilityState === 'visible');
+      appForegroundHeartbeat = window.setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          postToServiceWorker({ type: 'APP_HEARTBEAT' });
+        }
+      }, 8000);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      setAppForegroundState(document.visibilityState === 'visible');
+    });
+    window.addEventListener('focus', () => setAppForegroundState(true));
+    window.addEventListener('blur', () => {
+      // blur chưa chắc đã ra ngoài (bàn phím iOS) — chỉ đánh dấu nền khi tab hidden
+      if (document.visibilityState !== 'visible') setAppForegroundState(false);
+    });
+    window.addEventListener('pagehide', () => setAppForegroundState(false));
+    document.addEventListener('resume', () => setAppForegroundState(true), false);
+
     // Mỗi lần mở lại app / hiện tab → đồng bộ đăng ký push
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState !== 'visible' || !isLoggedIn) return;
@@ -5107,17 +5149,20 @@
         }
         if (data.type === 'PUSH_NOTIFY' && isLoggedIn) {
           const payload = data.payload || {};
+          // Trong app: chỉ banner nội bộ + cập nhật chat — không tạo Notification hệ thống
           if (!document.hidden && isDeviceNotifyEnabled()) {
             showAppNotifyBanner(payload.title || 'Mục tiêu chạy xe', payload.body || '');
           }
-          // Quan trọng: cập nhật khung chat ngay khi nhận push (không chỉ hiện banner)
           if (payload.type === 'chat' || payload.page === 'chat' || payload.messageId) {
             syncChatAfterPush(payload);
+          } else if (payload.type === 'money' || payload.page === 'home') {
+            checkForUpdates();
           } else {
             checkForUpdates();
           }
         }
       });
+      startAppForegroundHeartbeat();
     }
 
     function spawnTapRipple(x, y) {
