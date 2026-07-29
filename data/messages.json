@@ -29,11 +29,24 @@
       "callMode": "audio",
       "durationSec": 0,
       "callId": "cms63bcd93xxuo"
+    },
+    {
+      "id": "ms63msgms741zj",
+      "from": "admin",
+      "role": "admin",
+      "text": "Cuộc gọi video · Đã hủy",
+      "at": "2026-07-29T13:06:54.742Z",
+      "status": "sent",
+      "kind": "call",
+      "callEvent": "cancelled",
+      "callMode": "video",
+      "durationSec": 0,
+      "callId": "cms63megb01f1x"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T13:02:40.186Z"
+  "updatedAt": "2026-07-29T13:06:54.742Z"
 }
