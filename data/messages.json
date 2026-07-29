@@ -6,7 +6,8 @@
       "role": "admin",
       "text": "Hello",
       "at": "2026-07-29T07:11:07.033Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T07:38:23.013Z"
     },
     {
       "id": "ms5qy59u1ky8pz",
@@ -14,7 +15,8 @@
       "role": "admin",
       "text": "Chào cậu",
       "at": "2026-07-29T07:11:49.554Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T07:38:23.013Z"
     },
     {
       "id": "ms5rw22t1gdn5k",
@@ -22,8 +24,9 @@
       "role": "admin",
       "text": "Xin chào",
       "at": "2026-07-29T07:38:11.717Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T07:38:23.013Z"
     }
   ],
-  "updatedAt": "2026-07-29T07:38:11.717Z"
+  "updatedAt": "2026-07-29T07:38:23.013Z"
 }
