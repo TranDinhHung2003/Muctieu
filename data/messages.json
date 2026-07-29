@@ -113,8 +113,9 @@
       "role": "viewer",
       "text": "Rtui",
       "at": "2026-07-29T11:36:04.056Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T11:37:08.354Z"
     }
   ],
-  "updatedAt": "2026-07-29T11:36:04.056Z"
+  "updatedAt": "2026-07-29T11:37:08.354Z"
 }
