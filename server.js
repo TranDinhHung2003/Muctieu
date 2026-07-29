@@ -607,11 +607,14 @@ app.post('/api/call/signal', authMiddleware, (req, res) => {
   if (!result.ok) {
     return res.status(400).json({ error: result.error || 'Lỗi tín hiệu' });
   }
+  // Trả luôn tín hiệu đang chờ của mình → trao đổi offer/answer nhanh hơn
+  const incoming = callHub.drainSignals ? callHub.drainSignals(req.user.username) : [];
   res.json({
     ok: true,
     delivered: result.delivered,
     peerOffline: !!result.peerOffline,
     invite: result.inviteMeta || null,
+    signals: incoming || [],
   });
 });
 

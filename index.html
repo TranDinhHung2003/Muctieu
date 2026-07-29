@@ -3498,6 +3498,7 @@
   <div class="call-overlay" id="call-overlay" aria-hidden="true">
     <div class="call-remote-wrap">
       <video class="call-remote-video" id="call-remote-video" autoplay playsinline></video>
+      <audio id="call-remote-audio" autoplay playsinline></audio>
       <div class="call-avatar-fallback" id="call-avatar-fallback">
         <div class="big" aria-hidden="true">🦈</div>
         <div class="call-peer-label" id="call-peer-label">Đối phương</div>
@@ -3608,7 +3609,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.6.4';
+    const APP_VERSION = '1.6.5';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -3710,6 +3711,7 @@
       callDeclineBtn: document.getElementById('call-decline-btn'),
       callAcceptBtn: document.getElementById('call-accept-btn'),
       callRemoteVideo: document.getElementById('call-remote-video'),
+      callRemoteAudio: document.getElementById('call-remote-audio'),
       callLocalVideo: document.getElementById('call-local-video'),
       callAvatarFallback: document.getElementById('call-avatar-fallback'),
       callPeerLabel: document.getElementById('call-peer-label'),
@@ -3980,9 +3982,12 @@
       const ICE_SERVERS = [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' },
         {
           urls: [
             'turn:openrelay.metered.ca:80',
+            'turn:openrelay.metered.ca:80?transport=tcp',
             'turn:openrelay.metered.ca:443',
             'turn:openrelay.metered.ca:443?transport=tcp',
           ],
@@ -4079,27 +4084,59 @@
         }
       }
 
+      function playTone(ctx, freq, start, dur, peak, type) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        osc.type = type || 'triangle';
+        osc.frequency.value = freq;
+        filter.type = 'lowpass';
+        filter.frequency.value = 2800;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(peak, start + 0.025);
+        gain.gain.exponentialRampToValueAtTime(peak * 0.75, start + dur * 0.55);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + dur + 0.02);
+        return osc;
+      }
+
       function playRingBurst(kind) {
         const ctx = ensureAudioCtx();
         if (!ctx) return;
         if (ctx.state === 'suspended') ctx.resume().catch(() => {});
         const now = ctx.currentTime;
-        const freqs = kind === 'out' ? [440, 480] : [520, 660];
         const nodes = [];
-        freqs.forEach((f, i) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.value = f;
-          gain.gain.setValueAtTime(0.0001, now);
-          gain.gain.exponentialRampToValueAtTime(0.09, now + 0.03);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + i * 0.02);
-          osc.stop(now + 0.9);
-          nodes.push(osc);
-        });
+        if (kind === 'in') {
+          // Chuông đến: hợp âm ấm, to hơn, nhịp đôi kiểu điện thoại
+          const pattern = [
+            [0.00, [523.25, 659.25, 783.99], 0.42], // C5 E5 G5
+            [0.48, [587.33, 739.99, 880.00], 0.42], // D5 F#5 A5
+            [1.05, [659.25, 830.61, 987.77], 0.50], // E5 G#5 B5
+            [1.70, [523.25, 659.25, 987.77], 0.55], // C5 E5 B5
+          ];
+          pattern.forEach((step) => {
+            const t0 = now + step[0];
+            step[1].forEach((f, i) => {
+              nodes.push(playTone(ctx, f, t0 + i * 0.01, step[2], 0.28 - i * 0.03, i === 0 ? 'triangle' : 'sine'));
+            });
+          });
+        } else {
+          // Chuông đi: nhịp chờ máy (ringback) rõ hơn
+          const pattern = [
+            [0.00, [440, 480], 0.85],
+            [1.10, [440, 480], 0.85],
+          ];
+          pattern.forEach((step) => {
+            const t0 = now + step[0];
+            step[1].forEach((f, i) => {
+              nodes.push(playTone(ctx, f, t0, step[2], 0.18, 'sine'));
+            });
+          });
+        }
         ringNodes = nodes;
       }
 
@@ -4109,9 +4146,9 @@
         playRingBurst(kind);
         ringInterval = setInterval(() => {
           if (ringKind) playRingBurst(ringKind);
-        }, kind === 'out' ? 2800 : 2200);
+        }, kind === 'out' ? 4000 : 3200);
         try {
-          if (navigator.vibrate && kind === 'in') navigator.vibrate([200, 100, 200, 100, 400]);
+          if (navigator.vibrate && kind === 'in') navigator.vibrate([220, 80, 220, 80, 420, 120, 220]);
         } catch { /* ignore */ }
       }
 
@@ -4172,6 +4209,26 @@
         }
       }
 
+      function bindRemoteMedia(stream) {
+        remoteStream = stream || remoteStream;
+        // iOS: audio riêng — video element không phát audio-only ổn định
+        if (els.callRemoteAudio) {
+          els.callRemoteAudio.srcObject = remoteStream || null;
+          els.callRemoteAudio.autoplay = true;
+          els.callRemoteAudio.setAttribute('playsinline', 'true');
+          els.callRemoteAudio.volume = 1;
+          if (remoteStream) {
+            els.callRemoteAudio.play().catch(() => {});
+          }
+        }
+        const hasVideo = !!(remoteStream && remoteStream.getVideoTracks().some((t) => t.readyState === 'live'));
+        bindStreamToVideo(els.callRemoteVideo, hasVideo ? remoteStream : null);
+        if (hasVideo) {
+          if (els.callAvatarFallback) els.callAvatarFallback.style.display = 'none';
+          if (els.callOverlay) els.callOverlay.classList.add('video-on');
+        }
+      }
+
       function elapsedSec() {
         if (!connectedAt) return 0;
         return Math.max(0, Math.floor((Date.now() - connectedAt) / 1000));
@@ -4219,14 +4276,21 @@
         return false;
       }
 
+      function ingestSignals(list) {
+        if (!Array.isArray(list) || !list.length) return;
+        list.forEach((s) => {
+          try { handleMessage(s); } catch (err) { console.warn('signal', err); }
+        });
+      }
+
       async function send(msg) {
-        // Chỉ HTTP — tránh gửi kép WS+HTTP (gây invite trùng / báo bận sai)
+        // Chỉ HTTP — kèm tín hiệu chiều ngược trong response (nhanh hơn poll)
         try {
-          await api('/call/signal', { method: 'POST', body: msg });
+          const res = await api('/call/signal', { method: 'POST', body: msg });
+          if (res && res.signals) ingestSignals(res.signals);
           return true;
         } catch (err) {
           console.warn('call signal http', err);
-          // Fallback WS nếu HTTP lỗi
           if (ws && ws.readyState === 1) {
             try {
               ws.send(JSON.stringify(msg));
@@ -4301,9 +4365,12 @@
         }
         remoteDescSet = false;
         pendingIce = [];
-        pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+        pc = new RTCPeerConnection({
+          iceServers: ICE_SERVERS,
+          iceCandidatePoolSize: 8,
+        });
         remoteStream = new MediaStream();
-        bindStreamToVideo(els.callRemoteVideo, remoteStream);
+        bindRemoteMedia(remoteStream);
         setVideoModeUi(callMode === 'video');
 
         if (localStream) {
@@ -4332,25 +4399,29 @@
               remoteStream.addTrack(track);
             }
           });
-          bindStreamToVideo(els.callRemoteVideo, remoteStream);
-          if (remoteStream.getVideoTracks().some((t) => t.readyState === 'live')) {
-            if (els.callAvatarFallback) els.callAvatarFallback.style.display = 'none';
-            if (els.callOverlay) els.callOverlay.classList.add('video-on');
-          }
+          bindRemoteMedia(remoteStream);
           markConnected();
         };
 
         pc.onconnectionstatechange = () => {
           const st = pc && pc.connectionState;
-          if (st === 'connected') markConnected();
+          if (st === 'connected' || st === 'completed') markConnected();
           else if (st === 'failed') {
-            setStatus('Không kết nối được');
+            setStatus('Đang thử kết nối lại…');
+            try {
+              pc.restartIce();
+            } catch { /* ignore */ }
             setTimeout(() => {
-              if (pc && pc.connectionState === 'failed') {
+              if (pc && (pc.connectionState === 'failed' || pc.connectionState === 'disconnected')) {
+                setStatus('Không kết nối được');
                 finishCall(callState === 'active' ? 'ended' : 'missed', true);
               }
-            }, 2000);
+            }, 5000);
           }
+        };
+        pc.oniceconnectionstatechange = () => {
+          const st = pc && pc.iceConnectionState;
+          if (st === 'connected' || st === 'completed') markConnected();
         };
         return pc;
       }
@@ -4456,6 +4527,9 @@
         remoteStream = null;
         bindStreamToVideo(els.callRemoteVideo, null);
         bindStreamToVideo(els.callLocalVideo, null);
+        if (els.callRemoteAudio) {
+          els.callRemoteAudio.srcObject = null;
+        }
         startInvitePoll(false);
       }
 
@@ -4615,7 +4689,10 @@
           createPeerConnection();
           await send({ type: 'call-accept', to: callPeer, callId, mode: callMode });
           // Callee tạo offer — tránh phụ thuộc caller còn online đúng lúc
-          const offer = await pc.createOffer();
+          const offer = await pc.createOffer({
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: callMode === 'video',
+          });
           await pc.setLocalDescription(offer);
           await send({
             type: 'webrtc-offer',
@@ -4860,8 +4937,7 @@
         if (!isLoggedIn) return;
         try {
           const res = await api('/call/pending');
-          const signals = Array.isArray(res.signals) ? res.signals : [];
-          for (const s of signals) handleMessage(s);
+          ingestSignals(Array.isArray(res.signals) ? res.signals : []);
           const invite = res && res.invite;
           if (invite && invite.callId && invite.from && callState === 'idle') {
             if (invite.callId !== lastPendingCallId) {
@@ -4874,13 +4950,12 @@
 
       function startInvitePoll(fast) {
         stopInvitePoll();
-        const ms = fast || callState !== 'idle' ? 900 : 2000;
+        const inCall = fast || callState !== 'idle';
+        const ms = inCall ? 400 : 2000;
         pollTimer = setInterval(() => {
           pollPendingInvite();
-          // đang gọi thì poll nhanh
-          if (callState !== 'idle' && ms > 900) {
-            startInvitePoll(true);
-          }
+          if (callState !== 'idle' && ms > 400) startInvitePoll(true);
+          if (callState === 'idle' && ms < 2000) startInvitePoll(false);
         }, ms);
         pollPendingInvite();
       }
@@ -6573,7 +6648,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=16', {
+        const reg = await navigator.serviceWorker.register('/sw.js?v=17', {
           scope: '/',
           updateViaCache: 'none',
         });

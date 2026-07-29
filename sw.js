@@ -1,5 +1,5 @@
-/* Service worker v16: Cuộc gọi luôn hiện thông báo khi app nền/tắt màn */
-const SW_VERSION = 'muctieu-sw-v16';
+/* Service worker v17: Cuộc gọi luôn hiện thông báo khi app nền/tắt màn */
+const SW_VERSION = 'muctieu-sw-v17';
 const FOREGROUND_CACHE = 'muctieu-runtime-v1';
 const FOREGROUND_URL = '/__muctieu_foreground';
 const FOREGROUND_TTL_MS = 25000;
