@@ -2947,7 +2947,7 @@
               <div class="chat-peer-sub" id="chat-peer-sub">Baby Shark tank · tự xóa sau 30 phút</div>
             </div>
           </div>
-          <button type="button" class="chat-nick-btn" id="chat-nickname-btn" title="Đổi biệt danh">Biệt danh</button>
+          <button type="button" class="chat-nick-btn" id="chat-nickname-btn" title="Đặt biệt danh đối phương">Biệt danh</button>
         </div>
         <div class="chat-stage">
           <div class="shark-tank" aria-hidden="true">
@@ -3027,7 +3027,7 @@
       <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
-    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.5.5</span></footer>
+    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.5.6</span></footer>
     <div class="scroll-end-spacer" aria-hidden="true"></div>
     </div>
   </div>
@@ -3036,9 +3036,9 @@
 
   <div class="modal-overlay" id="nickname-modal">
     <div class="modal">
-      <h2>Đổi biệt danh</h2>
-      <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 14px">Biệt danh hiện trên tin nhắn cho cả hai phía. Tối đa 24 ký tự.</p>
-      <label for="nickname-input">Biệt danh của bạn</label>
+      <h2>Đặt biệt danh đối phương</h2>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 14px">Tên này chỉ bạn thấy trong khung chat. Đối phương không bị đổi tên phía họ. Tối đa 24 ký tự.</p>
+      <label for="nickname-input">Biệt danh gọi đối phương</label>
       <input type="text" id="nickname-input" maxlength="24" placeholder="vd: Baby Shark" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text);margin-top:8px;margin-bottom:8px">
       <div class="login-error" id="nickname-error"></div>
       <div class="modal-actions">
@@ -3144,7 +3144,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.5.5';
+    const APP_VERSION = '1.5.6';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -3385,9 +3385,12 @@
       isLoggedIn = true;
       currentUsername = username || '';
       currentNickname = (nickname && String(nickname).trim()) || username || '';
-      chatNicknames = Object.assign({}, chatNicknames, { [currentUsername]: currentNickname });
+      const seeded = { [currentUsername]: 'Bạn' };
+      if (role === 'viewer') seeded.admin = chatNicknames.admin || 'Admin';
+      else seeded.theodoi = chatNicknames.theodoi || 'Theo dõi';
+      chatNicknames = Object.assign({}, chatNicknames, seeded);
       applyRoleUI(role);
-      els.adminName.textContent = currentNickname || username;
+      els.adminName.textContent = username;
       els.loginError.textContent = '';
       document.body.classList.remove('logged-out');
       document.body.classList.add('logged-in');
@@ -3400,40 +3403,47 @@
       navigateTo('home');
     }
 
+    function getPeerUsername() {
+      if (currentRole === 'viewer') return 'admin';
+      if (currentRole === 'admin') return 'theodoi';
+      const peerUser = Object.keys(chatNicknames).find((u) => u && u !== currentUsername);
+      return peerUser || 'theodoi';
+    }
+
     function displayNameFor(username) {
       const key = String(username || '');
+      if (!key) return 'Người dùng';
+      if (key === currentUsername) return 'Bạn';
       if (chatNicknames[key]) return chatNicknames[key];
-      if (key === currentUsername && currentNickname) return currentNickname;
-      return key || 'Người dùng';
+      if (key === 'admin') return 'Admin';
+      if (key === 'theodoi') return 'Theo dõi';
+      return key;
     }
 
     function applyNicknames(map) {
       if (!map || typeof map !== 'object') return false;
       const prev = JSON.stringify(chatNicknames);
       chatNicknames = Object.assign({}, chatNicknames, map);
-      if (currentUsername && chatNicknames[currentUsername]) {
-        currentNickname = chatNicknames[currentUsername];
-        if (els.adminName) els.adminName.textContent = currentNickname;
-      }
+      if (currentUsername) chatNicknames[currentUsername] = 'Bạn';
       updateChatPeerHeader();
       return JSON.stringify(chatNicknames) !== prev;
     }
 
     function updateChatPeerHeader() {
-      const peerUser = Object.keys(chatNicknames).find((u) => u && u !== currentUsername)
-        || (currentRole === 'viewer' ? 'admin' : 'theodoi');
+      const peerUser = getPeerUsername();
       const peerName = displayNameFor(peerUser);
       if (els.chatPeerName) els.chatPeerName.textContent = peerName;
       if (els.chatPeerSub) {
-        els.chatPeerSub.textContent = 'Bạn: ' + displayNameFor(currentUsername) + ' · tự xóa sau 30 phút';
+        els.chatPeerSub.textContent = 'Biệt danh đối phương · tự xóa sau 30 phút';
       }
     }
 
     function openNicknameModal() {
       if (!els.nicknameModal) return;
       if (els.nicknameError) els.nicknameError.textContent = '';
+      const peerUser = getPeerUsername();
       if (els.nicknameInput) {
-        els.nicknameInput.value = currentNickname || currentUsername || '';
+        els.nicknameInput.value = displayNameFor(peerUser) || '';
       }
       els.nicknameModal.classList.add('show');
       setTimeout(() => {
@@ -3459,13 +3469,17 @@
         if (els.nicknameError) els.nicknameError.textContent = 'Biệt danh tối đa 24 ký tự';
         return;
       }
+      const peerUser = getPeerUsername();
       try {
-        const result = await api('/nickname', { method: 'POST', body: { nickname } });
-        currentNickname = result.nickname || nickname;
-        applyNicknames(result.nicknames || { [currentUsername]: currentNickname });
+        const result = await api('/nickname', {
+          method: 'POST',
+          body: { username: peerUser, nickname },
+        });
+        applyNicknames(result.nicknames || { [peerUser]: nickname, [currentUsername]: 'Bạn' });
         closeNicknameModal();
         renderChatMessages({ forceBottom: false });
-        showToast('Đã cập nhật biệt danh');
+        updateChatPeerHeader();
+        showToast('Đã đặt biệt danh cho đối phương');
       } catch (err) {
         if (els.nicknameError) els.nicknameError.textContent = err.message || 'Không lưu được biệt danh';
       }

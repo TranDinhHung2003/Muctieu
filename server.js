@@ -75,6 +75,7 @@ function ensureUser(store, username, password, role) {
     password_hash: bcrypt.hashSync(password, 10),
     role,
     nickname: defaultNickname(username, role),
+    peerAliases: {},
     updated_at: nowIso(),
   });
   return true;
@@ -91,22 +92,49 @@ function initUsers() {
     console.log('Đã tạo tài khoản theo dõi:', VIEWER_USERNAME);
     changed = true;
   }
-  // Bổ sung biệt danh cho user cũ
+  // Bổ sung biệt danh / peerAliases cho user cũ
   usersStore.users.forEach((u) => {
     if (!u.nickname || !String(u.nickname).trim()) {
       u.nickname = defaultNickname(u.username, u.role);
+      changed = true;
+    }
+    if (!u.peerAliases || typeof u.peerAliases !== 'object') {
+      u.peerAliases = {};
       changed = true;
     }
   });
   if (changed) saveUsersStore(usersStore);
 }
 
+/** Tên hiển thị theo góc nhìn của viewer (biệt danh đặt cho người khác) */
+function getDisplayNamesForViewer(viewerUsername) {
+  const store = loadUsersStore();
+  const viewer = (store.users || []).find((u) => u && u.username === viewerUsername) || null;
+  const aliases = (viewer && viewer.peerAliases && typeof viewer.peerAliases === 'object')
+    ? viewer.peerAliases
+    : {};
+  const map = {};
+  (store.users || []).forEach((u) => {
+    if (!u || !u.username) return;
+    if (u.username === viewerUsername) {
+      map[u.username] = 'Bạn';
+      return;
+    }
+    map[u.username] = normalizeNickname(
+      aliases[u.username],
+      defaultNickname(u.username, u.role)
+    );
+  });
+  return map;
+}
+
 function getNicknamesMap() {
+  // Giữ tương thích cũ — mặc định theo role
   const store = loadUsersStore();
   const map = {};
   (store.users || []).forEach((u) => {
     if (!u || !u.username) return;
-    map[u.username] = normalizeNickname(u.nickname, defaultNickname(u.username, u.role));
+    map[u.username] = defaultNickname(u.username, u.role);
   });
   return map;
 }
@@ -115,7 +143,7 @@ function publicUserPayload(user) {
   return {
     username: user.username,
     role: user.role,
-    nickname: normalizeNickname(user.nickname, defaultNickname(user.username, user.role)),
+    nickname: defaultNickname(user.username, user.role),
   };
 }
 
@@ -231,27 +259,49 @@ app.get('/api/me', (req, res) => {
 });
 
 app.post('/api/nickname', authMiddleware, (req, res) => {
-  const raw = String((req.body || {}).nickname || '');
-  const fallback = defaultNickname(req.user.username, req.user.role);
-  const nickname = normalizeNickname(raw, '');
+  // Đặt biệt danh CHO ĐỐI PHƯƠNG (chỉ mình thấy trong khung chat)
+  const body = req.body || {};
+  const rawNick = String(body.nickname || '');
+  const nickname = normalizeNickname(rawNick, '');
   if (!nickname) {
     return res.status(400).json({ error: 'Biệt danh không được để trống' });
   }
-  if (nickname.length < 1 || nickname.length > 24) {
+  if (nickname.length > 24) {
     return res.status(400).json({ error: 'Biệt danh tối đa 24 ký tự' });
   }
+
   const store = loadUsersStore();
-  const user = store.users.find((u) => u.username === req.user.username);
-  if (!user) {
+  const me = store.users.find((u) => u.username === req.user.username);
+  if (!me) {
     return res.status(404).json({ error: 'Không tìm thấy tài khoản' });
   }
-  user.nickname = nickname || fallback;
-  user.updated_at = nowIso();
+
+  let targetUsername = String(body.username || body.forUsername || '').trim();
+  if (!targetUsername) {
+    const other = (store.users || []).find((u) => u && u.username && u.username !== req.user.username);
+    targetUsername = other ? other.username : '';
+  }
+  if (!targetUsername) {
+    return res.status(400).json({ error: 'Không tìm thấy đối phương' });
+  }
+  if (targetUsername === req.user.username) {
+    return res.status(400).json({ error: 'Hãy đặt biệt danh cho người khác' });
+  }
+  const target = store.users.find((u) => u && u.username === targetUsername);
+  if (!target) {
+    return res.status(404).json({ error: 'Không tìm thấy đối phương' });
+  }
+
+  if (!me.peerAliases || typeof me.peerAliases !== 'object') me.peerAliases = {};
+  me.peerAliases[targetUsername] = nickname;
+  me.updated_at = nowIso();
   saveUsersStore(store);
+
   res.json({
     ok: true,
-    nickname: user.nickname,
-    nicknames: getNicknamesMap(),
+    peerUsername: targetUsername,
+    peerNickname: nickname,
+    nicknames: getDisplayNamesForViewer(req.user.username),
   });
 });
 
@@ -486,7 +536,7 @@ app.get('/api/messages', authMiddleware, (req, res) => {
   const store = storage.markMessagesDelivered(req.user.username);
   res.json({
     messages: store.messages || [],
-    nicknames: getNicknamesMap(),
+    nicknames: getDisplayNamesForViewer(req.user.username),
     updatedAt: store.updatedAt,
     ttlMinutes: 30,
   });
@@ -502,7 +552,7 @@ app.post('/api/messages/read', authMiddleware, (req, res) => {
   res.json({
     ok: true,
     messages: store.messages || [],
-    nicknames: getNicknamesMap(),
+    nicknames: getDisplayNamesForViewer(req.user.username),
     updatedAt: store.updatedAt,
   });
 });
@@ -533,29 +583,35 @@ app.post('/api/messages', authMiddleware, async (req, res) => {
       text,
       imageDataUrl,
     });
-    const nicknames = getNicknamesMap();
-    const fromName = nicknames[req.user.username]
-      || defaultNickname(req.user.username, req.user.role);
     const preview = text
       ? String(text).slice(0, 120)
       : (imageDataUrl ? '[Ảnh]' : 'Tin nhắn mới');
-    await pushToOthers(req.user.username, {
-      title: '💬 Tin nhắn mới',
-      body: fromName + ': ' + preview,
-      tag: 'muctieu-chat',
-      page: 'chat',
-      type: 'chat',
-      messageId: result.message && result.message.id,
-      from: req.user.username,
-      fromName,
-      text: text || (imageDataUrl ? '[Ảnh]' : ''),
-      imageId: (result.message && result.message.imageId) || null,
-      at: (result.message && result.message.at) || new Date().toISOString(),
-    });
+    const others = pushNotify.listOtherUsernames(getAllUsernames(), req.user.username);
+    await Promise.all(others.map((recipient) => {
+      const names = getDisplayNamesForViewer(recipient);
+      const fromName = names[req.user.username]
+        || defaultNickname(req.user.username, req.user.role);
+      return pushNotify.sendPushToUsernames([recipient], {
+        title: '💬 Tin nhắn mới',
+        body: fromName + ': ' + preview,
+        tag: 'muctieu-chat',
+        page: 'chat',
+        type: 'chat',
+        messageId: result.message && result.message.id,
+        from: req.user.username,
+        fromName,
+        text: text || (imageDataUrl ? '[Ảnh]' : ''),
+        imageId: (result.message && result.message.imageId) || null,
+        at: (result.message && result.message.at) || new Date().toISOString(),
+      }).catch((err) => {
+        console.warn('Push chat lỗi', recipient, err && err.message);
+        return null;
+      });
+    }));
     res.json({
       ok: true,
       message: result.message,
-      nicknames,
+      nicknames: getDisplayNamesForViewer(req.user.username),
       updatedAt: result.updatedAt,
     });
   } catch (err) {
