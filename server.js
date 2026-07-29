@@ -300,6 +300,19 @@ app.post('/api/messages', authMiddleware, async (req, res) => {
   }
 });
 
+app.get('/sw.js', (_req, res) => {
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Service-Worker-Allowed', '/');
+  res.sendFile(path.join(__dirname, 'sw.js'));
+});
+
+app.get('/manifest.webmanifest', (_req, res) => {
+  res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, 'manifest.webmanifest'));
+});
+
 app.use(express.static(__dirname));
 
 app.get('*', (_req, res) => {

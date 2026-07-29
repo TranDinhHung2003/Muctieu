@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="application-name" content="Mục tiêu chạy xe">
+  <meta name="apple-mobile-web-app-title" content="Mục tiêu chạy xe">
+  <meta name="theme-color" content="#22c55e">
+  <link rel="manifest" href="/manifest.webmanifest">
   <title>Mục tiêu chạy xe hôm nay</title>
   <style>
     :root {
@@ -3793,26 +3797,60 @@
     function showDeviceNotify(title, body, options = {}) {
       if (!isDeviceNotifyEnabled() || !supportsDeviceNotify()) return null;
       if (Notification.permission !== 'granted') return null;
+      const payload = {
+        body: body || '',
+        // Tag riêng từng lần → không bị ghi đè / biến mất thông báo cũ
+        tag: 'muctieu-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+        renotify: false,
+        requireInteraction: true,
+        silent: false,
+        data: Object.assign({ app: 'Mục tiêu chạy xe' }, options.data || {}),
+      };
+      const notifyTitle = title || 'Mục tiêu chạy xe';
+
+      const vibrate = () => {
+        if (navigator.vibrate) {
+          try { navigator.vibrate(options.vibrate || [40, 30, 40]); } catch { /* ignore */ }
+        }
+      };
+
+      // Ưu tiên Service Worker: thông báo nằm trên thanh hệ thống đến khi user xóa
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then((reg) => {
+          if (reg && typeof reg.showNotification === 'function') {
+            return reg.showNotification(notifyTitle, payload);
+          }
+          return createPageNotification(notifyTitle, payload, options);
+        }).catch(() => createPageNotification(notifyTitle, payload, options));
+        vibrate();
+        return true;
+      }
+      vibrate();
+      return createPageNotification(notifyTitle, payload, options);
+    }
+
+    function createPageNotification(notifyTitle, payload, options = {}) {
       try {
-        const n = new Notification(title || 'Mục tiêu chạy xe', {
-          body: body || '',
-          tag: options.tag || 'muctieu',
-          renotify: !!options.renotify,
-          silent: false,
-          data: options.data || {},
-        });
+        const n = new Notification(notifyTitle, payload);
         n.onclick = () => {
           try { window.focus(); } catch { /* ignore */ }
           if (options.data && options.data.page) {
             try { navigateTo(options.data.page); } catch { /* ignore */ }
           }
-          n.close();
+          // Không n.close() — giữ trên thanh thông báo đến khi người dùng xóa
         };
-        if (navigator.vibrate) {
-          try { navigator.vibrate(options.vibrate || [40, 30, 40]); } catch { /* ignore */ }
-        }
-        setTimeout(() => { try { n.close(); } catch { /* ignore */ } }, options.ttl || 8000);
         return n;
+      } catch {
+        return null;
+      }
+    }
+
+    async function registerNotifyServiceWorker() {
+      if (!('serviceWorker' in navigator)) return null;
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        await navigator.serviceWorker.ready;
+        return reg;
       } catch {
         return null;
       }
@@ -3820,13 +3858,22 @@
 
     async function initDeviceNotifications() {
       updateNotifyToggleUI();
+      await registerNotifyServiceWorker();
       if (!isDeviceNotifyEnabled() || !supportsDeviceNotify()) return;
       if (Notification.permission === 'default') {
-        // Xin quyền sau đăng nhập (cần thao tác người dùng trước đó — login đủ điều kiện)
         await ensureNotifyPermission(true);
       } else {
         updateNotifyToggleUI();
       }
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        const data = event.data || {};
+        if (data.type === 'muctieu-notify-open' && data.page && isLoggedIn) {
+          try { navigateTo(data.page); } catch { /* ignore */ }
+        }
+      });
     }
 
     function spawnTapRipple(x, y) {

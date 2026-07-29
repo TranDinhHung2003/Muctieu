@@ -1,0 +1,12 @@
+{
+  "name": "Mục tiêu chạy xe",
+  "short_name": "Mục tiêu",
+  "description": "Theo dõi doanh thu và mục tiêu chạy xe mỗi ngày",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1419",
+  "theme_color": "#22c55e",
+  "lang": "vi",
+  "dir": "ltr"
+}
