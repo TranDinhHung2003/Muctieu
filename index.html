@@ -294,16 +294,20 @@
     }
 
     body.chat-mode .app-scroll-clip {
+      position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: var(--keyboard-inset, 0px);
+      width: auto;
       height: auto;
-      inset: auto;
-      width: 100%;
     }
 
     body.chat-mode .app-scroll {
+      position: absolute;
+      inset: 0;
+      width: auto;
+      height: auto;
       overflow: hidden !important;
       touch-action: none;
       overscroll-behavior: none;
@@ -311,6 +315,7 @@
 
     body.chat-mode .container {
       height: 100%;
+      min-height: 0;
       max-width: none;
       width: 100%;
       display: flex;
@@ -319,6 +324,7 @@
       padding-top: max(6px, var(--sat));
       padding-bottom: 0;
       margin: 0;
+      box-sizing: border-box;
     }
 
     body.chat-mode .top-bar {
@@ -3008,7 +3014,7 @@
       <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
-    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.5.3</span></footer>
+    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.5.4</span></footer>
     <div class="scroll-end-spacer" aria-hidden="true"></div>
     </div>
   </div>
@@ -3125,7 +3131,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.5.3';
+    const APP_VERSION = '1.5.4';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
