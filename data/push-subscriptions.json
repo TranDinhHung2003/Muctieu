@@ -16,6 +16,14 @@
           "auth": "scLuaJU_KlUXfEKKxvtWOQ"
         },
         "updatedAt": "2026-07-29T08:21:36.746Z"
+      },
+      {
+        "endpoint": "https://fcm.googleapis.com/fcm/send/cbsO9JUTTPE:APA91bHdquIsf0hRsWY6zDUEesia8QYm_znzmrFZ9V-3txnQcvXvgSWE08nbC29laTA4ivyFaxiD1lfN8meqUMEIG5O0-gspH1CfUGcI4pfJhRcjL3c3deoLIIJ79sht3ofsVkL_HaC9",
+        "keys": {
+          "p256dh": "BPises0m5QWqdUXc-crlK8Qu0xEf8TXDeswLzX34Xb1r9SOgiDP-kCAX8vZ3eSrrXGxRkhlXv8yo0-hyuBaSEBI",
+          "auth": "uUNw4bSIhfPT5XtwIT3lQw"
+        },
+        "updatedAt": "2026-07-29T08:24:28.468Z"
       }
     ],
     "theodoi": [
@@ -37,5 +45,5 @@
       }
     ]
   },
-  "updatedAt": "2026-07-29T08:21:36.746Z"
+  "updatedAt": "2026-07-29T08:24:28.468Z"
 }
