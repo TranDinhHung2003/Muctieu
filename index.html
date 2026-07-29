@@ -3608,7 +3608,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.6.2';
+    const APP_VERSION = '1.6.3';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -3888,6 +3888,7 @@
       updateChatPeerHeader();
       navigateTo('home');
       CallApp.connect();
+      try { CallApp.warmPermissions(); } catch { /* ignore */ }
     }
 
     function getPeerUsername() {
@@ -3973,7 +3974,7 @@
       }
     }
 
-    /* ===== Gọi thoại / video (WebRTC + WebSocket) — kiểu Zalo ===== */
+    /* ===== Gọi thoại / video — HTTP-first + chuông + quyền media ===== */
     const CallApp = (() => {
       const ICE_SERVERS = [
         { urls: 'stun:stun.l.google.com:19302' },
@@ -3988,10 +3989,12 @@
           credential: 'openrelayproject',
         },
       ];
+      const MEDIA_PREF_KEY = 'muctieu_media_perm_v1';
+      const SEEN_SIGNAL_MAX = 120;
 
       let ws = null;
       let wsTimer = null;
-      let wsReadyWaiters = [];
+      let pollTimer = null;
       let pc = null;
       let localStream = null;
       let remoteStream = null;
@@ -4011,6 +4014,13 @@
       let reconnectAttempt = 0;
       let loggedCallId = null;
       let ticketCache = { ticket: '', at: 0 };
+      let incomingFullscreen = false;
+      let lastPendingCallId = null;
+      let seenSignalKeys = new Set();
+      let audioCtx = null;
+      let ringNodes = null;
+      let ringInterval = null;
+      let ringKind = null; // 'in' | 'out'
 
       function formatDur(totalSec) {
         const s = Math.max(0, Math.floor(Number(totalSec) || 0));
@@ -4032,6 +4042,78 @@
         return kind;
       }
 
+      function loadMediaPref() {
+        try {
+          const raw = localStorage.getItem(MEDIA_PREF_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveMediaPref(patch) {
+        try {
+          const next = Object.assign({}, loadMediaPref(), patch, { at: Date.now() });
+          localStorage.setItem(MEDIA_PREF_KEY, JSON.stringify(next));
+        } catch { /* ignore */ }
+      }
+
+      function ensureAudioCtx() {
+        if (audioCtx) return audioCtx;
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return null;
+        audioCtx = new Ctx();
+        return audioCtx;
+      }
+
+      function stopRingtone() {
+        ringKind = null;
+        if (ringInterval) {
+          clearInterval(ringInterval);
+          ringInterval = null;
+        }
+        if (ringNodes) {
+          try { ringNodes.forEach((n) => n.stop && n.stop()); } catch { /* ignore */ }
+          ringNodes = null;
+        }
+      }
+
+      function playRingBurst(kind) {
+        const ctx = ensureAudioCtx();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+        const now = ctx.currentTime;
+        const freqs = kind === 'out' ? [440, 480] : [520, 660];
+        const nodes = [];
+        freqs.forEach((f, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = f;
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.exponentialRampToValueAtTime(0.09, now + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.02);
+          osc.stop(now + 0.9);
+          nodes.push(osc);
+        });
+        ringNodes = nodes;
+      }
+
+      function startRingtone(kind) {
+        stopRingtone();
+        ringKind = kind;
+        playRingBurst(kind);
+        ringInterval = setInterval(() => {
+          if (ringKind) playRingBurst(ringKind);
+        }, kind === 'out' ? 2800 : 2200);
+        try {
+          if (navigator.vibrate && kind === 'in') navigator.vibrate([200, 100, 200, 100, 400]);
+        } catch { /* ignore */ }
+      }
+
       function setStatus(text) {
         if (els.callStatusLabel) els.callStatusLabel.textContent = text || '';
       }
@@ -4042,6 +4124,13 @@
         }
       }
 
+      function setIncomingLabels(name, sub) {
+        if (els.callIncomingTitle) els.callIncomingTitle.textContent = name || 'Cuộc gọi đến';
+        if (els.callIncomingSub) els.callIncomingSub.textContent = sub || 'Đang đổ chuông…';
+        if (els.callBannerTitle) els.callBannerTitle.textContent = name || 'Cuộc gọi đến';
+        if (els.callBannerSub) els.callBannerSub.textContent = sub || 'Đang đổ chuông…';
+      }
+
       function showOverlay(show) {
         if (!els.callOverlay) return;
         els.callOverlay.classList.toggle('show', !!show);
@@ -4049,10 +4138,22 @@
         document.body.classList.toggle('in-call', !!show);
       }
 
-      function showIncoming(show) {
-        if (!els.callIncoming) return;
-        els.callIncoming.classList.toggle('show', !!show);
-        els.callIncoming.setAttribute('aria-hidden', show ? 'false' : 'true');
+      function showIncoming(show, opts) {
+        const fullscreen = !!(opts && opts.fullscreen) || (!!document.hidden && !!show);
+        incomingFullscreen = show ? fullscreen : false;
+        if (els.callBanner) {
+          const useBanner = !!show && !fullscreen;
+          els.callBanner.classList.toggle('show', useBanner);
+          els.callBanner.setAttribute('aria-hidden', useBanner ? 'false' : 'true');
+        }
+        if (els.callIncoming) {
+          const useFull = !!show && fullscreen;
+          els.callIncoming.classList.toggle('show', useFull);
+          els.callIncoming.setAttribute('aria-hidden', useFull ? 'false' : 'true');
+        }
+        if (show) {
+          try { navigateTo('chat'); } catch { /* ignore */ }
+        }
       }
 
       function setVideoModeUi(on) {
@@ -4092,13 +4193,44 @@
         }
       }
 
-      function send(msg) {
-        if (!ws || ws.readyState !== 1) return false;
+      function signalKey(msg) {
+        if (!msg) return '';
+        return [
+          msg.type || '',
+          msg.callId || '',
+          msg.from || '',
+          msg.at || '',
+          msg.sdp && msg.sdp.sdp ? String(msg.sdp.sdp).slice(0, 40) : '',
+          msg.candidate && msg.candidate.candidate ? String(msg.candidate.candidate).slice(0, 40) : '',
+        ].join('|');
+      }
+
+      function markSeen(msg) {
+        const key = signalKey(msg);
+        if (!key) return false;
+        if (seenSignalKeys.has(key)) return true;
+        seenSignalKeys.add(key);
+        if (seenSignalKeys.size > SEEN_SIGNAL_MAX) {
+          seenSignalKeys = new Set(Array.from(seenSignalKeys).slice(-80));
+        }
+        return false;
+      }
+
+      async function send(msg) {
+        let wsOk = false;
+        if (ws && ws.readyState === 1) {
+          try {
+            ws.send(JSON.stringify(msg));
+            wsOk = true;
+          } catch { wsOk = false; }
+        }
+        // HTTP là đường chính — luôn gửi để 2 máy nhận qua poll
         try {
-          ws.send(JSON.stringify(msg));
+          await api('/call/signal', { method: 'POST', body: msg });
           return true;
-        } catch {
-          return false;
+        } catch (err) {
+          console.warn('call signal http', err);
+          return wsOk;
         }
       }
 
@@ -4109,38 +4241,9 @@
         });
       }
 
-      async function fetchTicket() {
-        const now = Date.now();
-        if (ticketCache.ticket && now - ticketCache.at < 8 * 60 * 1000) {
-          return ticketCache.ticket;
-        }
-        const res = await api('/call/ticket');
-        ticketCache = { ticket: res.ticket, at: now };
-        return res.ticket;
-      }
-
-      function flushWsWaiters(ok) {
-        const list = wsReadyWaiters.splice(0);
-        list.forEach((w) => (ok ? w.resolve() : w.reject(new Error('WS đóng'))));
-      }
-
-      function waitWsReady(timeoutMs) {
-        if (ws && ws.readyState === 1) return Promise.resolve();
-        return new Promise((resolve, reject) => {
-          const timer = setTimeout(() => {
-            wsReadyWaiters = wsReadyWaiters.filter((w) => w.resolve !== resolve);
-            reject(new Error('Không kết nối được máy chủ gọi'));
-          }, timeoutMs || 8000);
-          wsReadyWaiters.push({
-            resolve: () => { clearTimeout(timer); resolve(); },
-            reject: (err) => { clearTimeout(timer); reject(err); },
-          });
-          connect();
-        });
-      }
-
       async function ensureMedia(mode) {
         const wantVideo = mode === 'video';
+        const pref = loadMediaPref();
         if (localStream) {
           const hasVideo = localStream.getVideoTracks().length > 0;
           if (wantVideo === hasVideo) return localStream;
@@ -4150,18 +4253,43 @@
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           throw new Error('Thiết bị không hỗ trợ gọi trên trình duyệt này');
         }
-        localStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-          video: wantVideo
-            ? { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
-            : false,
-        });
-        bindStreamToVideo(els.callLocalVideo, wantVideo ? localStream : null);
-        return localStream;
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+            video: wantVideo
+              ? { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+              : false,
+          });
+          saveMediaPref({
+            audio: true,
+            video: wantVideo ? true : !!pref.video,
+            granted: true,
+          });
+          bindStreamToVideo(els.callLocalVideo, wantVideo ? localStream : null);
+          return localStream;
+        } catch (err) {
+          const name = err && err.name;
+          if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+            saveMediaPref({ granted: false, deniedAt: Date.now() });
+            throw new Error('Hãy cho phép Micro' + (wantVideo ? '/Camera' : '') + ' trong Cài đặt → Safari/BabyShark');
+          }
+          throw err;
+        }
+      }
+
+      async function warmPermissions() {
+        const pref = loadMediaPref();
+        if (pref.granted) return;
+        try {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          stopTracks(stream);
+          saveMediaPref({ audio: true, granted: true });
+        } catch { /* user may deny — will ask again on call */ }
       }
 
       function createPeerConnection() {
@@ -4175,11 +4303,8 @@
         bindStreamToVideo(els.callRemoteVideo, remoteStream);
         setVideoModeUi(callMode === 'video');
 
-        // Gắn track trước rồi để browser tạo transceiver tự nhiên — ổn định hơn trên iOS
         if (localStream) {
-          localStream.getTracks().forEach((track) => {
-            pc.addTrack(track, localStream);
-          });
+          localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
         } else {
           pc.addTransceiver('audio', { direction: 'sendrecv' });
           if (callMode === 'video') pc.addTransceiver('video', { direction: 'sendrecv' });
@@ -4205,8 +4330,7 @@
             }
           });
           bindStreamToVideo(els.callRemoteVideo, remoteStream);
-          const hasRemoteVideo = remoteStream.getVideoTracks().some((t) => t.readyState === 'live');
-          if (hasRemoteVideo) {
+          if (remoteStream.getVideoTracks().some((t) => t.readyState === 'live')) {
             if (els.callAvatarFallback) els.callAvatarFallback.style.display = 'none';
             if (els.callOverlay) els.callOverlay.classList.add('video-on');
           }
@@ -4225,11 +4349,11 @@
             }, 2000);
           }
         };
-
         return pc;
       }
 
       function markConnected() {
+        stopRingtone();
         if (callState === 'active') {
           if (!durationTimer) startDurationTick();
           return;
@@ -4281,12 +4405,7 @@
         try {
           const result = await api('/call/log', {
             method: 'POST',
-            body: {
-              event,
-              mode,
-              durationSec: durationSec || 0,
-              callId: id,
-            },
+            body: { event, mode, durationSec: durationSec || 0, callId: id },
           });
           if (result.message) {
             chatMessages = chatMessages.filter((m) => m.id !== localMsg.id);
@@ -4307,6 +4426,7 @@
       function resetCallLocal() {
         clearRingTimer();
         stopDurationTick();
+        stopRingtone();
         pendingOffer = null;
         pendingIce = [];
         remoteDescSet = false;
@@ -4318,6 +4438,7 @@
         muted = false;
         camOff = false;
         connectedAt = 0;
+        incomingFullscreen = false;
         if (els.callMuteBtn) els.callMuteBtn.classList.remove('active');
         if (els.callCamBtn) els.callCamBtn.classList.remove('active');
         if (els.callAvatarFallback) els.callAvatarFallback.style.display = '';
@@ -4332,6 +4453,7 @@
         remoteStream = null;
         bindStreamToVideo(els.callRemoteVideo, null);
         bindStreamToVideo(els.callLocalVideo, null);
+        startInvitePoll(false);
       }
 
       async function finishCall(event, notifyPeer) {
@@ -4380,6 +4502,7 @@
           return;
         }
         try { navigateTo('chat'); } catch { /* ignore */ }
+        ensureAudioCtx();
         callMode = mode === 'video' ? 'video' : 'audio';
         callRole = 'caller';
         callPeer = peer;
@@ -4391,12 +4514,13 @@
         setStatus('Đang kết nối…');
         showOverlay(true);
         setVideoModeUi(callMode === 'video');
+        startInvitePoll(true);
+        connect(); // WS tuỳ chọn
 
         try {
-          await waitWsReady(10000);
           await ensureMedia(callMode);
           createPeerConnection();
-          const ok = send({
+          const ok = await send({
             type: 'call-invite',
             to: peer,
             callId,
@@ -4405,6 +4529,7 @@
           if (!ok) throw new Error('Không gửi được tín hiệu gọi');
           setStatus('Đang đổ chuông…');
           callState = 'ringing';
+          startRingtone('out');
           clearRingTimer();
           ringTimer = setTimeout(() => {
             if (callState === 'calling' || callState === 'ringing') {
@@ -4419,10 +4544,13 @@
       }
 
       async function onInvite(msg) {
+        if (!msg || !msg.from || !msg.callId) return;
         if (callState !== 'idle') {
+          if (callId === msg.callId) return;
           send({ type: 'call-busy', to: msg.from, callId: msg.callId });
           return;
         }
+        ensureAudioCtx();
         callId = msg.callId;
         callPeer = msg.from;
         callMode = msg.mode === 'video' ? 'video' : 'audio';
@@ -4431,12 +4559,14 @@
         loggedCallId = null;
         pendingOffer = null;
         connectedAt = 0;
+        lastPendingCallId = msg.callId;
         updatePeerLabel();
         setIncomingLabels(
           displayNameFor(msg.from),
           msg.mode === 'video' ? 'Cuộc gọi video đến…' : 'Cuộc gọi thoại đến…'
         );
         showIncoming(true, { fullscreen: !!document.hidden || !!(msg && msg.forceFullscreen) });
+        startRingtone('in');
         send({ type: 'call-ringing', to: msg.from, callId });
         try {
           if (isDeviceNotifyEnabled() && document.hidden) {
@@ -4451,6 +4581,7 @@
         ringTimer = setTimeout(() => {
           if (callState === 'ringing') {
             send({ type: 'call-reject', to: callPeer, callId, reason: 'timeout' });
+            stopRingtone();
             resetCallLocal();
           }
         }, 45000);
@@ -4458,17 +4589,18 @@
 
       async function acceptCall() {
         if (callState !== 'ringing' || !callPeer) return;
+        stopRingtone();
         showIncoming(false);
         callState = 'connecting';
         updatePeerLabel();
         setStatus('Đang kết nối…');
         showOverlay(true);
         setVideoModeUi(callMode === 'video');
+        startInvitePoll(true);
         try {
-          await waitWsReady(8000);
           await ensureMedia(callMode);
           createPeerConnection();
-          send({ type: 'call-accept', to: callPeer, callId, mode: callMode });
+          await send({ type: 'call-accept', to: callPeer, callId, mode: callMode });
           if (pendingOffer) {
             await applyRemoteOffer(pendingOffer);
             pendingOffer = null;
@@ -4481,6 +4613,7 @@
       }
 
       async function rejectCall() {
+        stopRingtone();
         if (callPeer) send({ type: 'call-reject', to: callPeer, callId });
         await finishCall('rejected', false);
       }
@@ -4492,7 +4625,7 @@
         await flushPendingIce();
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        send({
+        await send({
           type: 'webrtc-answer',
           to: callPeer,
           callId,
@@ -4507,11 +4640,12 @@
         if (msg.callId && callId && msg.callId !== callId) return;
         callState = 'connecting';
         setStatus('Đối phương đã nghe…');
+        stopRingtone();
         clearRingTimer();
         try {
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
-          send({
+          await send({
             type: 'webrtc-offer',
             to: callPeer,
             callId,
@@ -4584,6 +4718,7 @@
             }
             callMode = 'video';
             camOff = false;
+            saveMediaPref({ video: true, granted: true });
             bindStreamToVideo(els.callLocalVideo, localStream);
             setVideoModeUi(true);
             if (els.callCamBtn) els.callCamBtn.classList.remove('active');
@@ -4600,24 +4735,25 @@
 
       function handleMessage(msg) {
         if (!msg || !msg.type) return;
+        if (msg.type !== 'ready' && msg.type !== 'pong' && msg.type !== 'presence' && msg.type !== 'call-invite-sent' && msg.type !== 'peer-offline' && msg.type !== 'error') {
+          if (markSeen(msg)) return;
+        }
         switch (msg.type) {
           case 'ready':
             reconnectAttempt = 0;
-            flushWsWaiters(true);
             break;
           case 'call-invite':
             onInvite(msg);
             break;
           case 'call-invite-sent':
-            setStatus(msg.peerOnline === false
-              ? 'Đang đổ chuông (đã gửi thông báo)…'
-              : 'Đang đổ chuông…');
+            setStatus('Đang đổ chuông…');
             callState = 'ringing';
             break;
           case 'call-ringing':
             if (callRole === 'caller') {
               callState = 'ringing';
               setStatus('Đang đổ chuông…');
+              if (ringKind !== 'out') startRingtone('out');
             }
             break;
           case 'call-accept':
@@ -4654,9 +4790,6 @@
             setTimeout(() => { try { refreshMessages(false); } catch { /* ignore */ } }, 500);
             break;
           }
-          case 'peer-offline':
-            setStatus('Đối phương chưa online — đã gửi thông báo');
-            break;
           case 'webrtc-offer':
             onOffer(msg);
             break;
@@ -4674,17 +4807,58 @@
         }
       }
 
+      async function pollPendingInvite() {
+        if (!isLoggedIn) return;
+        try {
+          const res = await api('/call/pending');
+          const signals = Array.isArray(res.signals) ? res.signals : [];
+          for (const s of signals) handleMessage(s);
+          const invite = res && res.invite;
+          if (invite && invite.callId && invite.from && callState === 'idle') {
+            if (invite.callId !== lastPendingCallId) {
+              lastPendingCallId = invite.callId;
+              handleMessage(invite);
+            }
+          }
+        } catch { /* ignore */ }
+      }
+
+      function startInvitePoll(fast) {
+        stopInvitePoll();
+        const ms = fast || callState !== 'idle' ? 900 : 2000;
+        pollTimer = setInterval(() => {
+          pollPendingInvite();
+          // đang gọi thì poll nhanh
+          if (callState !== 'idle' && ms > 900) {
+            startInvitePoll(true);
+          }
+        }, ms);
+        pollPendingInvite();
+      }
+
+      function stopInvitePoll() {
+        if (pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
+      }
+
       async function connect() {
         if (!isLoggedIn) return;
-        startInvitePoll();
+        startInvitePoll(callState !== 'idle');
         if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
         let ticket = '';
         try {
-          ticket = await fetchTicket();
+          ticket = await (async () => {
+            const now = Date.now();
+            if (ticketCache.ticket && now - ticketCache.at < 8 * 60 * 1000) return ticketCache.ticket;
+            const res = await api('/call/ticket');
+            ticketCache = { ticket: res.ticket, at: now };
+            return res.ticket;
+          })();
         } catch (err) {
+          // Không chặn cuộc gọi — HTTP poll vẫn chạy
           console.warn('call ticket', err);
-          scheduleReconnect();
-          flushWsWaiters(false);
           return;
         }
         const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -4693,22 +4867,14 @@
           ws = new WebSocket(url);
         } catch (err) {
           console.warn('WS call:', err);
-          scheduleReconnect();
-          flushWsWaiters(false);
           return;
         }
-        ws.onopen = () => {
-          reconnectAttempt = 0;
-          setTimeout(() => {
-            if (ws && ws.readyState === 1 && wsReadyWaiters.length) flushWsWaiters(true);
-          }, 400);
-        };
+        ws.onopen = () => { reconnectAttempt = 0; };
         ws.onmessage = (ev) => {
           try { handleMessage(JSON.parse(ev.data)); } catch { /* ignore */ }
         };
         ws.onclose = () => {
           ws = null;
-          flushWsWaiters(false);
           if (isLoggedIn) scheduleReconnect();
         };
         ws.onerror = () => {
@@ -4726,6 +4892,7 @@
 
       function disconnect() {
         stopInvitePoll();
+        stopRingtone();
         lastPendingCallId = null;
         if (wsTimer) {
           clearTimeout(wsTimer);
@@ -4759,6 +4926,7 @@
           });
         } else if (callState === 'ringing' && forceFull) {
           showIncoming(true, { fullscreen: true });
+          if (ringKind !== 'in') startRingtone('in');
         }
       }
 
@@ -4775,6 +4943,7 @@
         toggleMute,
         toggleCam,
         onPushCall,
+        warmPermissions,
       };
     })();
 
@@ -6345,7 +6514,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js?v=14', {
+        const reg = await navigator.serviceWorker.register('/sw.js?v=15', {
           scope: '/',
           updateViaCache: 'none',
         });

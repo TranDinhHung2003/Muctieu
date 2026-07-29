@@ -586,9 +586,14 @@ app.get('/api/call/ticket', authMiddleware, (req, res) => {
 
 /** Invite đang chờ — HTTP fallback khi WebSocket bị iOS suspend */
 app.get('/api/call/pending', authMiddleware, (req, res) => {
-  if (!callHub) return res.json({ invite: null });
+  if (!callHub) return res.json({ invite: null, signals: [] });
   const invite = callHub.getPendingInvite(req.user.username);
-  res.json({ invite: invite || null, online: callHub.listOnline() });
+  const signals = callHub.drainSignals ? callHub.drainSignals(req.user.username) : [];
+  res.json({
+    invite: invite || null,
+    signals: signals || [],
+    online: callHub.listOnline(),
+  });
 });
 
 /** Gửi / chuyển tiếp tín hiệu cuộc gọi qua HTTP (bổ sung cho WS) */
