@@ -3275,6 +3275,9 @@
       els.pageHistory.classList.toggle('active', isHistory);
       if (els.pageChat) els.pageChat.classList.toggle('active', isChat);
       document.body.classList.toggle('chat-mode', isChat);
+      if (!isChat) {
+        document.documentElement.style.setProperty('--keyboard-inset', '0px');
+      }
       els.pageTitle.textContent = isHistory
         ? 'Doanh số các ngày'
         : isChat
@@ -3295,8 +3298,8 @@
         renderChatMessages({ forceBottom: true });
         refreshMessages(false);
         setTimeout(() => {
-          if (els.chatInput) els.chatInput.focus();
           scrollChatToBottom();
+          syncChatKeyboardInset();
         }, 50);
       }
       const appScroll = document.getElementById('app-scroll');
