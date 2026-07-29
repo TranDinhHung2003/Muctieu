@@ -7,6 +7,8 @@
   <meta name="apple-mobile-web-app-title" content="Mục tiêu chạy xe">
   <meta name="theme-color" content="#22c55e">
   <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <title>Mục tiêu chạy xe hôm nay</title>
   <style>
     :root {
@@ -726,6 +728,80 @@
     .toast.show {
       transform: translateX(-50%) translateY(0) scale(1);
       opacity: 1;
+    }
+
+    /* Banner thông báo trong app — không có dòng "from …" */
+    .app-notify-stack {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(420px, calc(100vw - 20px));
+      z-index: 450;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .app-notify {
+      pointer-events: auto;
+      display: grid;
+      grid-template-columns: 40px 1fr auto;
+      gap: 10px;
+      align-items: start;
+      padding: 12px 12px 12px 10px;
+      border-radius: 16px;
+      background: #1c2333;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      color: #f1f5f9;
+      animation: app-notify-in 0.28s ease;
+    }
+
+    @keyframes app-notify-in {
+      from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .app-notify-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: #14532d;
+    }
+
+    .app-notify-main {
+      min-width: 0;
+    }
+
+    .app-notify-title {
+      font-size: 0.92rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin: 0 0 4px;
+    }
+
+    .app-notify-body {
+      font-size: 0.84rem;
+      color: #cbd5e1;
+      white-space: pre-line;
+      line-height: 1.4;
+    }
+
+    .app-notify-close {
+      border: 0;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+
+    .app-notify-close:hover {
+      color: #fff;
     }
 
     .modal-overlay {
@@ -2304,6 +2380,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <div class="app-notify-stack" id="app-notify-stack" aria-live="polite"></div>
 
   <script>
     const DEFAULT_GOAL = 1200000;
@@ -3795,38 +3872,81 @@
     }
 
     function showDeviceNotify(title, body, options = {}) {
-      if (!isDeviceNotifyEnabled() || !supportsDeviceNotify()) return null;
-      if (Notification.permission !== 'granted') return null;
+      if (!isDeviceNotifyEnabled()) return null;
+      const notifyTitle = String(title || 'Mục tiêu chạy xe').replace(/\bfrom\b/ig, '').trim();
+      const notifyBody = String(body || '')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line && !/^from\s+/i.test(line) && !/dasborad|dashboard/i.test(line))
+        .join('\n');
+
+      // Banner trong app: không có dòng "from …"
+      showAppNotifyBanner(notifyTitle, notifyBody, options);
+
+      if (!supportsDeviceNotify() || Notification.permission !== 'granted') return null;
+
       const payload = {
-        body: body || '',
-        // Tag riêng từng lần → không bị ghi đè / biến mất thông báo cũ
+        body: notifyBody,
         tag: 'muctieu-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
         renotify: false,
         requireInteraction: true,
-        silent: false,
-        data: Object.assign({ app: 'Mục tiêu chạy xe' }, options.data || {}),
+        // App đang mở: im lặng trên hệ thống để tránh heads-up hiện "from …"
+        silent: !document.hidden,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-96.png',
+        data: Object.assign({}, options.data || {}),
       };
-      const notifyTitle = title || 'Mục tiêu chạy xe';
 
       const vibrate = () => {
-        if (navigator.vibrate) {
+        if (document.hidden && navigator.vibrate) {
           try { navigator.vibrate(options.vibrate || [40, 30, 40]); } catch { /* ignore */ }
         }
       };
 
-      // Ưu tiên Service Worker: thông báo nằm trên thanh hệ thống đến khi user xóa
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then((reg) => {
           if (reg && typeof reg.showNotification === 'function') {
             return reg.showNotification(notifyTitle, payload);
           }
-          return createPageNotification(notifyTitle, payload, options);
-        }).catch(() => createPageNotification(notifyTitle, payload, options));
+          if (document.hidden) return createPageNotification(notifyTitle, payload, options);
+          return null;
+        }).catch(() => {
+          if (document.hidden) createPageNotification(notifyTitle, payload, options);
+        });
         vibrate();
         return true;
       }
-      vibrate();
-      return createPageNotification(notifyTitle, payload, options);
+      if (document.hidden) {
+        vibrate();
+        return createPageNotification(notifyTitle, payload, options);
+      }
+      return true;
+    }
+
+    function showAppNotifyBanner(title, body, options = {}) {
+      const stack = document.getElementById('app-notify-stack');
+      if (!stack) return;
+      const el = document.createElement('div');
+      el.className = 'app-notify';
+      el.innerHTML =
+        '<img class="app-notify-icon" src="/icons/icon-192.png" alt="">' +
+        '<div class="app-notify-main">' +
+          '<div class="app-notify-title"></div>' +
+          '<div class="app-notify-body"></div>' +
+        '</div>' +
+        '<button type="button" class="app-notify-close" aria-label="Đóng">×</button>';
+      el.querySelector('.app-notify-title').textContent = title || '';
+      el.querySelector('.app-notify-body').textContent = body || '';
+      const close = () => el.remove();
+      el.querySelector('.app-notify-close').addEventListener('click', close);
+      el.addEventListener('click', (e) => {
+        if (e.target.closest('.app-notify-close')) return;
+        if (options.data && options.data.page) {
+          try { navigateTo(options.data.page); } catch { /* ignore */ }
+        }
+      });
+      stack.prepend(el);
+      // Giữ trên màn hình; chỉ mất khi bấm × (giống xóa trên thanh thông báo)
     }
 
     function createPageNotification(notifyTitle, payload, options = {}) {
@@ -3837,7 +3957,6 @@
           if (options.data && options.data.page) {
             try { navigateTo(options.data.page); } catch { /* ignore */ }
           }
-          // Không n.close() — giữ trên thanh thông báo đến khi người dùng xóa
         };
         return n;
       } catch {
@@ -3848,7 +3967,7 @@
     async function registerNotifyServiceWorker() {
       if (!('serviceWorker' in navigator)) return null;
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        const reg = await navigator.serviceWorker.register('/sw.js?v=3', { scope: '/' });
         await navigator.serviceWorker.ready;
         return reg;
       } catch {

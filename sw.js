@@ -1,15 +1,19 @@
-/* Service worker: giữ thông báo trên thanh hệ thống đến khi người dùng xóa */
+/* Service worker v3: thông báo hệ thống — tên app Mục tiêu chạy xe */
+const SW_VERSION = 'muctieu-sw-v3';
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil((async () => {
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('notificationclick', (event) => {
   const data = (event.notification && event.notification.data) || {};
-  // Không tự đóng — chỉ mở/focus app; người dùng tự xóa trên thanh thông báo
+  // Không tự đóng — người dùng tự xóa trên thanh thông báo
   event.waitUntil((async () => {
     const all = await clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const client of all) {

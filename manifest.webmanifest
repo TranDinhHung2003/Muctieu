@@ -8,5 +8,19 @@
   "background_color": "#0f1419",
   "theme_color": "#22c55e",
   "lang": "vi",
-  "dir": "ltr"
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
