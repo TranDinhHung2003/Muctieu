@@ -295,12 +295,12 @@
 
     body.chat-mode .app-scroll-clip {
       position: fixed;
-      top: 0;
+      top: var(--vv-top, 0px);
       left: 0;
-      right: 0;
-      bottom: var(--keyboard-inset, 0px);
-      width: auto;
-      height: auto;
+      width: 100%;
+      height: var(--vv-height, 100%);
+      right: auto;
+      bottom: auto;
     }
 
     body.chat-mode .app-scroll {
@@ -325,6 +325,10 @@
       padding-bottom: 0;
       margin: 0;
       box-sizing: border-box;
+    }
+
+    body.chat-mode.keyboard-open .container {
+      padding-top: 4px;
     }
 
     body.chat-mode .top-bar {
@@ -368,10 +372,19 @@
 
     body.chat-mode .chat-compose-wrap {
       padding-bottom: max(6px, var(--sab));
+      flex-shrink: 0;
+    }
+
+    body.chat-mode.keyboard-open .chat-compose-wrap {
+      padding-bottom: 6px;
     }
 
     body.chat-mode .app-notify-stack {
-      bottom: max(78px, calc(env(safe-area-inset-bottom, 0px) + 72px + var(--keyboard-inset, 0px)));
+      bottom: max(78px, calc(env(safe-area-inset-bottom, 0px) + 72px));
+    }
+
+    body.chat-mode.keyboard-open .app-notify-stack {
+      bottom: 72px;
     }
 
     .chat-status {
@@ -3014,7 +3027,7 @@
       <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
-    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.5.4</span></footer>
+    <footer id="app-footer">© bản quyền thuộc về TranDinhHung<br><span class="app-build-inline">Phiên bản 1.5.5</span></footer>
     <div class="scroll-end-spacer" aria-hidden="true"></div>
     </div>
   </div>
@@ -3131,7 +3144,7 @@
 
     let appData = { days: {}, dailyGoal: DEFAULT_GOAL };
     let isLoggedIn = false;
-    const APP_VERSION = '1.5.4';
+    const APP_VERSION = '1.5.5';
     const APP_VERSION_LABEL = 'Phiên bản ' + APP_VERSION;
     const COPYRIGHT_TEXT = '© bản quyền thuộc về TranDinhHung';
     const FOREGROUND_CACHE = 'muctieu-runtime-v1';
@@ -3282,7 +3295,16 @@
       if (els.pageChat) els.pageChat.classList.toggle('active', isChat);
       document.body.classList.toggle('chat-mode', isChat);
       if (!isChat) {
+        document.body.classList.remove('keyboard-open');
         document.documentElement.style.setProperty('--keyboard-inset', '0px');
+        document.documentElement.style.setProperty('--vv-height', '100%');
+        document.documentElement.style.setProperty('--vv-top', '0px');
+      } else if (typeof window._chatViewportBaseline === 'number') {
+        // giữ baseline
+      } else {
+        window._chatViewportBaseline = Math.round(
+          (window.visualViewport && window.visualViewport.height) || window.innerHeight || 0
+        );
       }
       els.pageTitle.textContent = isHistory
         ? 'Doanh số các ngày'
@@ -6142,23 +6164,51 @@
     function syncChatKeyboardInset() {
       try {
         if (!document.body.classList.contains('chat-mode')) {
+          document.body.classList.remove('keyboard-open');
+          document.documentElement.style.setProperty('--vv-height', '100%');
+          document.documentElement.style.setProperty('--vv-top', '0px');
           document.documentElement.style.setProperty('--keyboard-inset', '0px');
           return;
         }
+
         const vv = window.visualViewport;
-        if (!vv) {
-          document.documentElement.style.setProperty('--keyboard-inset', '0px');
-          return;
+        const fallbackH = Math.round(window.innerHeight || document.documentElement.clientHeight || 0);
+        const vvHeight = Math.round((vv && vv.height) || fallbackH);
+        const vvTop = Math.round((vv && vv.offsetTop) || 0);
+
+        // Baseline chiều cao khi không có bàn phím (iOS: innerHeight cũng co lại khi mở phím)
+        if (!window._chatViewportBaseline || vvHeight > window._chatViewportBaseline) {
+          window._chatViewportBaseline = vvHeight;
         }
-        // Phần bị bàn phím che = layout height - vùng nhìn thấy
-        const covered = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
-        document.documentElement.style.setProperty('--keyboard-inset', covered + 'px');
-        // Giữ tin mới trong tầm nhìn khi bàn phím mở
-        if (covered > 40 && typeof scrollChatToBottom === 'function' && chatPinnedToBottom) {
+        const baseline = window._chatViewportBaseline || fallbackH;
+        const inputFocused = !!(
+          document.activeElement
+          && (document.activeElement.id === 'chat-input'
+            || (document.activeElement.closest && document.activeElement.closest('#chat-form')))
+        );
+        const keyboardOpen = inputFocused && vvHeight < baseline - 100;
+
+        document.documentElement.style.setProperty('--vv-height', vvHeight + 'px');
+        document.documentElement.style.setProperty('--vv-top', vvTop + 'px');
+        document.documentElement.style.setProperty(
+          '--keyboard-inset',
+          Math.max(0, baseline - vvHeight) + 'px'
+        );
+        document.body.classList.toggle('keyboard-open', keyboardOpen);
+
+        // Chặn iOS đẩy cả trang lên khi mở phím
+        try { window.scrollTo(0, 0); } catch { /* ignore */ }
+        const appScroll = document.getElementById('app-scroll');
+        if (appScroll) appScroll.scrollTop = 0;
+
+        if (keyboardOpen && typeof scrollChatToBottom === 'function') {
           scrollChatToBottom();
         }
       } catch {
+        document.documentElement.style.setProperty('--vv-height', '100%');
+        document.documentElement.style.setProperty('--vv-top', '0px');
         document.documentElement.style.setProperty('--keyboard-inset', '0px');
+        document.body.classList.remove('keyboard-open');
       }
     }
 
@@ -6166,6 +6216,7 @@
       const sync = () => syncChatKeyboardInset();
       window.addEventListener('resize', sync, { passive: true });
       window.addEventListener('orientationchange', () => {
+        window._chatViewportBaseline = 0;
         window.setTimeout(sync, 80);
         window.setTimeout(sync, 300);
       }, { passive: true });
@@ -6176,16 +6227,27 @@
       window.addEventListener('focusin', (e) => {
         const t = e.target;
         if (!t || (t.id !== 'chat-input' && !(t.closest && t.closest('#chat-form')))) return;
-        window.setTimeout(sync, 50);
-        window.setTimeout(sync, 280);
+        window.setTimeout(sync, 16);
+        window.setTimeout(sync, 120);
+        window.setTimeout(sync, 320);
+        window.setTimeout(sync, 560);
       });
       window.addEventListener('focusout', () => {
         window.setTimeout(() => {
           const active = document.activeElement;
           if (active && (active.id === 'chat-input' || (active.closest && active.closest('#chat-form')))) return;
-          document.documentElement.style.setProperty('--keyboard-inset', '0px');
+          document.body.classList.remove('keyboard-open');
+          syncChatKeyboardInset();
         }, 120);
       });
+      // Gắn thêm vào ô nhập để chắc chắn
+      if (els.chatInput) {
+        els.chatInput.addEventListener('focus', () => {
+          window.setTimeout(sync, 16);
+          window.setTimeout(sync, 200);
+          window.setTimeout(sync, 450);
+        });
+      }
     }
 
     function setupStandaloneAppMode() {
