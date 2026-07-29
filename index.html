@@ -115,33 +115,40 @@
     }
 
     .live-clock {
-      flex-shrink: 0;
-      min-width: 42px;
-      text-align: right;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      background: rgba(34, 197, 94, 0.12);
       font-variant-numeric: tabular-nums;
-      line-height: 1.15;
+      line-height: 1.1;
+      min-width: 108px;
     }
 
     .live-clock .clock-time {
       display: block;
-      font-size: 0.95rem;
+      font-size: 1.15rem;
       font-weight: 800;
-      letter-spacing: 0.02em;
-      color: var(--accent);
+      letter-spacing: 0.04em;
+      color: #86efac;
     }
 
     .live-clock .clock-sec {
-      font-weight: 600;
-      color: #86efac;
-      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 0.95rem;
     }
 
     .live-clock .clock-ampm {
       display: block;
-      font-size: 0.65rem;
+      font-size: 0.68rem;
       color: var(--text-muted);
-      font-weight: 500;
-      margin-top: 1px;
+      font-weight: 600;
+      margin-top: 2px;
     }
 
     .drawer-overlay {
@@ -1715,11 +1722,12 @@
       <div class="top-bar-title">
         <h1 id="page-title">Mục tiêu chạy xe</h1>
         <p id="today-date"></p>
+        <div class="live-clock" id="live-clock" aria-live="polite" aria-label="Đồng hồ thời gian thực">
+          <span class="clock-time"><span id="clock-hm">--:--</span><span class="clock-sec" id="clock-sec">:--</span></span>
+          <span class="clock-ampm" id="clock-label">Đồng hồ realtime</span>
+        </div>
       </div>
-      <div class="live-clock" id="live-clock" aria-live="polite" aria-label="Đồng hồ thời gian thực">
-        <span class="clock-time"><span id="clock-hm">--:--</span><span class="clock-sec" id="clock-sec">:--</span></span>
-        <span class="clock-ampm" id="clock-label">Giờ Việt Nam</span>
-      </div>
+      <div class="top-bar-spacer"></div>
     </div>
     <div class="sync-status" id="sync-status">✓ Dữ liệu đã lưu trên server</div>
     <div class="role-banner admin hidden" id="role-banner">👤 Bạn đang ở tài khoản admin</div>
@@ -1758,7 +1766,7 @@
     <div class="form-group">
       <label for="app-income">
         Số tiền chạy trên app
-        <span class="hint">1 = 1000vnđ</span>
+        <span class="hint">1 = 1000đ</span>
       </label>
       <div class="locked-badge">🔒 Đã cộng: <strong id="locked-app">0đ</strong> <button type="button" class="clear-field-btn" data-clear="app">Xóa mục này</button></div>
       <div class="input-row">
@@ -1774,7 +1782,7 @@
     <div class="form-group">
       <label for="outside-income">
         Số tiền chạy ngoài
-        <span class="hint">1 = 1000vnđ</span>
+        <span class="hint">1 = 1000đ</span>
       </label>
       <div class="locked-badge">🔒 Đã cộng: <strong id="locked-outside">0đ</strong> <button type="button" class="clear-field-btn" data-clear="outside">Xóa mục này</button></div>
       <div class="input-row">
@@ -1805,7 +1813,7 @@
     <div class="form-group">
       <label for="highway-fee">
         Số tiền cao tốc phải trả
-        <span class="hint">1 = 1000vnđ</span>
+        <span class="hint">1 = 1000đ</span>
       </label>
       <div class="locked-badge">🔒 Đã trừ: <strong class="deduct" id="locked-highway">0đ</strong> <button type="button" class="clear-field-btn" data-clear="highway">Xóa mục này</button></div>
       <div class="input-row">
@@ -1821,7 +1829,7 @@
     <div class="form-group tip-highlight">
       <label for="tip-income">
         Khách hàng TIP (thái độ phục vụ)
-        <span class="hint">1 = 1000vnđ</span>
+        <span class="hint">1 = 1000đ</span>
       </label>
       <div class="locked-badge">🔒 Đã cộng: <strong id="locked-tip">0đ</strong> <button type="button" class="clear-field-btn" data-clear="tip">Xóa mục này</button></div>
       <div class="input-row">
