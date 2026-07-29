@@ -250,6 +250,43 @@ app.post('/api/restore', authMiddleware, adminOnly, async (req, res) => {
   res.json({ ok: true, updatedAt });
 });
 
+app.get('/api/messages', authMiddleware, (_req, res) => {
+  const store = storage.getMessagesStore();
+  res.json({
+    messages: store.messages || [],
+    updatedAt: store.updatedAt,
+  });
+});
+
+app.get('/api/messages/sync', authMiddleware, (_req, res) => {
+  const store = storage.getMessagesStore();
+  res.json({ updatedAt: store.updatedAt });
+});
+
+app.post('/api/messages', authMiddleware, async (req, res) => {
+  const text = String((req.body || {}).text || '').trim();
+  if (!text) {
+    return res.status(400).json({ error: 'Vui lòng nhập nội dung tin nhắn' });
+  }
+  if (text.length > 1000) {
+    return res.status(400).json({ error: 'Tin nhắn tối đa 1000 ký tự' });
+  }
+  try {
+    const result = await storage.addMessage({
+      from: req.user.username,
+      role: req.user.role,
+      text,
+    });
+    res.json({
+      ok: true,
+      message: result.message,
+      updatedAt: result.updatedAt,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Không gửi được tin nhắn: ' + err.message });
+  }
+});
+
 app.use(express.static(__dirname));
 
 app.get('*', (_req, res) => {
@@ -259,6 +296,7 @@ app.get('*', (_req, res) => {
 async function start() {
   initUsers();
   await storage.initAppStore();
+  await storage.initMessagesStore();
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log('Server chạy tại http://0.0.0.0:' + PORT);

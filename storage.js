@@ -7,11 +7,13 @@ const DATA_DIR = process.env.DATA_DIR
 
 const APP_DATA_PATH = path.join(DATA_DIR, 'app-data.json');
 const BACKUP_PATH = path.join(DATA_DIR, 'backup-latest.json');
+const MESSAGES_PATH = path.join(DATA_DIR, 'messages.json');
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'TranDinhHung2003/Muctieu';
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'cursor/muc-tieu-chay-xe-becf';
 const GITHUB_DATA_PATH = process.env.GITHUB_DATA_PATH || 'data/app-data.json';
+const GITHUB_MESSAGES_PATH = process.env.GITHUB_MESSAGES_PATH || 'data/messages.json';
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -19,6 +21,9 @@ if (!fs.existsSync(DATA_DIR)) {
 
 let memoryStore = null;
 let githubSha = null;
+let memoryMessages = null;
+let githubMessagesSha = null;
+const MAX_MESSAGES = 500;
 
 function nowIso() {
   return new Date().toISOString();
@@ -190,6 +195,127 @@ async function setAppStore(data) {
   return store.updatedAt;
 }
 
+function emptyMessagesStore() {
+  return { messages: [], updatedAt: nowIso() };
+}
+
+function normalizeMessagesStore(raw) {
+  if (!raw || typeof raw !== 'object') return emptyMessagesStore();
+  const list = Array.isArray(raw.messages) ? raw.messages : [];
+  return {
+    messages: list
+      .filter((m) => m && typeof m.text === 'string' && m.text.trim())
+      .map((m) => ({
+        id: String(m.id || ''),
+        from: String(m.from || ''),
+        role: m.role === 'viewer' ? 'viewer' : 'admin',
+        text: String(m.text).trim().slice(0, 1000),
+        at: m.at || nowIso(),
+      }))
+      .filter((m) => m.id && m.from)
+      .slice(-MAX_MESSAGES),
+    updatedAt: raw.updatedAt || nowIso(),
+  };
+}
+
+function loadMessagesFromDisk() {
+  return normalizeMessagesStore(readJson(MESSAGES_PATH, emptyMessagesStore()));
+}
+
+function saveMessagesToDisk(store) {
+  writeJson(MESSAGES_PATH, store);
+}
+
+async function loadMessagesFromGitHub() {
+  if (!GITHUB_TOKEN) return null;
+  try {
+    const encPath = GITHUB_MESSAGES_PATH.split('/').map(encodeURIComponent).join('/');
+    const info = await githubRequest(
+      '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
+    );
+    if (!info || info.notFound || !info.content) return null;
+    githubMessagesSha = info.sha || null;
+    const decoded = Buffer.from(info.content, 'base64').toString('utf8');
+    return normalizeMessagesStore(JSON.parse(decoded));
+  } catch (err) {
+    console.warn('Không tải được tin nhắn từ GitHub:', err.message);
+    return null;
+  }
+}
+
+async function saveMessagesToGitHub(store) {
+  if (!GITHUB_TOKEN) return false;
+  try {
+    const encPath = GITHUB_MESSAGES_PATH.split('/').map(encodeURIComponent).join('/');
+    if (!githubMessagesSha) {
+      const info = await githubRequest(
+        '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
+      );
+      if (info && !info.notFound && info.sha) githubMessagesSha = info.sha;
+    }
+    const content = Buffer.from(JSON.stringify(store, null, 2), 'utf8').toString('base64');
+    const body = {
+      message: 'chore: cập nhật tin nhắn admin ↔ theo dõi',
+      content,
+      branch: GITHUB_BRANCH,
+    };
+    if (githubMessagesSha) body.sha = githubMessagesSha;
+    const result = await githubRequest(
+      '/repos/' + GITHUB_REPO + '/contents/' + encPath,
+      { method: 'PUT', body: JSON.stringify(body) }
+    );
+    if (result && result.content && result.content.sha) {
+      githubMessagesSha = result.content.sha;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Không lưu được tin nhắn lên GitHub:', err.message);
+    return false;
+  }
+}
+
+async function initMessagesStore() {
+  let store = loadMessagesFromDisk();
+  const remote = await loadMessagesFromGitHub();
+  if (remote) {
+    const diskTime = store.updatedAt ? new Date(store.updatedAt).getTime() : 0;
+    const remoteTime = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
+    const preferRemote = (remote.messages.length > store.messages.length)
+      || (remote.messages.length > 0 && remoteTime >= diskTime);
+    if (preferRemote) {
+      store = remote;
+      saveMessagesToDisk(store);
+      console.log('Đã tải tin nhắn từ GitHub');
+    }
+  }
+  memoryMessages = store;
+  return store;
+}
+
+function getMessagesStore() {
+  if (!memoryMessages) memoryMessages = loadMessagesFromDisk();
+  return memoryMessages;
+}
+
+async function addMessage({ from, role, text }) {
+  const clean = String(text || '').trim().slice(0, 1000);
+  if (!clean) throw new Error('Nội dung trống');
+  const store = getMessagesStore();
+  const msg = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+    from: String(from || ''),
+    role: role === 'viewer' ? 'viewer' : 'admin',
+    text: clean,
+    at: nowIso(),
+  };
+  store.messages = [...store.messages, msg].slice(-MAX_MESSAGES);
+  store.updatedAt = nowIso();
+  memoryMessages = store;
+  saveMessagesToDisk(store);
+  await saveMessagesToGitHub(store);
+  return { message: msg, updatedAt: store.updatedAt };
+}
+
 module.exports = {
   DATA_DIR,
   GITHUB_TOKEN,
@@ -200,4 +326,7 @@ module.exports = {
   setAppStore,
   hasMoneyData,
   nowIso,
+  initMessagesStore,
+  getMessagesStore,
+  addMessage,
 };
