@@ -76,8 +76,9 @@
       "role": "viewer",
       "text": "O",
       "at": "2026-07-29T08:20:28.592Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T08:21:35.783Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T08:21:35.783Z",
+      "readAt": "2026-07-29T08:24:55.662Z"
     },
     {
       "id": "ms5tg0fwvci74u",
@@ -85,9 +86,10 @@
       "role": "viewer",
       "text": "I",
       "at": "2026-07-29T08:21:42.332Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T08:24:19.242Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T08:24:19.242Z",
+      "readAt": "2026-07-29T08:24:55.662Z"
     }
   ],
-  "updatedAt": "2026-07-29T08:24:19.242Z"
+  "updatedAt": "2026-07-29T08:24:55.662Z"
 }
