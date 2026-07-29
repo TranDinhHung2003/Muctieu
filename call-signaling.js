@@ -1,6 +1,6 @@
 /**
- * WebSocket signaling cho cuộc gọi WebRTC (thoại / video)
- * Path: /ws/call — auth bằng cookie JWT (cùng origin)
+ * WebSocket + bộ nhớ invite HTTP fallback cho cuộc gọi WebRTC
+ * Path WS: /ws/call — auth cookie hoặc ?ticket=
  */
 const { WebSocketServer } = require('ws');
 const cookie = require('cookie');
@@ -20,6 +20,9 @@ function attachCallSignaling(httpServer, options = {}) {
 
   /** username → Set<WebSocket> */
   const clients = new Map();
+  /** username(to) → invite object */
+  const pendingInvites = new Map();
+  const INVITE_TTL_MS = 55 * 1000;
 
   function addClient(username, ws) {
     if (!clients.has(username)) clients.set(username, new Set());
@@ -61,6 +64,43 @@ function attachCallSignaling(httpServer, options = {}) {
     return Array.from(clients.keys());
   }
 
+  function pruneInvites() {
+    const now = Date.now();
+    pendingInvites.forEach((inv, key) => {
+      if (!inv || !inv.at || now - new Date(inv.at).getTime() > INVITE_TTL_MS) {
+        pendingInvites.delete(key);
+      }
+    });
+  }
+
+  function storeInvite({ from, to, callId, mode }) {
+    pruneInvites();
+    if (!to || !callId) return null;
+    const invite = {
+      type: 'call-invite',
+      from: String(from),
+      to: String(to),
+      callId: String(callId),
+      mode: mode === 'video' ? 'video' : 'audio',
+      at: new Date().toISOString(),
+    };
+    pendingInvites.set(String(to), invite);
+    return invite;
+  }
+
+  function clearInvite(to, callId) {
+    const key = String(to || '');
+    const inv = pendingInvites.get(key);
+    if (!inv) return;
+    if (callId && inv.callId !== callId) return;
+    pendingInvites.delete(key);
+  }
+
+  function getPendingInvite(username) {
+    pruneInvites();
+    return pendingInvites.get(String(username || '')) || null;
+  }
+
   function parseUserFromRequest(req) {
     try {
       const url = new URL(req.url || '', 'http://localhost');
@@ -88,6 +128,76 @@ function attachCallSignaling(httpServer, options = {}) {
     }
   }
 
+  function handleRelay(user, msg) {
+    const type = String(msg.type || '');
+    const peer = String(msg.to || msg.peer || '').trim();
+    const relayTypes = new Set([
+      'call-invite',
+      'call-ringing',
+      'call-accept',
+      'call-reject',
+      'call-busy',
+      'call-end',
+      'webrtc-offer',
+      'webrtc-answer',
+      'webrtc-ice',
+      'call-renegotiate',
+    ]);
+    if (!relayTypes.has(type)) return { ok: false, error: 'Loại tín hiệu không hỗ trợ' };
+    if (!peer || peer === user.username) return { ok: false, error: 'Đối phương không hợp lệ' };
+
+    const payload = Object.assign({}, msg, {
+      type,
+      from: user.username,
+      to: peer,
+      at: new Date().toISOString(),
+    });
+
+    if (type === 'call-invite') {
+      storeInvite({
+        from: user.username,
+        to: peer,
+        callId: payload.callId,
+        mode: payload.mode,
+      });
+    }
+    if (type === 'call-accept' || type === 'call-reject' || type === 'call-busy' || type === 'call-end') {
+      clearInvite(user.username, payload.callId);
+      clearInvite(peer, payload.callId);
+    }
+
+    const delivered = sendToUser(peer, payload);
+    let inviteMeta = null;
+    if (type === 'call-invite') {
+      inviteMeta = {
+        callId: payload.callId,
+        to: peer,
+        mode: payload.mode || 'audio',
+        peerOnline: delivered > 0,
+      };
+      if (typeof onCallInvite === 'function') {
+        try {
+          onCallInvite({
+            from: user.username,
+            to: peer,
+            mode: payload.mode === 'video' ? 'video' : 'audio',
+            callId: payload.callId,
+            peerOnline: delivered > 0,
+          });
+        } catch (err) {
+          console.warn('onCallInvite:', err && err.message ? err.message : err);
+        }
+      }
+    }
+    return {
+      ok: true,
+      delivered,
+      peerOffline: delivered === 0 && (type === 'call-invite' || type === 'webrtc-offer'),
+      inviteMeta,
+      payload,
+    };
+  }
+
   wss.on('connection', (ws, req) => {
     const user = parseUserFromRequest(req);
     if (!user) {
@@ -105,7 +215,10 @@ function attachCallSignaling(httpServer, options = {}) {
       online: listOnline(),
     });
 
-    // Báo online cho người khác
+    // Đẩy invite đang chờ (nếu có) ngay khi online lại
+    const pending = getPendingInvite(user.username);
+    if (pending) send(ws, pending);
+
     clients.forEach((_set, other) => {
       if (other === user.username) return;
       sendToUser(other, {
@@ -127,67 +240,24 @@ function attachCallSignaling(httpServer, options = {}) {
         return;
       }
       if (!msg || typeof msg !== 'object') return;
-      const type = String(msg.type || '');
-
-      if (type === 'ping') {
+      if (String(msg.type || '') === 'ping') {
         send(ws, { type: 'pong', t: Date.now() });
         return;
       }
 
-      const peer = String(msg.to || msg.peer || '').trim();
-      const relayTypes = new Set([
-        'call-invite',
-        'call-ringing',
-        'call-accept',
-        'call-reject',
-        'call-busy',
-        'call-end',
-        'webrtc-offer',
-        'webrtc-answer',
-        'webrtc-ice',
-        'call-renegotiate',
-      ]);
-
-      if (!relayTypes.has(type)) return;
-      if (!peer || peer === user.username) {
-        send(ws, { type: 'error', error: 'Đối phương không hợp lệ' });
+      const result = handleRelay(user, msg);
+      if (!result.ok) {
+        send(ws, { type: 'error', error: result.error || 'Lỗi tín hiệu' });
         return;
       }
-
-      const payload = Object.assign({}, msg, {
-        type,
-        from: user.username,
-        to: peer,
-        at: new Date().toISOString(),
-      });
-
-      const delivered = sendToUser(peer, payload);
-      if (type === 'call-invite') {
-        send(ws, {
-          type: 'call-invite-sent',
-          callId: payload.callId,
-          to: peer,
-          mode: payload.mode || 'audio',
-          peerOnline: delivered > 0,
-        });
-        if (typeof onCallInvite === 'function') {
-          try {
-            onCallInvite({
-              from: user.username,
-              to: peer,
-              mode: payload.mode === 'video' ? 'video' : 'audio',
-              callId: payload.callId,
-              peerOnline: delivered > 0,
-            });
-          } catch (err) {
-            console.warn('onCallInvite:', err && err.message ? err.message : err);
-          }
-        }
-      } else if (!delivered && (type === 'call-invite' || type === 'webrtc-offer')) {
+      if (result.inviteMeta) {
+        send(ws, Object.assign({ type: 'call-invite-sent' }, result.inviteMeta));
+      }
+      if (result.peerOffline) {
         send(ws, {
           type: 'peer-offline',
-          to: peer,
-          callId: payload.callId || null,
+          to: result.payload.to,
+          callId: result.payload.callId || null,
         });
       }
     });
@@ -206,6 +276,7 @@ function attachCallSignaling(httpServer, options = {}) {
   });
 
   const heartbeat = setInterval(() => {
+    pruneInvites();
     wss.clients.forEach((ws) => {
       if (ws.isAlive === false) {
         try { ws.terminate(); } catch { /* ignore */ }
@@ -223,6 +294,10 @@ function attachCallSignaling(httpServer, options = {}) {
     isOnline,
     listOnline,
     sendToUser,
+    storeInvite,
+    clearInvite,
+    getPendingInvite,
+    handleRelay,
   };
 }
 

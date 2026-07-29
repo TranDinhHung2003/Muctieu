@@ -11,6 +11,9 @@ const storage = require('./storage');
 const pushNotify = require('./push-notify');
 const { attachCallSignaling } = require('./call-signaling');
 
+/** Gán sau khi HTTP server + WS khởi động */
+let callHub = null;
+
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
@@ -581,6 +584,32 @@ app.get('/api/call/ticket', authMiddleware, (req, res) => {
   res.json({ ticket, expiresIn: 600 });
 });
 
+/** Invite đang chờ — HTTP fallback khi WebSocket bị iOS suspend */
+app.get('/api/call/pending', authMiddleware, (req, res) => {
+  if (!callHub) return res.json({ invite: null });
+  const invite = callHub.getPendingInvite(req.user.username);
+  res.json({ invite: invite || null, online: callHub.listOnline() });
+});
+
+/** Gửi / chuyển tiếp tín hiệu cuộc gọi qua HTTP (bổ sung cho WS) */
+app.post('/api/call/signal', authMiddleware, (req, res) => {
+  if (!callHub) return res.status(503).json({ error: 'Chưa sẵn sàng gọi điện' });
+  const body = req.body || {};
+  const result = callHub.handleRelay(
+    { username: req.user.username, role: req.user.role },
+    body
+  );
+  if (!result.ok) {
+    return res.status(400).json({ error: result.error || 'Lỗi tín hiệu' });
+  }
+  res.json({
+    ok: true,
+    delivered: result.delivered,
+    peerOffline: !!result.peerOffline,
+    invite: result.inviteMeta || null,
+  });
+});
+
 /** Ghi sự kiện cuộc gọi vào khung chat (kiểu Zalo) */
 app.post('/api/call/log', authMiddleware, async (req, res) => {
   const body = req.body || {};
@@ -729,12 +758,12 @@ async function start() {
   }, 60 * 1000);
 
   const httpServer = http.createServer(app);
-  attachCallSignaling(httpServer, {
+  callHub = attachCallSignaling(httpServer, {
     jwt,
     jwtSecret: JWT_SECRET,
     cookieName: COOKIE_NAME,
     onCallInvite: ({ from, to, mode, callId, peerOnline }) => {
-      // Luôn gửi push để máy kia hiện thông báo cuộc gọi (kể cả khi app nền)
+      // Luôn gửi push để máy kia hiện thông báo cuộc gọi (kể cả khi app nền / tắt màn)
       const names = getDisplayNamesForViewer(to);
       const fromName = names[from] || defaultNickname(from, from === VIEWER_USERNAME ? 'viewer' : 'admin');
       const isVideo = mode === 'video';

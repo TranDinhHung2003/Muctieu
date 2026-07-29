@@ -1,5 +1,5 @@
-/* Service worker v13: Push cuộc gọi + chat; hệ thống chỉ khi app nền */
-const SW_VERSION = 'muctieu-sw-v13';
+/* Service worker v14: Cuộc gọi luôn hiện thông báo khi app nền/tắt màn */
+const SW_VERSION = 'muctieu-sw-v14';
 const FOREGROUND_CACHE = 'muctieu-runtime-v1';
 const FOREGROUND_URL = '/__muctieu_foreground';
 const FOREGROUND_TTL_MS = 25000;
@@ -161,31 +161,41 @@ async function clearNotificationsWithTag(tag) {
 async function showPushNotification(data) {
   const payload = buildPushPayload(data);
 
-  // Đồng bộ khung chat nếu app còn sống
+  // Đồng bộ khung chat / cuộc gọi nếu app còn sống
   await notifyClients(payload);
 
-  // Đang trong app → KHÔNG hiện thông báo đẩy lên máy
-  if (await isAppInForeground()) {
-    // Phòng trường hợp OS đã queue sẵn — đóng tag này nếu có
+  const isCall = payload.type === 'call';
+
+  // Chat thường: đang trong app → không hiện OS notify
+  // Cuộc gọi: LUÔN hiện OS notify khi không chắc app đang mở (iOS tắt màn vẫn coi foreground)
+  if (!isCall && (await isAppInForeground())) {
     await clearNotificationsWithTag(payload.tag);
     return;
   }
 
-  // Ngoài màn hình chính / đã vuốt tắt → hiện 1 thông báo hệ thống
+  // Nếu cuộc gọi mà app đang thật sự visible trên 1 client → vẫn postMessage (đã làm),
+  // và vẫn hiện notify ngắn để chắc chắn user thấy khi màn hình khóa.
+  const notifData = {
+    page: isCall ? 'chat' : payload.page,
+    type: payload.type,
+    messageId: payload.messageId,
+    callId: payload.callId,
+    mode: payload.mode,
+    from: payload.from,
+    fromName: payload.fromName,
+    sw: SW_VERSION,
+  };
+
   await self.registration.showNotification(payload.title, {
     body: payload.body,
-    tag: payload.tag,
+    tag: payload.tag || (isCall ? 'muctieu-call' : 'muctieu-push'),
     renotify: true,
-    requireInteraction: false,
+    requireInteraction: isCall,
     silent: false,
+    vibrate: isCall ? [250, 120, 250, 120, 400] : undefined,
     icon: absUrl('/icons/icon-192.png'),
     badge: absUrl('/icons/icon-96.png'),
-    data: {
-      page: payload.page,
-      type: payload.type,
-      messageId: payload.messageId,
-      sw: SW_VERSION,
-    },
+    data: notifData,
   });
 }
 
@@ -248,19 +258,30 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil((async () => {
     const all = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const openPayload = {
+      type: 'muctieu-notify-open',
+      page: data.page || (data.type === 'call' ? 'chat' : 'home'),
+      call: data.type === 'call' ? {
+        type: 'call',
+        callId: data.callId,
+        mode: data.mode,
+        from: data.from,
+        fromName: data.fromName,
+      } : null,
+    };
     for (const client of all) {
       if ('focus' in client) {
         await client.focus();
-        if (data.page) {
-          try {
-            client.postMessage({ type: 'muctieu-notify-open', page: data.page });
-          } catch { /* ignore */ }
-        }
+        try {
+          client.postMessage(openPayload);
+        } catch { /* ignore */ }
         return;
       }
     }
     if (clients.openWindow) {
-      const url = data.page === 'chat' ? '/?open=chat' : '/';
+      const url = (data.type === 'call' || data.page === 'chat')
+        ? '/?open=chat&call=1'
+        : '/';
       await clients.openWindow(url);
     }
   })());
