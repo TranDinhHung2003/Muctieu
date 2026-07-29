@@ -46,8 +46,18 @@
       "role": "viewer",
       "text": "U",
       "at": "2026-07-29T11:29:46.284Z",
+      "status": "read",
+      "deliveredAt": "2026-07-29T11:29:46.610Z",
+      "readAt": "2026-07-29T11:29:46.864Z"
+    },
+    {
+      "id": "ms605yd6tebacc",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "Ut",
+      "at": "2026-07-29T11:29:50.394Z",
       "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T11:29:46.284Z"
+  "updatedAt": "2026-07-29T11:29:50.394Z"
 }
