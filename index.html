@@ -997,24 +997,6 @@
       font-size: 0.85rem;
     }
 
-    .reset-btn {
-      width: 100%;
-      margin-top: 20px;
-      padding: 14px;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
-    }
-
-    .reset-btn:hover {
-      border-color: var(--danger);
-      color: var(--danger);
-    }
-
     .toast {
       position: fixed;
       bottom: 24px;
@@ -1391,7 +1373,6 @@
 
     .pressable:active,
     .add-btn:active,
-    .reset-btn:active,
     .entry-delete:active,
     .clear-field-btn:active,
     .login-btn:active,
@@ -1400,7 +1381,6 @@
     }
 
     .add-btn,
-    .reset-btn,
     .login-btn,
     .collapse-toggle,
     .entry-delete {
@@ -2869,7 +2849,6 @@
       </div>
     </div>
 
-    <button class="reset-btn admin-only" id="reset-btn">Đặt lại dữ liệu hôm nay</button>
     </div>
 
     <div id="page-history" class="page">
@@ -2974,7 +2953,7 @@
       <img id="chat-lightbox-img" alt="Ảnh tin nhắn">
     </div>
 
-    <footer id="app-footer">Mục tiêu: 1.200.000đ / ngày · Dữ liệu lưu trên server</footer>
+    <footer id="app-footer">© bản quyền thuộc về TranDinhHung</footer>
     </div>
   </div>
   </div>
@@ -3190,7 +3169,6 @@
       drawerOverlay: document.getElementById('drawer-overlay'),
       roleBadge: document.getElementById('role-badge'),
       roleBanner: document.getElementById('role-banner'),
-      resetBtn: document.getElementById('reset-btn'),
       toast: document.getElementById('toast'),
     };
 
@@ -3809,7 +3787,7 @@
     function updateGoalDisplay(goal) {
       const g = normalizeGoal(goal);
       if (els.goalAmount) els.goalAmount.textContent = formatMoney(g);
-      if (els.appFooter) els.appFooter.textContent = 'Mục tiêu: ' + formatMoney(g) + ' / ngày · Dữ liệu lưu trên server';
+      if (els.appFooter) els.appFooter.textContent = '© bản quyền thuộc về TranDinhHung';
     }
 
     function normalizeDay(day) {
@@ -5347,36 +5325,6 @@
       showToast('Đã xóa lượt nhập sai');
     }
 
-    async function resetToday() {
-      if (!isAdmin()) {
-        showToast('Tài khoản theo dõi không thể đặt lại dữ liệu');
-        return;
-      }
-      const ok = await askConfirm({
-        title: 'Đặt lại hôm nay?',
-        desc: 'Toàn bộ doanh thu và lượt nhập trong ngày sẽ bị xóa.',
-        detailLabel: 'Phạm vi',
-        detailValue: 'Tất cả dữ liệu hôm nay',
-        confirmText: 'Đặt lại',
-        icon: '⚠️',
-      });
-      if (!ok) return;
-
-      const data = loadData();
-      data.days[getTodayKey()] = emptyDay();
-
-      try {
-        await saveData(data);
-      } catch (err) {
-        showToast('Lỗi lưu: ' + err.message);
-        return;
-      }
-
-      clearInputFields();
-      calculate();
-      showToast('Đã đặt lại · mục tiêu còn ' + formatMoney(getDailyGoal()));
-    }
-
     function setTodayDate() {
       const now = new Date();
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -5429,7 +5377,6 @@
       }
     });
 
-    els.resetBtn.addEventListener('click', resetToday);
     els.loginForm.addEventListener('submit', handleLogin);
     if (els.chatForm) els.chatForm.addEventListener('submit', sendChatMessage);
     if (els.chatMessages) {
