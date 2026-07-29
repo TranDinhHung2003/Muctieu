@@ -581,13 +581,22 @@
     }
 
     .clear-field-btn {
-      background: transparent;
-      border: none;
-      color: var(--danger);
-      font-size: 0.72rem;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      font-size: 0.7rem;
+      font-weight: 700;
       cursor: pointer;
-      padding: 0 2px;
-      text-decoration: underline;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .clear-field-btn:hover {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: var(--danger);
+      color: #fecaca;
     }
 
     .entries-list {
@@ -603,8 +612,8 @@
       gap: 8px;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 10px;
+      border-radius: 10px;
+      padding: 10px 10px;
       font-size: 0.82rem;
     }
 
@@ -637,19 +646,66 @@
     .entry-item .entry-value.minus { color: var(--danger); }
 
     .entry-delete {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--danger);
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 0.7rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      font-weight: 700;
       cursor: pointer;
       flex-shrink: 0;
     }
 
     .entry-delete:hover {
       border-color: var(--danger);
-      background: #ef444422;
+      background: rgba(239, 68, 68, 0.22);
+      color: #fecaca;
+    }
+
+    .modal.sheet.delete-sheet {
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(239, 68, 68, 0.16), transparent 55%),
+        var(--surface);
+      text-align: left;
+    }
+
+    .modal.sheet.delete-sheet h2 {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .sheet-icon.delete {
+      background: rgba(239, 68, 68, 0.14);
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    .delete-confirm-card {
+      margin: 14px 0 4px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(239, 68, 68, 0.28);
+      background: rgba(239, 68, 68, 0.08);
+    }
+
+    .delete-confirm-card .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .delete-confirm-card .value {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #fecaca;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .delete-confirm-card .hint {
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: #fca5a5;
+      line-height: 1.4;
     }
 
     .summary {
@@ -2369,6 +2425,23 @@
       <div class="modal-actions">
         <button type="button" id="goal-cancel">Hủy</button>
         <button type="button" class="primary" id="goal-save">Lưu mục tiêu</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal sheet delete-sheet">
+      <div class="sheet-icon delete" id="confirm-icon">🗑️</div>
+      <h2 id="confirm-title">Xác nhận xóa?</h2>
+      <p class="sheet-desc" id="confirm-desc" style="text-align:center">Hành động này không thể hoàn tác.</p>
+      <div class="delete-confirm-card" id="confirm-detail-card">
+        <div class="label" id="confirm-detail-label">Mục sẽ xóa</div>
+        <div class="value" id="confirm-detail-value"></div>
+        <div class="hint" id="confirm-detail-hint">Không thể hoàn tác sau khi xác nhận.</div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="confirm-cancel">Hủy</button>
+        <button type="button" class="danger" id="confirm-ok">Xóa</button>
       </div>
     </div>
   </div>
@@ -4186,6 +4259,41 @@
       showToast('Đã đặt mục tiêu ngày: ' + formatMoney(newGoal));
     }
 
+    let confirmResolver = null;
+
+    function askConfirm(opts = {}) {
+      const modal = document.getElementById('confirm-modal');
+      if (!modal) return Promise.resolve(window.confirm(opts.title || 'Xác nhận?'));
+      const title = document.getElementById('confirm-title');
+      const desc = document.getElementById('confirm-desc');
+      const icon = document.getElementById('confirm-icon');
+      const detailLabel = document.getElementById('confirm-detail-label');
+      const detailValue = document.getElementById('confirm-detail-value');
+      const detailHint = document.getElementById('confirm-detail-hint');
+      const okBtn = document.getElementById('confirm-ok');
+      if (title) title.textContent = opts.title || 'Xác nhận xóa?';
+      if (desc) desc.textContent = opts.desc || 'Hành động này không thể hoàn tác.';
+      if (icon) icon.textContent = opts.icon || '🗑️';
+      if (detailLabel) detailLabel.textContent = opts.detailLabel || 'Mục sẽ xóa';
+      if (detailValue) detailValue.textContent = opts.detailValue || '';
+      if (detailHint) detailHint.textContent = opts.hint || 'Không thể hoàn tác sau khi xác nhận.';
+      if (okBtn) okBtn.textContent = opts.confirmText || 'Xóa';
+      modal.classList.add('show');
+      return new Promise((resolve) => {
+        confirmResolver = resolve;
+      });
+    }
+
+    function closeConfirmModal(result) {
+      const modal = document.getElementById('confirm-modal');
+      if (modal) modal.classList.remove('show');
+      if (confirmResolver) {
+        const resolve = confirmResolver;
+        confirmResolver = null;
+        resolve(!!result);
+      }
+    }
+
     async function deleteEntry(entryId) {
       if (!isAdmin()) {
         showToast('Tài khoản theo dõi không thể xóa dữ liệu');
@@ -4205,7 +4313,15 @@
         ? sign + formatPoints(absVal) + ' điểm'
         : sign + formatMoney(absVal);
       const note = entry.adjust ? ' (điều chỉnh)' : '';
-      if (!confirm('Xóa lượt này?\n' + label + note + ': ' + display)) return;
+      const ok = await askConfirm({
+        title: 'Xóa lượt này?',
+        desc: 'Lượt nhập sẽ bị gỡ khỏi tổng hôm nay.',
+        detailLabel: 'Lượt sẽ xóa',
+        detailValue: label + note + ': ' + display,
+        confirmText: 'Xóa lượt',
+        icon: '🗑️',
+      });
+      if (!ok) return;
 
       today.entries.splice(idx, 1);
       today[entry.field] = (today[entry.field] || 0) - entry.value;
@@ -4238,7 +4354,15 @@
       const display = field === 'zoomPoints'
         ? formatPoints(today[field]) + ' điểm'
         : formatMoney(today[field]);
-      if (!confirm('Xóa toàn bộ ' + config.label + ' hôm nay (' + display + ')?')) return;
+      const ok = await askConfirm({
+        title: 'Xóa mục này?',
+        desc: 'Toàn bộ số liệu mục này trong hôm nay sẽ về 0.',
+        detailLabel: 'Mục sẽ xóa',
+        detailValue: config.label + ': ' + display,
+        confirmText: 'Xóa mục',
+        icon: '🧹',
+      });
+      if (!ok) return;
 
       today.entries = (today.entries || []).filter(e => e.field !== field);
       today[field] = 0;
@@ -4259,7 +4383,15 @@
         showToast('Tài khoản theo dõi không thể đặt lại dữ liệu');
         return;
       }
-      if (!confirm('Đặt lại toàn bộ dữ liệu hôm nay? Hành động này không thể hoàn tác.')) return;
+      const ok = await askConfirm({
+        title: 'Đặt lại hôm nay?',
+        desc: 'Toàn bộ doanh thu và lượt nhập trong ngày sẽ bị xóa.',
+        detailLabel: 'Phạm vi',
+        detailValue: 'Tất cả dữ liệu hôm nay',
+        confirmText: 'Đặt lại',
+        icon: '⚠️',
+      });
+      if (!ok) return;
 
       const data = loadData();
       data.days[getTodayKey()] = emptyDay();
@@ -4359,6 +4491,22 @@
     els.logoutBtn.addEventListener('click', openLogoutModal);
     document.getElementById('logout-cancel').addEventListener('click', () => els.logoutModal.classList.remove('show'));
     document.getElementById('logout-confirm').addEventListener('click', handleLogout);
+    const confirmModal = document.getElementById('confirm-modal');
+    const confirmCancel = document.getElementById('confirm-cancel');
+    const confirmOk = document.getElementById('confirm-ok');
+    if (confirmCancel) confirmCancel.addEventListener('click', () => closeConfirmModal(false));
+    if (confirmOk) confirmOk.addEventListener('click', () => closeConfirmModal(true));
+    if (confirmModal) {
+      confirmModal.addEventListener('click', (e) => {
+        if (e.target === confirmModal) closeConfirmModal(false);
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && confirmModal && confirmModal.classList.contains('show')) {
+        closeConfirmModal(false);
+      }
+    });
+
     document.getElementById('celebrate-close').addEventListener('click', closeCelebrate);
     const celebrateOverlay = document.getElementById('celebrate-overlay');
     if (celebrateOverlay) {
