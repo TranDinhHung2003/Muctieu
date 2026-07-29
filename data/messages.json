@@ -141,7 +141,9 @@
       "role": "admin",
       "text": "Cuộc gọi nhỡ · Cuộc gọi thoại",
       "at": "2026-07-29T14:23:20.744Z",
-      "status": "sent",
+      "status": "read",
+      "deliveredAt": "2026-07-29T14:23:40.986Z",
+      "readAt": "2026-07-29T14:23:40.986Z",
       "kind": "call",
       "callEvent": "missed",
       "callMode": "audio",
@@ -153,5 +155,5 @@
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:23:20.744Z"
+  "updatedAt": "2026-07-29T14:23:40.986Z"
 }
