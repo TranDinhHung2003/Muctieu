@@ -46,8 +46,9 @@
       "role": "admin",
       "text": "U",
       "at": "2026-07-29T12:03:52.492Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T12:03:58.303Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T12:03:58.303Z",
+      "readAt": "2026-07-29T12:05:11.741Z"
     },
     {
       "id": "ms61ebks6polph",
@@ -55,8 +56,9 @@
       "role": "admin",
       "text": "Heloo em yêu",
       "at": "2026-07-29T12:04:20.380Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T12:04:22.584Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T12:04:22.584Z",
+      "readAt": "2026-07-29T12:05:11.741Z"
     },
     {
       "id": "ms61fdbw302cxf",
@@ -64,9 +66,18 @@
       "role": "admin",
       "text": "Y",
       "at": "2026-07-29T12:05:09.308Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T12:05:11.151Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T12:05:11.151Z",
+      "readAt": "2026-07-29T12:05:11.741Z"
+    },
+    {
+      "id": "ms61fjh34xtndz",
+      "from": "admin",
+      "role": "admin",
+      "text": "Em iu",
+      "at": "2026-07-29T12:05:17.271Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T12:05:11.151Z"
+  "updatedAt": "2026-07-29T12:05:17.271Z"
 }
