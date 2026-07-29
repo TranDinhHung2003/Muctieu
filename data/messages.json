@@ -86,8 +86,9 @@
       "role": "viewer",
       "text": "R",
       "at": "2026-07-29T11:35:41.514Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T11:35:41.854Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T11:35:41.854Z",
+      "readAt": "2026-07-29T11:37:11.937Z"
     },
     {
       "id": "ms60dm9w1me9d3",
@@ -95,8 +96,9 @@
       "role": "viewer",
       "text": "Rt",
       "at": "2026-07-29T11:35:47.972Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T11:35:51.260Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T11:35:51.260Z",
+      "readAt": "2026-07-29T11:37:11.937Z"
     },
     {
       "id": "ms60ds99736wdy",
@@ -104,8 +106,9 @@
       "role": "viewer",
       "text": "Rtu",
       "at": "2026-07-29T11:35:55.725Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T11:36:01.756Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T11:36:01.756Z",
+      "readAt": "2026-07-29T11:37:11.937Z"
     },
     {
       "id": "ms60dyoorkb6nt",
@@ -113,9 +116,10 @@
       "role": "viewer",
       "text": "Rtui",
       "at": "2026-07-29T11:36:04.056Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T11:37:08.354Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T11:37:08.354Z",
+      "readAt": "2026-07-29T11:37:11.937Z"
     }
   ],
-  "updatedAt": "2026-07-29T11:37:08.354Z"
+  "updatedAt": "2026-07-29T11:37:11.937Z"
 }
