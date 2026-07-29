@@ -1,36 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms66camxvxghpu",
-      "from": "admin",
-      "role": "admin",
-      "text": "Cuộc gọi thoại · Đã hủy",
-      "at": "2026-07-29T14:22:43.929Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T14:22:45.417Z",
-      "readAt": "2026-07-29T14:22:45.701Z",
-      "kind": "call",
-      "callEvent": "cancelled",
-      "callMode": "audio",
-      "durationSec": 0,
-      "callId": "cms66c84l5qbls"
-    },
-    {
-      "id": "ms66ch0c2ufqac",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "Cuộc gọi thoại · Đã từ chối",
-      "at": "2026-07-29T14:22:52.188Z",
-      "status": "read",
-      "deliveredAt": "2026-07-29T14:22:54.692Z",
-      "readAt": "2026-07-29T14:23:00.976Z",
-      "kind": "call",
-      "callEvent": "rejected",
-      "callMode": "audio",
-      "durationSec": 0,
-      "callId": "cms66c84l5qbls"
-    },
-    {
       "id": "ms66d31kn76eyd",
       "from": "admin",
       "role": "admin",
@@ -197,12 +167,13 @@
       "text": "",
       "imageId": "ms67ely0pzkrvx",
       "at": "2026-07-29T14:52:31.513Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T14:53:15.814Z"
     }
   ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
-  "updatedAt": "2026-07-29T14:52:32.385Z"
+  "updatedAt": "2026-07-29T14:53:15.814Z"
 }
