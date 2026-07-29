@@ -2355,12 +2355,14 @@
         const me = await api('/me');
         if (!me.loggedIn) {
           showLogin();
+          startLiveClock();
           startWeatherEffects();
           return;
         }
         showApp(me.username, me.role || 'admin');
         await loadFromServer();
         setTodayDate();
+        startLiveClock();
         startDayWatcher();
         startRealtimeSync();
         calculate();
@@ -2368,6 +2370,7 @@
         startWeatherEffects();
       } catch (err) {
         showLogin(err.message);
+        startLiveClock();
         startWeatherEffects();
       }
     }
@@ -2389,6 +2392,7 @@
         showApp(result.username, result.role || 'admin');
         await loadFromServer();
         setTodayDate();
+        startLiveClock();
         startDayWatcher();
         startRealtimeSync();
         calculate();
