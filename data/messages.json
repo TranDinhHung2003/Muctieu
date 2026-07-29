@@ -49,7 +49,15 @@
       "status": "read",
       "deliveredAt": "2026-07-29T09:02:01.749Z",
       "readAt": "2026-07-29T09:07:15.345Z"
+    },
+    {
+      "id": "ms5v2rqi5dcyf2",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "G",
+      "at": "2026-07-29T09:07:23.754Z",
+      "status": "sent"
     }
   ],
-  "updatedAt": "2026-07-29T09:07:15.345Z"
+  "updatedAt": "2026-07-29T09:07:23.754Z"
 }
