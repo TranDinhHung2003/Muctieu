@@ -26,8 +26,9 @@
       "role": "viewer",
       "text": "Đang Tét",
       "at": "2026-07-29T08:54:38.530Z",
-      "status": "sent"
+      "status": "delivered",
+      "deliveredAt": "2026-07-29T08:55:37.897Z"
     }
   ],
-  "updatedAt": "2026-07-29T08:54:38.530Z"
+  "updatedAt": "2026-07-29T08:55:37.897Z"
 }
