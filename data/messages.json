@@ -46,9 +46,10 @@
       "role": "viewer",
       "text": "D",
       "at": "2026-07-29T10:24:08.423Z",
-      "status": "delivered",
-      "deliveredAt": "2026-07-29T10:46:51.763Z"
+      "status": "read",
+      "deliveredAt": "2026-07-29T10:46:51.763Z",
+      "readAt": "2026-07-29T10:46:53.346Z"
     }
   ],
-  "updatedAt": "2026-07-29T10:46:51.763Z"
+  "updatedAt": "2026-07-29T10:46:53.346Z"
 }
