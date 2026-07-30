@@ -1,14 +1,6 @@
 {
   "messages": [
     {
-      "id": "ms6w6hgcmvjz3u",
-      "from": "admin",
-      "role": "admin",
-      "text": "Cho đi ăn cỗ có mà da rại",
-      "at": "2026-07-30T02:26:02.844Z",
-      "status": "sent"
-    },
-    {
       "id": "ms6w77vntgvltn",
       "from": "admin",
       "role": "admin",
@@ -31,5 +23,5 @@
       "lastReadAt": "2026-07-29T16:50:11.264Z"
     }
   },
-  "updatedAt": "2026-07-30T02:26:45.051Z"
+  "updatedAt": "2026-07-30T02:56:28.555Z"
 }
