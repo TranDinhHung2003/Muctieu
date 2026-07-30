@@ -7,6 +7,14 @@
       "text": "Cho đi ăn cỗ có mà da rại",
       "at": "2026-07-30T02:26:02.844Z",
       "status": "sent"
+    },
+    {
+      "id": "ms6w77vntgvltn",
+      "from": "admin",
+      "role": "admin",
+      "text": "Cá lại làm con Tôm",
+      "at": "2026-07-30T02:26:37.091Z",
+      "status": "sent"
     }
   ],
   "nicknames": {
@@ -23,5 +31,5 @@
       "lastReadAt": "2026-07-29T16:50:11.264Z"
     }
   },
-  "updatedAt": "2026-07-30T02:26:04.069Z"
+  "updatedAt": "2026-07-30T02:26:37.091Z"
 }
