@@ -1,18 +1,27 @@
 {
-  "messages": [],
+  "messages": [
+    {
+      "id": "ms6w6hgcmvjz3u",
+      "from": "admin",
+      "role": "admin",
+      "text": "Cho đi ăn cỗ có mà da rại",
+      "at": "2026-07-30T02:26:02.844Z",
+      "status": "sent"
+    }
+  ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
   },
   "receipts": {
     "admin": {
-      "lastDeliveredAt": "2026-07-30T02:25:54.445Z",
-      "lastReadAt": "2026-07-30T02:25:54.445Z"
+      "lastDeliveredAt": "2026-07-30T02:25:54.664Z",
+      "lastReadAt": "2026-07-30T02:25:54.664Z"
     },
     "theodoi": {
       "lastDeliveredAt": "2026-07-29T16:50:11.264Z",
       "lastReadAt": "2026-07-29T16:50:11.264Z"
     }
   },
-  "updatedAt": "2026-07-30T02:25:54.445Z"
+  "updatedAt": "2026-07-30T02:26:02.844Z"
 }
