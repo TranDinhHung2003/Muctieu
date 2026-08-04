@@ -120,7 +120,7 @@
         "outside": 700000,
         "zoomPoints": 1,
         "highway": 100000,
-        "tip": 0,
+        "tip": 7000,
         "entries": [
           {
             "id": "mse9bs7epududc",
@@ -151,11 +151,17 @@
             "field": "app",
             "value": 36000,
             "at": "2026-08-04T11:06:54.042Z"
+          },
+          {
+            "id": "msekq45itompwo",
+            "field": "tip",
+            "value": 7000,
+            "at": "2026-08-04T11:27:32.742Z"
           }
         ]
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-08-04T11:06:54.230Z"
+  "updatedAt": "2026-08-04T11:27:32.893Z"
 }
