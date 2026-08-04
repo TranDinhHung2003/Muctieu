@@ -1,14 +1,5 @@
 {
-  "messages": [
-    {
-      "id": "msekc8ihlwpcvg",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "U",
-      "at": "2026-08-04T11:16:45.209Z",
-      "status": "sent"
-    }
-  ],
+  "messages": [],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
@@ -23,5 +14,5 @@
       "lastReadAt": "2026-08-04T11:16:41.327Z"
     }
   },
-  "updatedAt": "2026-08-04T11:27:12.231Z"
+  "updatedAt": "2026-08-04T11:47:09.469Z"
 }
