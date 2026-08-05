@@ -223,7 +223,7 @@
       "2026-08-05": {
         "app": 585000,
         "outside": 200000,
-        "zoomPoints": 0,
+        "zoomPoints": 1,
         "highway": 0,
         "tip": 0,
         "entries": [
@@ -250,11 +250,17 @@
             "field": "app",
             "value": 500000,
             "at": "2026-08-05T06:40:30.358Z"
+          },
+          {
+            "id": "msfpwyaw3ohh4x",
+            "field": "zoomPoints",
+            "value": 1,
+            "at": "2026-08-05T06:40:36.008Z"
           }
         ]
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-08-05T06:40:32.603Z"
+  "updatedAt": "2026-08-05T06:40:36.482Z"
 }
