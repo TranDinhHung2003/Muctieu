@@ -224,7 +224,7 @@
         "app": 585000,
         "outside": 800000,
         "zoomPoints": 1,
-        "highway": 0,
+        "highway": 100000,
         "tip": 0,
         "entries": [
           {
@@ -262,11 +262,17 @@
             "field": "outside",
             "value": 600000,
             "at": "2026-08-05T09:59:37.461Z"
+          },
+          {
+            "id": "msfx12fx2g1xcz",
+            "field": "highway",
+            "value": 100000,
+            "at": "2026-08-05T09:59:45.309Z"
           }
         ]
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-08-05T09:59:37.619Z"
+  "updatedAt": "2026-08-05T09:59:45.445Z"
 }
