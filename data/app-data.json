@@ -280,13 +280,20 @@
       "2026-08-06": {
         "app": 0,
         "outside": 0,
-        "zoomPoints": 0,
+        "zoomPoints": 1,
         "highway": 0,
         "tip": 0,
-        "entries": []
+        "entries": [
+          {
+            "id": "msgvnyb23fo61o",
+            "field": "zoomPoints",
+            "value": 1,
+            "at": "2026-08-06T02:09:19.982Z"
+          }
+        ]
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-08-06T02:08:48.553Z"
+  "updatedAt": "2026-08-06T02:09:20.163Z"
 }
