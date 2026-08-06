@@ -279,27 +279,14 @@
       },
       "2026-08-06": {
         "app": 0,
-        "outside": 200000,
-        "zoomPoints": 0.5,
+        "outside": 0,
+        "zoomPoints": 0,
         "highway": 0,
         "tip": 0,
-        "entries": [
-          {
-            "id": "msgssyy5m7svrh",
-            "field": "zoomPoints",
-            "value": 0.5,
-            "at": "2026-08-06T00:49:15.246Z"
-          },
-          {
-            "id": "msgst15c7kfay2",
-            "field": "outside",
-            "value": 200000,
-            "at": "2026-08-06T00:49:18.096Z"
-          }
-        ]
+        "entries": []
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-08-06T00:49:18.231Z"
+  "updatedAt": "2026-08-06T00:49:20.653Z"
 }
