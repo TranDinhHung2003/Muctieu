@@ -1,14 +1,6 @@
 {
   "messages": [
     {
-      "id": "msih1g70309swa",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "Cbi di ăn cơm hoi",
-      "at": "2026-08-07T04:55:27.804Z",
-      "status": "sent"
-    },
-    {
       "id": "msih5vxp829yo6",
       "from": "theodoi",
       "role": "viewer",
@@ -71,5 +63,5 @@
       "lastReadAt": "2026-08-07T05:01:10.105Z"
     }
   },
-  "updatedAt": "2026-08-07T05:17:48.525Z"
+  "updatedAt": "2026-08-07T05:25:42.982Z"
 }
