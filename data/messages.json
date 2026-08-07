@@ -31,6 +31,14 @@
       "text": "Hihi",
       "at": "2026-08-07T04:29:06.273Z",
       "status": "sent"
+    },
+    {
+      "id": "msig3nlanv23b6",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "Ch có khách hẻ",
+      "at": "2026-08-07T04:29:11.086Z",
+      "status": "sent"
     }
   ],
   "nicknames": {
@@ -39,7 +47,7 @@
   },
   "receipts": {
     "admin": {
-      "lastDeliveredAt": "2026-08-07T04:29:10.575Z",
+      "lastDeliveredAt": "2026-08-07T04:29:11.556Z",
       "lastReadAt": "2026-08-07T04:29:10.575Z"
     },
     "theodoi": {
@@ -47,5 +55,5 @@
       "lastReadAt": "2026-08-07T04:29:09.747Z"
     }
   },
-  "updatedAt": "2026-08-07T04:29:10.575Z"
+  "updatedAt": "2026-08-07T04:29:11.556Z"
 }
