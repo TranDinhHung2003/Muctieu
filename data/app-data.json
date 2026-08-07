@@ -397,20 +397,13 @@
       "2026-08-07": {
         "app": 0,
         "outside": 0,
-        "zoomPoints": 1,
+        "zoomPoints": 0,
         "highway": 0,
         "tip": 0,
-        "entries": [
-          {
-            "id": "msifpr7p54zell",
-            "field": "zoomPoints",
-            "value": 1,
-            "at": "2026-08-07T04:18:22.597Z"
-          }
-        ]
+        "entries": []
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-08-07T04:18:22.749Z"
+  "updatedAt": "2026-08-07T04:18:37.209Z"
 }
