@@ -31,6 +31,14 @@
       "text": "vch",
       "at": "2026-08-07T04:58:59.897Z",
       "status": "sent"
+    },
+    {
+      "id": "msih79afwt88yh",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "Bùn ẻ vãi",
+      "at": "2026-08-07T04:59:58.791Z",
+      "status": "sent"
     }
   ],
   "nicknames": {
@@ -39,7 +47,7 @@
   },
   "receipts": {
     "admin": {
-      "lastDeliveredAt": "2026-08-07T04:59:00.683Z",
+      "lastDeliveredAt": "2026-08-07T04:59:59.851Z",
       "lastReadAt": "2026-08-07T04:55:46.200Z"
     },
     "theodoi": {
@@ -47,5 +55,5 @@
       "lastReadAt": "2026-08-07T04:59:54.622Z"
     }
   },
-  "updatedAt": "2026-08-07T04:59:58.790Z"
+  "updatedAt": "2026-08-07T04:59:59.851Z"
 }
