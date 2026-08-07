@@ -1,22 +1,6 @@
 {
   "messages": [
     {
-      "id": "msih5vxp829yo6",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "Đến giờ đi ăn thì buồn đi ẻ vãi",
-      "at": "2026-08-07T04:58:54.829Z",
-      "status": "sent"
-    },
-    {
-      "id": "msih5zuh5naza9",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "vch",
-      "at": "2026-08-07T04:58:59.897Z",
-      "status": "sent"
-    },
-    {
       "id": "msih79afwt88yh",
       "from": "theodoi",
       "role": "viewer",
@@ -63,5 +47,5 @@
       "lastReadAt": "2026-08-07T05:01:10.105Z"
     }
   },
-  "updatedAt": "2026-08-07T05:25:42.982Z"
+  "updatedAt": "2026-08-07T05:29:06.334Z"
 }
