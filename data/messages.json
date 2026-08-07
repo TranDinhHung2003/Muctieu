@@ -1,14 +1,6 @@
 {
   "messages": [
     {
-      "id": "msig2z4jbwtidk",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "Shenme",
-      "at": "2026-08-07T04:28:39.380Z",
-      "status": "sent"
-    },
-    {
       "id": "msig3jvlzyuen2",
       "from": "admin",
       "role": "admin",
@@ -63,5 +55,5 @@
       "lastReadAt": "2026-08-07T04:55:18.123Z"
     }
   },
-  "updatedAt": "2026-08-07T04:55:46.200Z"
+  "updatedAt": "2026-08-07T04:58:43.102Z"
 }
