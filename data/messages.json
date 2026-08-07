@@ -1,30 +1,6 @@
 {
   "messages": [
     {
-      "id": "msih79afwt88yh",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "Bùn ẻ vãi",
-      "at": "2026-08-07T04:59:58.791Z",
-      "status": "sent"
-    },
-    {
-      "id": "msih7dey5zy4uj",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "phair nhịn ẻ để đi ăn",
-      "at": "2026-08-07T05:00:04.138Z",
-      "status": "sent"
-    },
-    {
-      "id": "msih7gdfp1z354",
-      "from": "theodoi",
-      "role": "viewer",
-      "text": "khoor ghia",
-      "at": "2026-08-07T05:00:07.971Z",
-      "status": "sent"
-    },
-    {
       "id": "msih8ew6v85zti",
       "from": "admin",
       "role": "admin",
@@ -47,5 +23,5 @@
       "lastReadAt": "2026-08-07T05:01:10.105Z"
     }
   },
-  "updatedAt": "2026-08-07T05:29:06.334Z"
+  "updatedAt": "2026-08-07T05:30:28.612Z"
 }
