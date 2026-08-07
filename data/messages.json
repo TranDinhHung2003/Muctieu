@@ -55,6 +55,14 @@
       "text": "khoor ghia",
       "at": "2026-08-07T05:00:07.971Z",
       "status": "sent"
+    },
+    {
+      "id": "msih8ew6v85zti",
+      "from": "admin",
+      "role": "admin",
+      "text": "😂😂😂",
+      "at": "2026-08-07T05:00:52.710Z",
+      "status": "sent"
     }
   ],
   "nicknames": {
@@ -71,5 +79,5 @@
       "lastReadAt": "2026-08-07T05:00:51.680Z"
     }
   },
-  "updatedAt": "2026-08-07T05:00:51.680Z"
+  "updatedAt": "2026-08-07T05:00:52.710Z"
 }
