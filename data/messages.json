@@ -1,5 +1,14 @@
 {
-  "messages": [],
+  "messages": [
+    {
+      "id": "msi9y8c8i65nz6",
+      "from": "admin",
+      "role": "admin",
+      "text": "Chưa được nhìn nào 😂",
+      "at": "2026-08-07T01:37:00.344Z",
+      "status": "sent"
+    }
+  ],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
@@ -14,5 +23,5 @@
       "lastReadAt": "2026-08-04T15:16:38.321Z"
     }
   },
-  "updatedAt": "2026-08-07T01:36:52.162Z"
+  "updatedAt": "2026-08-07T01:37:00.344Z"
 }
