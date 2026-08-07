@@ -71,13 +71,13 @@
   },
   "receipts": {
     "admin": {
-      "lastDeliveredAt": "2026-08-07T05:01:04.912Z",
-      "lastReadAt": "2026-08-07T05:01:04.912Z"
+      "lastDeliveredAt": "2026-08-07T05:01:08.036Z",
+      "lastReadAt": "2026-08-07T05:01:08.036Z"
     },
     "theodoi": {
       "lastDeliveredAt": "2026-08-07T05:01:06.678Z",
       "lastReadAt": "2026-08-07T05:01:06.678Z"
     }
   },
-  "updatedAt": "2026-08-07T05:01:06.678Z"
+  "updatedAt": "2026-08-07T05:01:08.036Z"
 }
