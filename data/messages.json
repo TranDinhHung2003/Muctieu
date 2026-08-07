@@ -47,6 +47,14 @@
       "text": "phair nhịn ẻ để đi ăn",
       "at": "2026-08-07T05:00:04.138Z",
       "status": "sent"
+    },
+    {
+      "id": "msih7gdfp1z354",
+      "from": "theodoi",
+      "role": "viewer",
+      "text": "khoor ghia",
+      "at": "2026-08-07T05:00:07.971Z",
+      "status": "sent"
     }
   ],
   "nicknames": {
@@ -63,5 +71,5 @@
       "lastReadAt": "2026-08-07T05:00:04.577Z"
     }
   },
-  "updatedAt": "2026-08-07T05:00:05.602Z"
+  "updatedAt": "2026-08-07T05:00:07.971Z"
 }
