@@ -1,22 +1,6 @@
 {
   "messages": [
     {
-      "id": "msifo264t4rtyz",
-      "from": "admin",
-      "role": "admin",
-      "text": "Ư",
-      "at": "2026-08-07T04:17:03.484Z",
-      "status": "sent"
-    },
-    {
-      "id": "msifo4y3g9j7hq",
-      "from": "admin",
-      "role": "admin",
-      "text": "Alo",
-      "at": "2026-08-07T04:17:07.083Z",
-      "status": "sent"
-    },
-    {
       "id": "msig2z4jbwtidk",
       "from": "theodoi",
       "role": "viewer",
@@ -71,5 +55,5 @@
       "lastReadAt": "2026-08-07T04:30:40.499Z"
     }
   },
-  "updatedAt": "2026-08-07T04:31:36.248Z"
+  "updatedAt": "2026-08-07T04:47:15.069Z"
 }
