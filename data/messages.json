@@ -1,14 +1,6 @@
 {
   "messages": [
     {
-      "id": "msig4ob0zc1hoi",
-      "from": "admin",
-      "role": "admin",
-      "text": "Rui",
-      "at": "2026-08-07T04:29:58.668Z",
-      "status": "sent"
-    },
-    {
       "id": "msig6ex19eixkm",
       "from": "admin",
       "role": "admin",
@@ -55,5 +47,5 @@
       "lastReadAt": "2026-08-07T04:59:54.622Z"
     }
   },
-  "updatedAt": "2026-08-07T04:59:54.622Z"
+  "updatedAt": "2026-08-07T04:59:58.790Z"
 }
