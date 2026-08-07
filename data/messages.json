@@ -47,6 +47,14 @@
       "text": "Rui",
       "at": "2026-08-07T04:29:58.668Z",
       "status": "sent"
+    },
+    {
+      "id": "msig6ex19eixkm",
+      "from": "admin",
+      "role": "admin",
+      "text": "😂😂😂",
+      "at": "2026-08-07T04:31:19.813Z",
+      "status": "sent"
     }
   ],
   "nicknames": {
@@ -63,5 +71,5 @@
       "lastReadAt": "2026-08-07T04:30:40.499Z"
     }
   },
-  "updatedAt": "2026-08-07T04:30:40.499Z"
+  "updatedAt": "2026-08-07T04:31:19.813Z"
 }
