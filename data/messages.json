@@ -1,14 +1,5 @@
 {
-  "messages": [
-    {
-      "id": "msih8ew6v85zti",
-      "from": "admin",
-      "role": "admin",
-      "text": "😂😂😂",
-      "at": "2026-08-07T05:00:52.710Z",
-      "status": "sent"
-    }
-  ],
+  "messages": [],
   "nicknames": {
     "theodoi": "Mẹ Cá 🐬",
     "admin": "Bố Cá"
@@ -23,5 +14,5 @@
       "lastReadAt": "2026-08-07T05:01:10.105Z"
     }
   },
-  "updatedAt": "2026-08-07T05:30:28.612Z"
+  "updatedAt": "2026-08-07T05:31:51.160Z"
 }
