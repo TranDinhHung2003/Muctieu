@@ -444,9 +444,24 @@
             "at": "2026-08-07T14:29:27.476Z"
           }
         ]
+      },
+      "2026-08-08": {
+        "app": 35000,
+        "outside": 0,
+        "zoomPoints": 0,
+        "highway": 0,
+        "tip": 0,
+        "entries": [
+          {
+            "id": "msjvp4y7ip9mxi",
+            "field": "app",
+            "value": 35000,
+            "at": "2026-08-08T04:33:33.775Z"
+          }
+        ]
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-08-07T14:29:29.385Z"
+  "updatedAt": "2026-08-08T04:33:33.948Z"
 }
