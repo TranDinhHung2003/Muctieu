@@ -450,7 +450,7 @@
         "outside": 650000,
         "zoomPoints": 1,
         "highway": 0,
-        "tip": 0,
+        "tip": 50000,
         "entries": [
           {
             "id": "msjvp4y7ip9mxi",
@@ -475,11 +475,17 @@
             "field": "zoomPoints",
             "value": 1,
             "at": "2026-08-08T06:39:06.183Z"
+          },
+          {
+            "id": "msk6yw0vniqgxg",
+            "field": "tip",
+            "value": 50000,
+            "at": "2026-08-08T09:49:04.543Z"
           }
         ]
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-08-08T06:39:06.389Z"
+  "updatedAt": "2026-08-08T09:49:04.664Z"
 }
