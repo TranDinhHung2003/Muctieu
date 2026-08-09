@@ -98,8 +98,16 @@
           "auth": "g0_04YnZ2sKnE-jJ_3-CVA"
         },
         "updatedAt": "2026-08-09T07:27:56.125Z"
+      },
+      {
+        "endpoint": "https://web.push.apple.com/QGoySmVRBfcHfjyDBOv_LvFqQNQV12TXPVrDObPUdGXj6EH871O0pItOP_YzT2PA2V8I7wghmOkO8KQp3uQRuzU34LKT5iNRMhwhdpFg2Jdme04w9xYA6uM2G2kzmk87a9fj97OqRVa_an6bl95eNZK4w_g05RSkQczgiiDcy-M",
+        "keys": {
+          "p256dh": "BARSyZhVUGIk5IJpPari1wt_pu8hrsf_V6V6L9yXbYTbGuDhlYtru7Vcv53IWrsjEJsQV1lC7CAEPmH3kUheFCI",
+          "auth": "n8uJqMARrcmgRdMWL3JrHQ"
+        },
+        "updatedAt": "2026-08-09T11:26:07.993Z"
       }
     ]
   },
-  "updatedAt": "2026-08-09T11:25:07.949Z"
+  "updatedAt": "2026-08-09T11:26:07.993Z"
 }
