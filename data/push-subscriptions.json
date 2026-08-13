@@ -52,14 +52,6 @@
     ],
     "theodoi": [
       {
-        "endpoint": "https://web.push.apple.com/QOwDdtWE16RZVXYBr3LHiMxoNE6S7P2beHEA0MhFoYcoJ_O8m4xJDhqa7IpQsuPWJCioTQu_nfa_eAhfcRwHXeuFql-9OjLU4WIuj6OfPK-8BxzanDwSZhVL9hu4CXb4kl7cQ461Z8HGCRNLDTKijpFsePb5sR3yQNMgdsQgpr0",
-        "keys": {
-          "p256dh": "BFc9h2ZPTGf4DWLHGSI_LTLTyBslUiaW2KpdSbnHcwz8zvcJjhQ8Ut_hxyqKVXWKSEmxrxa-EuYg_VkP9AZeBhA",
-          "auth": "FbtenqL43You3p6NKjhZrg"
-        },
-        "updatedAt": "2026-07-29T08:18:53.779Z"
-      },
-      {
         "endpoint": "https://web.push.apple.com/QCvwmaDfGSAU7ax8dB_7ikNNcm0Nc1x5TWgD5ZlK50TBgfmzJzpandInWRsSk4aN0pB0a_9H8N2S5wOYuJcptdSBgRW1pcOUcDbS3HqJZa6HfKODC3RuvBbXWDDzdH59bXkekkfaPh6mQuzCFWMFMmz_DMdEPFaR8m_5OMSLnRA",
         "keys": {
           "p256dh": "BPamlva3piDkbtLYBmigG-BpYEFEoEklft0FUho9_8R3qzyCU69wHrHKPwubS9Uh3gSvAa4jp4LE9a9q6AveypY",
@@ -109,5 +101,5 @@
       }
     ]
   },
-  "updatedAt": "2026-08-13T11:09:10.445Z"
+  "updatedAt": "2026-08-13T11:09:22.206Z"
 }
