@@ -606,9 +606,24 @@
             "at": "2026-08-14T07:28:09.333Z"
           }
         ]
+      },
+      "2026-08-16": {
+        "app": 0,
+        "outside": 400000,
+        "zoomPoints": 0,
+        "highway": 0,
+        "tip": 0,
+        "entries": [
+          {
+            "id": "msv7tu0ajsgc91",
+            "field": "outside",
+            "value": 400000,
+            "at": "2026-08-16T02:58:36.202Z"
+          }
+        ]
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-08-14T07:28:09.469Z"
+  "updatedAt": "2026-08-16T02:58:36.343Z"
 }
