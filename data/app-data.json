@@ -789,7 +789,7 @@
         "outside": 500000,
         "zoomPoints": 0,
         "highway": 0,
-        "tip": 0,
+        "tip": 21000,
         "entries": [
           {
             "id": "mt14vb1xxq3obw",
@@ -802,11 +802,23 @@
             "field": "app",
             "value": 76000,
             "at": "2026-08-20T06:22:50.337Z"
+          },
+          {
+            "id": "mt14w32p0sxsv4",
+            "field": "tip",
+            "value": 21000,
+            "at": "2026-08-20T06:22:59.473Z"
+          },
+          {
+            "id": "mt14wap1t5j38n",
+            "field": "app",
+            "value": 76000,
+            "at": "2026-08-20T06:23:09.349Z"
           }
         ]
       }
     },
     "dailyGoal": 1200000
   },
-  "updatedAt": "2026-08-20T06:22:50.642Z"
+  "updatedAt": "2026-08-20T08:35:53.984Z"
 }
