@@ -1,43 +1,70 @@
-const fs = require('fs');
-const path = require('path');
+/**
+ * Kho dữ liệu theo từng workspace.
+ *
+ * Mỗi tài khoản sở hữu đúng 1 workspace mang tên tài khoản đó:
+ *   workspaces/<owner>/app-data.json   → doanh thu, mục tiêu... (chỉ chủ được sửa)
+ *   workspaces/<owner>/messages.json   → hội thoại chủ ↔ từng người theo dõi
+ *
+ * Ảnh chat dùng chung thư mục `chat-images/` vì id ảnh đã là chuỗi ngẫu nhiên.
+ */
 
-const DATA_DIR = process.env.DATA_DIR
-  ? path.resolve(process.env.DATA_DIR)
-  : path.join(__dirname, 'data');
+const durable = require('./lib/durable');
 
-const APP_DATA_PATH = path.join(DATA_DIR, 'app-data.json');
-const BACKUP_PATH = path.join(DATA_DIR, 'backup-latest.json');
-const MESSAGES_PATH = path.join(DATA_DIR, 'messages.json');
-const CHAT_IMAGES_DIR = path.join(DATA_DIR, 'chat-images');
-
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
-const GITHUB_REPO = process.env.GITHUB_REPO || 'TranDinhHung2003/Muctieu';
-const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'cursor/muc-tieu-chay-xe-becf';
-const GITHUB_DATA_PATH = process.env.GITHUB_DATA_PATH || 'data/app-data.json';
-const GITHUB_MESSAGES_PATH = process.env.GITHUB_MESSAGES_PATH || 'data/messages.json';
-const GITHUB_CHAT_IMAGES_PATH = process.env.GITHUB_CHAT_IMAGES_PATH || 'data/chat-images';
-
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-if (!fs.existsSync(CHAT_IMAGES_DIR)) {
-  fs.mkdirSync(CHAT_IMAGES_DIR, { recursive: true });
-}
-
-let memoryStore = null;
-let githubSha = null;
-let memoryMessages = null;
-let githubMessagesSha = null;
 const MAX_MESSAGES = 200;
 const MESSAGE_TTL_MS = 30 * 60 * 1000;
 const MAX_IMAGE_BYTES = 700 * 1024;
 
+const LEGACY_DATA_PATH = 'app-data.json';
+const LEGACY_BACKUP_PATH = 'backup-latest.json';
+const LEGACY_MESSAGES_PATH = 'messages.json';
+
+/** owner → { data, updatedAt } */
+const dataStores = new Map();
+/** owner → { conversations, nicknames, updatedAt } */
+const messageStores = new Map();
+/** owner → Promise, tránh tải trùng khi nhiều request cùng vào 1 workspace */
+const dataLoading = new Map();
+const messagesLoading = new Map();
+
 function nowIso() {
-  return new Date().toISOString();
+  return durable.nowIso();
 }
 
-function emptyStore() {
+function safeName(value) {
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+}
+
+function dataPath(owner) {
+  return 'workspaces/' + safeName(owner) + '/app-data.json';
+}
+
+function messagesPath(owner) {
+  return 'workspaces/' + safeName(owner) + '/messages.json';
+}
+
+function chatImagePath(imageId) {
+  const safe = String(imageId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!safe) return null;
+  return 'chat-images/' + safe + '.img';
+}
+
+/* ------------------------------------------------------------------ */
+/* Dữ liệu doanh thu                                                    */
+/* ------------------------------------------------------------------ */
+
+function emptyData() {
   return { data: { days: {} }, updatedAt: nowIso() };
+}
+
+function normalizeDataStore(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  if (raw.data && raw.data.days && typeof raw.data.days === 'object') {
+    return { data: raw.data, updatedAt: raw.updatedAt || nowIso() };
+  }
+  if (raw.days && typeof raw.days === 'object') {
+    return { data: raw, updatedAt: raw.updatedAt || nowIso() };
+  }
+  return null;
 }
 
 function hasMoneyData(store) {
@@ -52,154 +79,109 @@ function hasMoneyData(store) {
   });
 }
 
-function readJson(filePath, fallback) {
-  try {
-    if (!fs.existsSync(filePath)) return fallback;
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  } catch {
-    return fallback;
-  }
-}
+async function loadDataStore(owner) {
+  const key = safeName(owner);
+  const logical = dataPath(key);
+  const local = normalizeDataStore(durable.readLocalJson(logical, null));
+  const remote = normalizeDataStore(await durable.readRemoteJson(logical));
 
-function writeJson(filePath, data) {
-  const tmp = filePath + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
-  fs.renameSync(tmp, filePath);
-}
-
-function loadFromDisk() {
-  const store = readJson(APP_DATA_PATH, null);
-  if (store && store.data) return store;
-
-  const backup = readJson(BACKUP_PATH, null);
-  if (backup && backup.days) {
-    return { data: backup, updatedAt: nowIso() };
-  }
-  if (backup && backup.data && backup.data.days) {
-    return { data: backup.data, updatedAt: backup.updatedAt || nowIso() };
-  }
-  return emptyStore();
-}
-
-function saveToDisk(store) {
-  writeJson(APP_DATA_PATH, store);
-  writeJson(BACKUP_PATH, store.data || { days: {} });
-}
-
-async function githubRequest(urlPath, options = {}) {
-  if (!GITHUB_TOKEN) return null;
-  const res = await fetch('https://api.github.com' + urlPath, {
-    ...options,
-    headers: {
-      Accept: 'application/vnd.github+json',
-      Authorization: 'Bearer ' + GITHUB_TOKEN,
-      'X-GitHub-Api-Version': '2022-11-28',
-      'User-Agent': 'muctieu-chay-xe',
-      ...(options.headers || {}),
-    },
-  });
-  if (res.status === 404) return { notFound: true, status: 404 };
-  const text = await res.text();
-  let body = null;
-  try { body = text ? JSON.parse(text) : null; } catch { body = { raw: text }; }
-  if (!res.ok) {
-    const msg = (body && body.message) || ('GitHub HTTP ' + res.status);
-    throw new Error(msg);
-  }
-  return body;
-}
-
-async function loadFromGitHub() {
-  if (!GITHUB_TOKEN) return null;
-  try {
-    const encPath = GITHUB_DATA_PATH.split('/').map(encodeURIComponent).join('/');
-    const info = await githubRequest(
-      '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
-    );
-    if (!info || info.notFound || !info.content) return null;
-    githubSha = info.sha || null;
-    const decoded = Buffer.from(info.content, 'base64').toString('utf8');
-    const parsed = JSON.parse(decoded);
-    if (parsed && parsed.data && parsed.data.days) return parsed;
-    if (parsed && parsed.days) return { data: parsed, updatedAt: nowIso() };
-    return null;
-  } catch (err) {
-    console.warn('Không tải được dữ liệu từ GitHub:', err.message);
-    return null;
-  }
-}
-
-async function saveToGitHub(store) {
-  if (!GITHUB_TOKEN) return false;
-  try {
-    const encPath = GITHUB_DATA_PATH.split('/').map(encodeURIComponent).join('/');
-    if (!githubSha) {
-      const info = await githubRequest(
-        '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
-      );
-      if (info && !info.notFound && info.sha) githubSha = info.sha;
-    }
-
-    const content = Buffer.from(JSON.stringify(store, null, 2), 'utf8').toString('base64');
-    const body = {
-      message: 'chore: cập nhật dữ liệu mục tiêu chạy xe',
-      content,
-      branch: GITHUB_BRANCH,
-    };
-    if (githubSha) body.sha = githubSha;
-
-    const result = await githubRequest(
-      '/repos/' + GITHUB_REPO + '/contents/' + encPath,
-      { method: 'PUT', body: JSON.stringify(body) }
-    );
-    if (result && result.content && result.content.sha) {
-      githubSha = result.content.sha;
-    }
-    return true;
-  } catch (err) {
-    console.warn('Không lưu được dữ liệu lên GitHub:', err.message);
-    return false;
-  }
-}
-
-async function initAppStore() {
-  let store = loadFromDisk();
-  const remote = await loadFromGitHub();
-
+  let store = local || emptyData();
   if (remote) {
-    const diskTime = store && store.updatedAt ? new Date(store.updatedAt).getTime() : 0;
+    const localTime = local && local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
     const remoteTime = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
     const preferRemote = !hasMoneyData(store)
-      || (hasMoneyData(remote) && remoteTime >= diskTime);
-
+      || (hasMoneyData(remote) && remoteTime >= localTime);
     if (preferRemote) {
       store = remote;
-      saveToDisk(store);
-      console.log('Đã tải dữ liệu bền từ GitHub');
+      durable.writeLocalJson(logical, store);
+      console.log('Đã tải dữ liệu workspace', key, 'từ GitHub');
     }
   }
-
-  memoryStore = store;
   return store;
 }
 
-function getAppStore() {
-  if (!memoryStore) {
-    memoryStore = loadFromDisk();
-  }
-  return memoryStore;
+async function initWorkspaceData(owner) {
+  const key = safeName(owner);
+  if (dataStores.has(key)) return dataStores.get(key);
+  if (dataLoading.has(key)) return dataLoading.get(key);
+
+  const job = loadDataStore(key).then((store) => {
+    dataStores.set(key, store);
+    dataLoading.delete(key);
+    return store;
+  }).catch((err) => {
+    dataLoading.delete(key);
+    console.warn('Không tải được workspace', key, err && err.message);
+    const store = normalizeDataStore(durable.readLocalJson(dataPath(key), null)) || emptyData();
+    dataStores.set(key, store);
+    return store;
+  });
+  dataLoading.set(key, job);
+  return job;
 }
 
-async function setAppStore(data) {
-  const store = {
-    data,
-    updatedAt: nowIso(),
-  };
-  memoryStore = store;
-  saveToDisk(store);
-  // Lưu bền lên GitHub để theodoi vẫn xem được khi admin offline / Render sleep
-  await saveToGitHub(store);
+function getAppStore(owner) {
+  const key = safeName(owner);
+  if (!dataStores.has(key)) {
+    dataStores.set(key, normalizeDataStore(durable.readLocalJson(dataPath(key), null)) || emptyData());
+  }
+  return dataStores.get(key);
+}
+
+async function setAppStore(owner, data) {
+  const key = safeName(owner);
+  const store = { data, updatedAt: nowIso() };
+  dataStores.set(key, store);
+  await durable.persistJson(dataPath(key), store, 'chore: cập nhật dữ liệu ' + key);
   return store.updatedAt;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tin nhắn                                                             */
+/* ------------------------------------------------------------------ */
+
+function emptyMessagesStore() {
+  return { conversations: {}, nicknames: {}, updatedAt: nowIso() };
+}
+
+function emptyConversation() {
+  return { messages: [], receipts: {} };
+}
+
+function cleanNickname(value) {
+  return String(value == null ? '' : value)
+    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 24);
+}
+
+function normalizeNicknamesMap(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  Object.keys(raw).forEach((key) => {
+    const username = String(key || '').trim().toLowerCase().slice(0, 32);
+    const value = cleanNickname(raw[key]);
+    if (username && value) out[username] = value;
+  });
+  return out;
+}
+
+function normalizeReceiptsMap(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  Object.keys(raw).forEach((key) => {
+    const username = String(key || '').trim().toLowerCase().slice(0, 32);
+    if (!username) return;
+    const row = raw[key] || {};
+    const entry = {};
+    ['lastDeliveredAt', 'lastReadAt'].forEach((field) => {
+      const time = row[field] ? new Date(row[field]).getTime() : NaN;
+      if (Number.isFinite(time)) entry[field] = new Date(time).toISOString();
+    });
+    if (Object.keys(entry).length) out[username] = entry;
+  });
+  return out;
 }
 
 function normalizeCallFields(m) {
@@ -213,577 +195,6 @@ function normalizeCallFields(m) {
   return { kind: 'call', callEvent, callMode, durationSec, callId };
 }
 
-function emptyMessagesStore() {
-  return { messages: [], nicknames: {}, receipts: {}, updatedAt: nowIso() };
-}
-
-function normalizeNicknamesMap(raw) {
-  const out = {};
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
-  Object.keys(raw).forEach((key) => {
-    const username = String(key || '').trim().slice(0, 32);
-    if (!username) return;
-    const val = String(raw[key] || '')
-      .replace(/[\u0000-\u001F\u007F]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 24);
-    if (val) out[username] = val;
-  });
-  return out;
-}
-
-function normalizeReceiptsMap(raw) {
-  const out = {};
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
-  Object.keys(raw).forEach((key) => {
-    const username = String(key || '').trim().slice(0, 32);
-    if (!username) return;
-    const row = raw[key] || {};
-    const lastDeliveredAt = row.lastDeliveredAt && !Number.isNaN(new Date(row.lastDeliveredAt).getTime())
-      ? new Date(row.lastDeliveredAt).toISOString()
-      : undefined;
-    const lastReadAt = row.lastReadAt && !Number.isNaN(new Date(row.lastReadAt).getTime())
-      ? new Date(row.lastReadAt).toISOString()
-      : undefined;
-    if (lastDeliveredAt || lastReadAt) {
-      out[username] = {};
-      if (lastDeliveredAt) out[username].lastDeliveredAt = lastDeliveredAt;
-      if (lastReadAt) out[username].lastReadAt = lastReadAt;
-    }
-  });
-  return out;
-}
-
-function listKnownUsernames(store) {
-  const users = new Set();
-  Object.keys((store && store.nicknames) || {}).forEach((u) => users.add(u));
-  Object.keys((store && store.receipts) || {}).forEach((u) => users.add(u));
-  ((store && store.messages) || []).forEach((m) => {
-    if (m && m.from) users.add(String(m.from));
-  });
-  return users;
-}
-
-function findPeerUsername(store, viewerUsername) {
-  const viewer = String(viewerUsername || '');
-  if (viewer === 'admin') return 'theodoi';
-  if (viewer === 'theodoi') return 'admin';
-  const users = listKnownUsernames(store);
-  users.delete(viewer);
-  if (users.has('theodoi')) return 'theodoi';
-  if (users.has('admin')) return 'admin';
-  const first = Array.from(users)[0];
-  return first || '';
-}
-
-function ensureReceipts(store) {
-  if (!store.receipts || typeof store.receipts !== 'object' || Array.isArray(store.receipts)) {
-    store.receipts = {};
-  }
-  return store.receipts;
-}
-
-function bumpReceipt(store, username, field, atIso) {
-  const user = String(username || '').trim();
-  if (!user || (field !== 'lastDeliveredAt' && field !== 'lastReadAt')) return false;
-  const receipts = ensureReceipts(store);
-  const atMs = new Date(atIso || nowIso()).getTime();
-  if (!Number.isFinite(atMs)) return false;
-  const cur = Object.assign({}, receipts[user] || {});
-  let changed = false;
-  const prevField = cur[field] ? new Date(cur[field]).getTime() : 0;
-  if (!prevField || atMs > prevField) {
-    cur[field] = new Date(atMs).toISOString();
-    changed = true;
-  }
-  if (field === 'lastReadAt' && cur.lastReadAt) {
-    const readMs = new Date(cur.lastReadAt).getTime();
-    const dPrev = cur.lastDeliveredAt ? new Date(cur.lastDeliveredAt).getTime() : 0;
-    if (Number.isFinite(readMs) && readMs >= dPrev) {
-      if (!cur.lastDeliveredAt || readMs > dPrev) {
-        cur.lastDeliveredAt = cur.lastReadAt;
-        changed = true;
-      }
-    }
-  }
-  if (!changed) return false;
-  receipts[user] = cur;
-  store.receipts = receipts;
-  return true;
-}
-
-function statusForOutgoing(messageAt, peerReceipt) {
-  const at = new Date(messageAt).getTime();
-  if (!Number.isFinite(at)) return 'sent';
-  const readAt = peerReceipt && peerReceipt.lastReadAt
-    ? new Date(peerReceipt.lastReadAt).getTime()
-    : 0;
-  const delAt = peerReceipt && peerReceipt.lastDeliveredAt
-    ? new Date(peerReceipt.lastDeliveredAt).getTime()
-    : 0;
-  if (Number.isFinite(readAt) && readAt >= at) return 'read';
-  if (Number.isFinite(delAt) && delAt >= at) return 'delivered';
-  return 'sent';
-}
-
-/** Migrate status cũ trên từng tin → receipts theo từng tài khoản */
-function seedReceiptsFromLegacyStatuses(store) {
-  const receipts = ensureReceipts(store);
-  let changed = false;
-  for (const m of store.messages || []) {
-    if (!m || !m.from || !m.at) continue;
-    if (m.status !== 'delivered' && m.status !== 'read') continue;
-    const peer = findPeerUsername(store, m.from);
-    if (!peer) continue;
-    if (m.status === 'delivered' || m.status === 'read') {
-      if (bumpReceipt(store, peer, 'lastDeliveredAt', m.deliveredAt || m.at)) changed = true;
-    }
-    if (m.status === 'read') {
-      if (bumpReceipt(store, peer, 'lastReadAt', m.readAt || m.at)) changed = true;
-    }
-  }
-  store.receipts = receipts;
-  return changed;
-}
-
-function isFreshMessage(m, now = Date.now()) {
-  if (!m || !m.at) return false;
-  const t = new Date(m.at).getTime();
-  if (!Number.isFinite(t)) return false;
-  return now - t <= MESSAGE_TTL_MS;
-}
-
-function chatImageLocalPath(imageId) {
-  const safe = String(imageId || '').replace(/[^a-zA-Z0-9_-]/g, '');
-  if (!safe) return null;
-  return path.join(CHAT_IMAGES_DIR, safe + '.img');
-}
-
-function githubChatImagePath(imageId) {
-  const safe = String(imageId || '').replace(/[^a-zA-Z0-9_-]/g, '');
-  if (!safe) return null;
-  return GITHUB_CHAT_IMAGES_PATH.replace(/\/+$/, '') + '/' + safe + '.img';
-}
-
-function deleteChatImageFile(imageId) {
-  const filePath = chatImageLocalPath(imageId);
-  if (!filePath) return;
-  try {
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-  } catch { /* ignore */ }
-  deleteChatImageFromGitHub(imageId).catch(() => {});
-}
-
-function parseChatImagePayload(raw) {
-  if (!raw || !raw.length) return null;
-  const idx = raw.indexOf(0x0a); // \n
-  if (idx < 0) return null;
-  let meta = {};
-  try { meta = JSON.parse(raw.slice(0, idx).toString('utf8')); } catch { meta = {}; }
-  const buffer = raw.slice(idx + 1);
-  if (!buffer.length) return null;
-  return {
-    mime: meta.mime || 'image/jpeg',
-    buffer,
-  };
-}
-
-function readChatImage(imageId) {
-  const filePath = chatImageLocalPath(imageId);
-  if (!filePath || !fs.existsSync(filePath)) return null;
-  try {
-    return parseChatImagePayload(fs.readFileSync(filePath));
-  } catch {
-    return null;
-  }
-}
-
-async function saveChatImageToGitHub(imageId, payloadBuffer) {
-  if (!GITHUB_TOKEN || !payloadBuffer || !payloadBuffer.length) return false;
-  const relPath = githubChatImagePath(imageId);
-  if (!relPath) return false;
-  try {
-    const encPath = relPath.split('/').map(encodeURIComponent).join('/');
-    let sha = null;
-    const existing = await githubRequest(
-      '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
-    );
-    if (existing && !existing.notFound && existing.sha) sha = existing.sha;
-    const body = {
-      message: 'chore: lưu ảnh chat ' + imageId,
-      content: Buffer.from(payloadBuffer).toString('base64'),
-      branch: GITHUB_BRANCH,
-    };
-    if (sha) body.sha = sha;
-    await githubRequest(
-      '/repos/' + GITHUB_REPO + '/contents/' + encPath,
-      { method: 'PUT', body: JSON.stringify(body) }
-    );
-    return true;
-  } catch (err) {
-    console.warn('Không lưu được ảnh chat lên GitHub:', err && err.message ? err.message : err);
-    return false;
-  }
-}
-
-async function deleteChatImageFromGitHub(imageId) {
-  if (!GITHUB_TOKEN) return false;
-  const relPath = githubChatImagePath(imageId);
-  if (!relPath) return false;
-  try {
-    const encPath = relPath.split('/').map(encodeURIComponent).join('/');
-    const existing = await githubRequest(
-      '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
-    );
-    if (!existing || existing.notFound || !existing.sha) return false;
-    await githubRequest(
-      '/repos/' + GITHUB_REPO + '/contents/' + encPath,
-      {
-        method: 'DELETE',
-        body: JSON.stringify({
-          message: 'chore: xóa ảnh chat hết hạn ' + imageId,
-          sha: existing.sha,
-          branch: GITHUB_BRANCH,
-        }),
-      }
-    );
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function loadChatImageFromGitHub(imageId) {
-  if (!GITHUB_TOKEN) return null;
-  const relPath = githubChatImagePath(imageId);
-  const filePath = chatImageLocalPath(imageId);
-  if (!relPath || !filePath) return null;
-  try {
-    const encPath = relPath.split('/').map(encodeURIComponent).join('/');
-    const info = await githubRequest(
-      '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
-    );
-    if (!info || info.notFound || !info.content) return null;
-    const raw = Buffer.from(info.content, 'base64');
-    const parsed = parseChatImagePayload(raw);
-    if (!parsed) return null;
-    fs.writeFileSync(filePath, raw);
-    return parsed;
-  } catch (err) {
-    console.warn('Không tải được ảnh chat từ GitHub:', err && err.message ? err.message : err);
-    return null;
-  }
-}
-
-/** Đọc ảnh local; nếu mất thì khôi phục từ store bền / GitHub */
-async function resolveChatImage(imageId) {
-  const local = readChatImage(imageId);
-  if (local && local.buffer && local.buffer.length) return local;
-
-  // Thử khôi phục từ imageBin trong messages store (đã sync GitHub)
-  try {
-    const store = memoryMessages || loadMessagesFromDisk();
-    const msg = (store.messages || []).find((m) => m && m.imageId === String(imageId || '').replace(/[^a-zA-Z0-9_-]/g, '') && m.imageBin);
-    if (msg && msg.imageBin) {
-      const buf = Buffer.from(String(msg.imageBin).replace(/\s+/g, ''), 'base64');
-      if (buf.length) {
-        const meta = JSON.stringify({ mime: msg.imageMime || 'image/jpeg', at: msg.at || nowIso() });
-        const payload = Buffer.concat([
-          Buffer.from(meta, 'utf8'),
-          Buffer.from('\n', 'utf8'),
-          buf,
-        ]);
-        const filePath = chatImageLocalPath(imageId);
-        if (filePath) fs.writeFileSync(filePath, payload);
-        return parseChatImagePayload(payload);
-      }
-    }
-  } catch { /* ignore */ }
-
-  return loadChatImageFromGitHub(imageId);
-}
-
-function normalizeMessagesStore(raw) {
-  if (!raw || typeof raw !== 'object') return emptyMessagesStore();
-  const now = Date.now();
-  const list = Array.isArray(raw.messages) ? raw.messages : [];
-  const kept = [];
-  for (const m of list) {
-    if (!m || !m.id || !m.from) continue;
-    if (!isFreshMessage(m, now)) {
-      deleteChatImageFile(m.imageId);
-      continue;
-    }
-    const text = typeof m.text === 'string' ? m.text.trim().slice(0, 1000) : '';
-    const imageId = m.imageId ? String(m.imageId).replace(/[^a-zA-Z0-9_-]/g, '') : '';
-    const callFields = normalizeCallFields(m);
-    if (!text && !imageId && callFields.kind !== 'call') continue;
-    const imageMime = m.imageMime ? String(m.imageMime).slice(0, 64) : '';
-    const imageBin = typeof m.imageBin === 'string' && m.imageBin.length
-      ? String(m.imageBin).replace(/\s+/g, '')
-      : '';
-    // Khôi phục file ảnh local từ bản bền (GitHub/messages.json) nếu đĩa tạm đã mất
-    if (imageId && imageBin) {
-      const localPath = chatImageLocalPath(imageId);
-      if (localPath && !fs.existsSync(localPath)) {
-        try {
-          const buf = Buffer.from(imageBin, 'base64');
-          if (buf.length) {
-            const meta = JSON.stringify({ mime: imageMime || 'image/jpeg', at: m.at || nowIso() });
-            fs.writeFileSync(localPath, Buffer.concat([
-              Buffer.from(meta, 'utf8'),
-              Buffer.from('\n', 'utf8'),
-              buf,
-            ]));
-          }
-        } catch { /* ignore */ }
-      }
-    }
-    const entry = {
-      id: String(m.id),
-      from: String(m.from),
-      role: m.role === 'viewer' ? 'viewer' : 'admin',
-      text: callFields.kind === 'call'
-        ? (text || buildCallMessageText(callFields.callEvent, callFields.callMode, callFields.durationSec))
-        : text,
-      imageId: imageId || undefined,
-      at: m.at || nowIso(),
-      status: normalizeMessageStatus(m.status),
-      deliveredAt: m.deliveredAt || undefined,
-      readAt: m.readAt || undefined,
-      ...callFields,
-    };
-    // Giữ bản bền trong store (không trả ra client)
-    if (imageId && imageBin) {
-      entry.imageBin = imageBin;
-      entry.imageMime = imageMime || 'image/jpeg';
-    }
-    kept.push(entry);
-  }
-  kept.sort((a, b) => {
-    const ta = new Date(a.at).getTime() || 0;
-    const tb = new Date(b.at).getTime() || 0;
-    if (ta !== tb) return ta - tb;
-    return String(a.id).localeCompare(String(b.id));
-  });
-  const store = {
-    messages: kept.slice(-MAX_MESSAGES),
-    nicknames: normalizeNicknamesMap(raw.nicknames),
-    receipts: normalizeReceiptsMap(raw.receipts),
-    updatedAt: raw.updatedAt || nowIso(),
-  };
-  seedReceiptsFromLegacyStatuses(store);
-  return store;
-}
-
-function normalizeMessageStatus(status) {
-  if (status === 'delivered' || status === 'read' || status === 'sent') return status;
-  return 'sent';
-}
-
-function pruneExpiredMessages(persist = true) {
-  if (!memoryMessages) memoryMessages = loadMessagesFromDisk();
-  const store = memoryMessages;
-  const before = store.messages.length;
-  const next = normalizeMessagesStore(store);
-  const changed = next.messages.length !== before
-    || next.messages.some((m, i) => !store.messages[i] || m.id !== store.messages[i].id);
-  if (changed) {
-    next.updatedAt = nowIso();
-    memoryMessages = next;
-    if (persist) {
-      saveMessagesToDisk(next);
-      saveMessagesToGitHub(next).catch(() => {});
-    }
-  } else if (!store.nicknames) {
-    // Đảm bảo luôn có field nicknames trên memory store
-    store.nicknames = next.nicknames || {};
-  }
-  return memoryMessages;
-}
-
-function getStoredNicknames() {
-  const store = getMessagesStore();
-  return normalizeNicknamesMap(store && store.nicknames);
-}
-
-async function setPeerNickname(username, nickname) {
-  const user = String(username || '').trim().slice(0, 32);
-  const nick = String(nickname || '')
-    .replace(/[\u0000-\u001F\u007F]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 24);
-  if (!user || !nick) throw new Error('Biệt danh không hợp lệ');
-
-  const store = getMessagesStore();
-  const nicknames = normalizeNicknamesMap(store.nicknames);
-  nicknames[user] = nick;
-  store.nicknames = nicknames;
-  store.updatedAt = nowIso();
-  memoryMessages = store;
-  saveMessagesToDisk(store);
-  await saveMessagesToGitHub(store);
-  return { nicknames: store.nicknames, updatedAt: store.updatedAt };
-}
-
-function publicMessage(m) {
-  if (!m || typeof m !== 'object') return m;
-  const out = Object.assign({}, m);
-  delete out.imageBin;
-  delete out.imageMime;
-  return out;
-}
-
-function publicMessagesForViewer(store, viewerUsername) {
-  const s = store || getMessagesStore();
-  const viewer = String(viewerUsername || '');
-  const receipts = normalizeReceiptsMap(s.receipts);
-  const peer = findPeerUsername(s, viewer);
-  const peerReceipt = (peer && receipts[peer]) || {};
-  const messages = (s.messages || []).map((m) => {
-    const pub = publicMessage(m);
-    if (!pub) return pub;
-    if (pub.from === viewer) {
-      return Object.assign({}, pub, {
-        status: statusForOutgoing(pub.at, peerReceipt),
-      });
-    }
-    // Tin đến: không hiện trạng thái gửi của mình
-    return Object.assign({}, pub, { status: 'sent' });
-  });
-  return {
-    messages,
-    nicknames: s.nicknames || {},
-    receipts,
-    updatedAt: s.updatedAt,
-  };
-}
-
-function publicMessagesStore(store, viewerUsername) {
-  if (viewerUsername) return publicMessagesForViewer(store, viewerUsername);
-  const s = store || getMessagesStore();
-  return {
-    messages: (s.messages || []).map(publicMessage),
-    nicknames: s.nicknames || {},
-    receipts: normalizeReceiptsMap(s.receipts),
-    updatedAt: s.updatedAt,
-  };
-}
-
-function getMessagesStore() {
-  return pruneExpiredMessages(true);
-}
-
-function loadMessagesFromDisk() {
-  return normalizeMessagesStore(readJson(MESSAGES_PATH, emptyMessagesStore()));
-}
-
-function saveMessagesToDisk(store) {
-  writeJson(MESSAGES_PATH, store);
-}
-
-function saveChatImageFromDataUrl(messageId, dataUrl) {
-  const match = String(dataUrl || '').match(/^data:(image\/(?:jpeg|jpg|png|webp));base64,([A-Za-z0-9+/=\s]+)$/i);
-  if (!match) throw new Error('Ảnh không hợp lệ');
-  const mime = match[1].toLowerCase().replace('image/jpg', 'image/jpeg');
-  const buf = Buffer.from(match[2].replace(/\s+/g, ''), 'base64');
-  if (!buf.length) throw new Error('Ảnh trống');
-  if (buf.length > MAX_IMAGE_BYTES) throw new Error('Ảnh quá lớn (tối đa ~700KB sau khi nén)');
-  const imageId = String(messageId).replace(/[^a-zA-Z0-9_-]/g, '');
-  if (!imageId) throw new Error('Không tạo được ảnh');
-  const meta = JSON.stringify({ mime, at: nowIso() });
-  const payload = Buffer.concat([
-    Buffer.from(meta, 'utf8'),
-    Buffer.from('\n', 'utf8'),
-    buf,
-  ]);
-  const filePath = chatImageLocalPath(imageId);
-  fs.writeFileSync(filePath, payload);
-  return { imageId, mime, size: buf.length, payload };
-}
-
-async function loadMessagesFromGitHub() {
-  if (!GITHUB_TOKEN) return null;
-  try {
-    const encPath = GITHUB_MESSAGES_PATH.split('/').map(encodeURIComponent).join('/');
-    const info = await githubRequest(
-      '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
-    );
-    if (!info || info.notFound || !info.content) return null;
-    githubMessagesSha = info.sha || null;
-    const decoded = Buffer.from(info.content, 'base64').toString('utf8');
-    return normalizeMessagesStore(JSON.parse(decoded));
-  } catch (err) {
-    console.warn('Không tải được tin nhắn từ GitHub:', err.message);
-    return null;
-  }
-}
-
-async function saveMessagesToGitHub(store) {
-  if (!GITHUB_TOKEN) return false;
-  try {
-    const encPath = GITHUB_MESSAGES_PATH.split('/').map(encodeURIComponent).join('/');
-    if (!githubMessagesSha) {
-      const info = await githubRequest(
-        '/repos/' + GITHUB_REPO + '/contents/' + encPath + '?ref=' + encodeURIComponent(GITHUB_BRANCH)
-      );
-      if (info && !info.notFound && info.sha) githubMessagesSha = info.sha;
-    }
-    // Không đẩy binary ảnh lên GitHub — chỉ metadata tin nhắn
-    const content = Buffer.from(JSON.stringify(store, null, 2), 'utf8').toString('base64');
-    const body = {
-      message: 'chore: cập nhật tin nhắn admin ↔ theo dõi',
-      content,
-      branch: GITHUB_BRANCH,
-    };
-    if (githubMessagesSha) body.sha = githubMessagesSha;
-    const result = await githubRequest(
-      '/repos/' + GITHUB_REPO + '/contents/' + encPath,
-      { method: 'PUT', body: JSON.stringify(body) }
-    );
-    if (result && result.content && result.content.sha) {
-      githubMessagesSha = result.content.sha;
-    }
-    return true;
-  } catch (err) {
-    console.warn('Không lưu được tin nhắn lên GitHub:', err.message);
-    return false;
-  }
-}
-
-async function initMessagesStore() {
-  let store = loadMessagesFromDisk();
-  const remote = await loadMessagesFromGitHub();
-  if (remote) {
-    const diskTime = store.updatedAt ? new Date(store.updatedAt).getTime() : 0;
-    const remoteTime = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
-    const preferRemote = (remote.messages.length > store.messages.length)
-      || (remote.messages.length > 0 && remoteTime >= diskTime);
-    if (preferRemote) {
-      store = remote;
-      saveMessagesToDisk(store);
-      console.log('Đã tải tin nhắn từ GitHub');
-    }
-  }
-  memoryMessages = store;
-  pruneExpiredMessages(true);
-  return memoryMessages;
-}
-
-function buildCallMessageText(callEvent, callMode, durationSec) {
-  const kind = callMode === 'video' ? 'Cuộc gọi video' : 'Cuộc gọi thoại';
-  const sec = Math.max(0, Math.floor(Number(durationSec) || 0));
-  if (callEvent === 'ended') {
-    return kind + ' · ' + formatDurationVi(sec);
-  }
-  if (callEvent === 'cancelled') return kind + ' · Đã hủy';
-  if (callEvent === 'rejected') return kind + ' · Đã từ chối';
-  if (callEvent === 'missed') return 'Cuộc gọi nhỡ · ' + kind;
-  return kind;
-}
-
 function formatDurationVi(totalSec) {
   const s = Math.max(0, Math.floor(Number(totalSec) || 0));
   const h = Math.floor(s / 3600);
@@ -795,25 +206,383 @@ function formatDurationVi(totalSec) {
   return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
 }
 
-async function addMessage({ from, role, text, imageDataUrl, kind, callEvent, callMode, durationSec, callId }) {
+function buildCallMessageText(callEvent, callMode, durationSec) {
+  const kind = callMode === 'video' ? 'Cuộc gọi video' : 'Cuộc gọi thoại';
+  if (callEvent === 'ended') return kind + ' · ' + formatDurationVi(durationSec);
+  if (callEvent === 'cancelled') return kind + ' · Đã hủy';
+  if (callEvent === 'rejected') return kind + ' · Đã từ chối';
+  if (callEvent === 'missed') return 'Cuộc gọi nhỡ · ' + kind;
+  return kind;
+}
+
+function isFreshMessage(m, now = Date.now()) {
+  if (!m || !m.at) return false;
+  const t = new Date(m.at).getTime();
+  return Number.isFinite(t) && now - t <= MESSAGE_TTL_MS;
+}
+
+function normalizeMessageStatus(status) {
+  return status === 'delivered' || status === 'read' || status === 'sent' ? status : 'sent';
+}
+
+function deleteChatImage(imageId) {
+  const logical = chatImagePath(imageId);
+  if (!logical) return;
+  durable.removeLocal(logical);
+  durable.deleteRemote(logical, 'chore: xoá ảnh chat hết hạn ' + imageId).catch(() => {});
+}
+
+function parseChatImagePayload(raw) {
+  if (!raw || !raw.length) return null;
+  const idx = raw.indexOf(0x0a);
+  if (idx < 0) return null;
+  let meta = {};
+  try { meta = JSON.parse(raw.slice(0, idx).toString('utf8')); } catch { meta = {}; }
+  const buffer = raw.slice(idx + 1);
+  if (!buffer.length) return null;
+  return { mime: meta.mime || 'image/jpeg', buffer };
+}
+
+function buildChatImagePayload(mime, buffer, at) {
+  const meta = JSON.stringify({ mime: mime || 'image/jpeg', at: at || nowIso() });
+  return Buffer.concat([
+    Buffer.from(meta, 'utf8'),
+    Buffer.from('\n', 'utf8'),
+    Buffer.from(buffer),
+  ]);
+}
+
+function normalizeMessage(m, now) {
+  if (!m || !m.id || !m.from) return null;
+  if (!isFreshMessage(m, now)) {
+    deleteChatImage(m.imageId);
+    return null;
+  }
+  const text = typeof m.text === 'string' ? m.text.trim().slice(0, 1000) : '';
+  const imageId = m.imageId ? String(m.imageId).replace(/[^a-zA-Z0-9_-]/g, '') : '';
+  const callFields = normalizeCallFields(m);
+  if (!text && !imageId && callFields.kind !== 'call') return null;
+
+  const imageMime = m.imageMime ? String(m.imageMime).slice(0, 64) : '';
+  const imageBin = typeof m.imageBin === 'string' && m.imageBin.length
+    ? String(m.imageBin).replace(/\s+/g, '')
+    : '';
+
+  // Đĩa của Render là tạm — dựng lại file ảnh từ bản base64 bền nếu đã mất
+  if (imageId && imageBin) {
+    const logical = chatImagePath(imageId);
+    if (logical && !durable.localExists(logical)) {
+      try {
+        const buf = Buffer.from(imageBin, 'base64');
+        if (buf.length) {
+          durable.writeLocalBuffer(logical, buildChatImagePayload(imageMime, buf, m.at));
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  const entry = {
+    id: String(m.id),
+    from: String(m.from).toLowerCase(),
+    role: m.role === 'viewer' ? 'viewer' : 'admin',
+    text: callFields.kind === 'call'
+      ? (text || buildCallMessageText(callFields.callEvent, callFields.callMode, callFields.durationSec))
+      : text,
+    imageId: imageId || undefined,
+    at: m.at || nowIso(),
+    status: normalizeMessageStatus(m.status),
+    ...callFields,
+  };
+  if (imageId && imageBin) {
+    entry.imageBin = imageBin;
+    entry.imageMime = imageMime || 'image/jpeg';
+  }
+  return entry;
+}
+
+function sortMessages(list) {
+  return list.sort((a, b) => {
+    const ta = new Date(a.at).getTime() || 0;
+    const tb = new Date(b.at).getTime() || 0;
+    if (ta !== tb) return ta - tb;
+    return String(a.id).localeCompare(String(b.id));
+  });
+}
+
+function normalizeConversation(raw) {
+  const now = Date.now();
+  const list = Array.isArray(raw && raw.messages) ? raw.messages : [];
+  const kept = [];
+  list.forEach((m) => {
+    const entry = normalizeMessage(m, now);
+    if (entry) kept.push(entry);
+  });
+  return {
+    messages: sortMessages(kept).slice(-MAX_MESSAGES),
+    receipts: normalizeReceiptsMap(raw && raw.receipts),
+  };
+}
+
+function normalizeMessagesStore(raw) {
+  const conversations = {};
+  const rawConversations = (raw && raw.conversations && typeof raw.conversations === 'object')
+    ? raw.conversations
+    : {};
+  Object.keys(rawConversations).forEach((key) => {
+    const peer = String(key || '').trim().toLowerCase().slice(0, 32);
+    if (!peer) return;
+    conversations[peer] = normalizeConversation(rawConversations[key]);
+  });
+  return {
+    conversations,
+    nicknames: normalizeNicknamesMap(raw && raw.nicknames),
+    updatedAt: (raw && raw.updatedAt) || nowIso(),
+  };
+}
+
+function countMessages(store) {
+  return Object.values((store && store.conversations) || {})
+    .reduce((n, conv) => n + ((conv && conv.messages) || []).length, 0);
+}
+
+async function loadMessagesStore(owner) {
+  const key = safeName(owner);
+  const logical = messagesPath(key);
+  const local = normalizeMessagesStore(durable.readLocalJson(logical, null));
+  const remoteRaw = await durable.readRemoteJson(logical);
+
+  let store = local;
+  if (remoteRaw) {
+    const remote = normalizeMessagesStore(remoteRaw);
+    const localTime = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
+    const remoteTime = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
+    const remoteCount = countMessages(remote);
+    if (remoteCount > countMessages(local) || (remoteCount > 0 && remoteTime >= localTime)
+      || Object.keys(remote.nicknames).length > Object.keys(local.nicknames).length) {
+      store = remote;
+      durable.writeLocalJson(logical, store);
+      console.log('Đã tải tin nhắn workspace', key, 'từ GitHub');
+    }
+  }
+  return store;
+}
+
+async function initWorkspaceMessages(owner) {
+  const key = safeName(owner);
+  if (messageStores.has(key)) return messageStores.get(key);
+  if (messagesLoading.has(key)) return messagesLoading.get(key);
+
+  const job = loadMessagesStore(key).then((store) => {
+    messageStores.set(key, store);
+    messagesLoading.delete(key);
+    return store;
+  }).catch((err) => {
+    messagesLoading.delete(key);
+    console.warn('Không tải được tin nhắn workspace', key, err && err.message);
+    const store = normalizeMessagesStore(durable.readLocalJson(messagesPath(key), null));
+    messageStores.set(key, store);
+    return store;
+  });
+  messagesLoading.set(key, job);
+  return job;
+}
+
+function rawMessagesStore(owner) {
+  const key = safeName(owner);
+  if (!messageStores.has(key)) {
+    messageStores.set(key, normalizeMessagesStore(durable.readLocalJson(messagesPath(key), null)));
+  }
+  return messageStores.get(key);
+}
+
+function persistMessages(owner, { remote = true } = {}) {
+  const key = safeName(owner);
+  const store = rawMessagesStore(key);
+  durable.writeLocalJson(messagesPath(key), store);
+  if (remote) {
+    durable.writeRemoteJson(messagesPath(key), store, 'chore: cập nhật tin nhắn ' + key).catch(() => {});
+  }
+  return store.updatedAt;
+}
+
+/** Dọn tin quá hạn (30 phút); trả về store đã dọn. */
+function pruneExpiredMessages(owner, persist = true) {
+  const key = safeName(owner);
+  const store = rawMessagesStore(key);
+  const before = countMessages(store);
+  const next = normalizeMessagesStore(store);
+  if (countMessages(next) !== before) {
+    next.updatedAt = nowIso();
+    messageStores.set(key, next);
+    if (persist) persistMessages(key);
+    return next;
+  }
+  return store;
+}
+
+function getMessagesStore(owner) {
+  return pruneExpiredMessages(owner, true);
+}
+
+function getConversation(owner, peer) {
+  const store = getMessagesStore(owner);
+  const key = safeName(peer);
+  if (!key) return emptyConversation();
+  if (!store.conversations[key]) store.conversations[key] = emptyConversation();
+  return store.conversations[key];
+}
+
+function getStoredNicknames(owner) {
+  return normalizeNicknamesMap(getMessagesStore(owner).nicknames);
+}
+
+async function setNickname(owner, username, nickname) {
+  const key = safeName(owner);
+  const target = safeName(username);
+  const nick = cleanNickname(nickname);
+  if (!target || !nick) throw new Error('Biệt danh không hợp lệ');
+  const store = getMessagesStore(key);
+  store.nicknames = normalizeNicknamesMap(store.nicknames);
+  store.nicknames[target] = nick;
+  store.updatedAt = nowIso();
+  messageStores.set(key, store);
+  durable.writeLocalJson(messagesPath(key), store);
+  await durable.writeRemoteJson(messagesPath(key), store, 'chore: cập nhật biệt danh ' + key);
+  return { nicknames: store.nicknames, updatedAt: store.updatedAt };
+}
+
+function bumpReceipt(conversation, username, field, atIso) {
+  const user = safeName(username);
+  if (!user || (field !== 'lastDeliveredAt' && field !== 'lastReadAt')) return false;
+  const atMs = new Date(atIso || nowIso()).getTime();
+  if (!Number.isFinite(atMs)) return false;
+
+  const current = Object.assign({}, conversation.receipts[user] || {});
+  let changed = false;
+  const previous = current[field] ? new Date(current[field]).getTime() : 0;
+  if (!previous || atMs > previous) {
+    current[field] = new Date(atMs).toISOString();
+    changed = true;
+  }
+  // Đã đọc thì hiển nhiên đã nhận
+  if (field === 'lastReadAt' && current.lastReadAt) {
+    const readMs = new Date(current.lastReadAt).getTime();
+    const deliveredMs = current.lastDeliveredAt ? new Date(current.lastDeliveredAt).getTime() : 0;
+    if (Number.isFinite(readMs) && readMs > deliveredMs) {
+      current.lastDeliveredAt = current.lastReadAt;
+      changed = true;
+    }
+  }
+  if (!changed) return false;
+  conversation.receipts[user] = current;
+  return true;
+}
+
+function statusForOutgoing(messageAt, peerReceipt) {
+  const at = new Date(messageAt).getTime();
+  if (!Number.isFinite(at)) return 'sent';
+  const readAt = peerReceipt && peerReceipt.lastReadAt ? new Date(peerReceipt.lastReadAt).getTime() : 0;
+  const deliveredAt = peerReceipt && peerReceipt.lastDeliveredAt
+    ? new Date(peerReceipt.lastDeliveredAt).getTime()
+    : 0;
+  if (Number.isFinite(readAt) && readAt >= at) return 'read';
+  if (Number.isFinite(deliveredAt) && deliveredAt >= at) return 'delivered';
+  return 'sent';
+}
+
+function publicMessage(m) {
+  if (!m || typeof m !== 'object') return m;
+  const out = Object.assign({}, m);
+  delete out.imageBin;
+  delete out.imageMime;
+  return out;
+}
+
+/**
+ * Danh sách tin của 1 hội thoại, kèm trạng thái gửi tính theo receipts của đối phương.
+ * `viewer` là tài khoản đang xem, `other` là tài khoản còn lại trong hội thoại.
+ */
+function publicConversation(owner, peer, viewer, other) {
+  const store = getMessagesStore(owner);
+  const conversation = getConversation(owner, peer);
+  const peerReceipt = conversation.receipts[safeName(other)] || {};
+  const me = safeName(viewer);
+  const messages = (conversation.messages || []).map((m) => {
+    const pub = publicMessage(m);
+    if (pub.from === me) {
+      return Object.assign({}, pub, { status: statusForOutgoing(pub.at, peerReceipt) });
+    }
+    return Object.assign({}, pub, { status: 'sent' });
+  });
+  return { messages, nicknames: store.nicknames || {}, updatedAt: store.updatedAt };
+}
+
+function saveChatImageFromDataUrl(messageId, dataUrl) {
+  const match = String(dataUrl || '')
+    .match(/^data:(image\/(?:jpeg|jpg|png|webp));base64,([A-Za-z0-9+/=\s]+)$/i);
+  if (!match) throw new Error('Ảnh không hợp lệ');
+  const mime = match[1].toLowerCase().replace('image/jpg', 'image/jpeg');
+  const base64 = match[2].replace(/\s+/g, '');
+  const buf = Buffer.from(base64, 'base64');
+  if (!buf.length) throw new Error('Ảnh trống');
+  if (buf.length > MAX_IMAGE_BYTES) throw new Error('Ảnh quá lớn (tối đa ~700KB sau khi nén)');
+  const imageId = String(messageId).replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!imageId) throw new Error('Không tạo được ảnh');
+  const payload = buildChatImagePayload(mime, buf);
+  durable.writeLocalBuffer(chatImagePath(imageId), payload);
+  return { imageId, mime, base64, payload };
+}
+
+/** Đọc ảnh local; nếu đĩa Render đã mất thì dựng lại từ store bền / GitHub. */
+async function resolveChatImage(owner, imageId) {
+  const logical = chatImagePath(imageId);
+  if (!logical) return null;
+
+  const local = parseChatImagePayload(durable.readLocalBuffer(logical));
+  if (local) return local;
+
+  const safeId = String(imageId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  const store = rawMessagesStore(owner);
+  for (const conversation of Object.values(store.conversations || {})) {
+    const msg = (conversation.messages || []).find((m) => m && m.imageId === safeId && m.imageBin);
+    if (!msg) continue;
+    try {
+      const buf = Buffer.from(String(msg.imageBin).replace(/\s+/g, ''), 'base64');
+      if (!buf.length) continue;
+      const payload = buildChatImagePayload(msg.imageMime, buf, msg.at);
+      durable.writeLocalBuffer(logical, payload);
+      return parseChatImagePayload(payload);
+    } catch { /* ignore */ }
+  }
+
+  const remote = await durable.readRemoteBuffer(logical);
+  if (!remote) return null;
+  const parsed = parseChatImagePayload(remote);
+  if (parsed) durable.writeLocalBuffer(logical, remote);
+  return parsed;
+}
+
+async function addMessage(owner, peer, {
+  from, role, text, imageDataUrl, kind, callEvent, callMode, durationSec, callId,
+}) {
   const callFields = kind === 'call'
     ? normalizeCallFields({ kind, callEvent, callMode, durationSec, callId })
     : {};
   const clean = String(text || '').trim().slice(0, 1000);
   const hasImage = !!(imageDataUrl && String(imageDataUrl).startsWith('data:image/'));
-  if (callFields.kind === 'call') {
-    // ok
-  } else if (!clean && !hasImage) {
+  if (callFields.kind !== 'call' && !clean && !hasImage) {
     throw new Error('Nội dung trống');
   }
 
-  const store = getMessagesStore();
+  const key = safeName(owner);
+  const conversation = getConversation(key, peer);
+
   if (callFields.kind === 'call' && callFields.callId) {
-    const dup = (store.messages || []).some((m) => (
+    const duplicate = (conversation.messages || []).some((m) => (
       m && m.kind === 'call' && m.callId === callFields.callId && m.callEvent === callFields.callEvent
     ));
-    if (dup) {
-      return { message: null, updatedAt: store.updatedAt, duplicate: true };
+    if (duplicate) {
+      return { message: null, updatedAt: rawMessagesStore(key).updatedAt, duplicate: true };
     }
   }
 
@@ -825,15 +594,14 @@ async function addMessage({ from, role, text, imageDataUrl, kind, callEvent, cal
   if (hasImage) {
     const saved = saveChatImageFromDataUrl(id, imageDataUrl);
     imageId = saved.imageId;
-    imagePayload = saved.payload || null;
-    imageMime = saved.mime || 'image/jpeg';
-    // Lưu base64 trong messages store để sống sót qua Render restart / sync GitHub
-    const match = String(imageDataUrl).match(/^data:image\/[^;]+;base64,([A-Za-z0-9+/=\s]+)$/i);
-    imageBin = match ? match[1].replace(/\s+/g, '') : null;
+    imagePayload = saved.payload;
+    imageMime = saved.mime;
+    imageBin = saved.base64;
   }
-  const msg = {
+
+  const message = {
     id,
-    from: String(from || ''),
+    from: safeName(from),
     role: role === 'viewer' ? 'viewer' : 'admin',
     text: callFields.kind === 'call'
       ? buildCallMessageText(callFields.callEvent, callFields.callMode, callFields.durationSec)
@@ -845,98 +613,115 @@ async function addMessage({ from, role, text, imageDataUrl, kind, callEvent, cal
     status: 'sent',
     ...callFields,
   };
-  store.messages = [...store.messages, msg]
-    .sort((a, b) => {
-      const ta = new Date(a.at).getTime() || 0;
-      const tb = new Date(b.at).getTime() || 0;
-      if (ta !== tb) return ta - tb;
-      return String(a.id).localeCompare(String(b.id));
-    })
-    .slice(-MAX_MESSAGES);
+
+  conversation.messages = sortMessages([...conversation.messages, message]).slice(-MAX_MESSAGES);
+  const store = rawMessagesStore(key);
   store.updatedAt = nowIso();
-  memoryMessages = store;
-  saveMessagesToDisk(store);
+  durable.writeLocalJson(messagesPath(key), store);
+
   if (imageId && imagePayload) {
-    await saveChatImageToGitHub(imageId, imagePayload);
+    await durable.writeRemoteBuffer(chatImagePath(imageId), imagePayload, 'chore: lưu ảnh chat ' + imageId);
   }
-  await saveMessagesToGitHub(store);
-  // Không trả imageBin ra client
-  const publicMessage = Object.assign({}, msg);
-  delete publicMessage.imageBin;
-  delete publicMessage.imageMime;
-  return { message: publicMessage, updatedAt: store.updatedAt };
+  await durable.writeRemoteJson(messagesPath(key), store, 'chore: cập nhật tin nhắn ' + key);
+
+  return { message: publicMessage(message), updatedAt: store.updatedAt };
 }
 
-function markMessageDeliveredById(messageId, recipientUsername) {
+function touchReceipt(owner, peer, username, fields) {
+  const key = safeName(owner);
+  const conversation = getConversation(key, peer);
+  const at = nowIso();
+  let changed = false;
+  fields.forEach((field) => {
+    if (bumpReceipt(conversation, username, field, at)) changed = true;
+  });
+  if (!changed) return false;
+  const store = rawMessagesStore(key);
+  store.updatedAt = at;
+  persistMessages(key);
+  return true;
+}
+
+function markMessagesDelivered(owner, peer, username) {
+  return touchReceipt(owner, peer, username, ['lastDeliveredAt']);
+}
+
+function markMessagesRead(owner, peer, username) {
+  return touchReceipt(owner, peer, username, ['lastDeliveredAt', 'lastReadAt']);
+}
+
+function markMessageDeliveredById(owner, peer, messageId, recipient) {
+  const conversation = getConversation(owner, peer);
   const id = String(messageId || '').trim();
-  if (!id) return getMessagesStore();
-  const store = getMessagesStore();
-  const msg = (store.messages || []).find((m) => m && m.id === id);
-  if (!msg) return store;
-  const recipient = String(recipientUsername || '').trim() || findPeerUsername(store, msg.from);
-  if (!recipient || recipient === msg.from) return store;
-  const now = nowIso();
-  if (!bumpReceipt(store, recipient, 'lastDeliveredAt', now)) return store;
-  store.updatedAt = now;
-  memoryMessages = store;
-  saveMessagesToDisk(store);
-  saveMessagesToGitHub(store).catch(() => {});
-  return store;
+  if (!id || !(conversation.messages || []).some((m) => m && m.id === id)) return false;
+  return markMessagesDelivered(owner, peer, recipient);
 }
 
-/** viewerUsername = tài khoản ĐÃ NHẬN tin trên máy */
-function markMessagesDelivered(viewerUsername) {
-  const store = getMessagesStore();
-  const user = String(viewerUsername || '').trim();
-  if (!user) return store;
-  const now = nowIso();
-  if (!bumpReceipt(store, user, 'lastDeliveredAt', now)) return store;
-  store.updatedAt = now;
-  memoryMessages = store;
-  saveMessagesToDisk(store);
-  saveMessagesToGitHub(store).catch(() => {});
-  return store;
-}
+/* ------------------------------------------------------------------ */
+/* Chuyển dữ liệu 1 người dùng cũ sang workspace của chủ cũ             */
+/* ------------------------------------------------------------------ */
 
-/** viewerUsername = tài khoản ĐANG MỞ mục tin nhắn để đọc */
-function markMessagesRead(viewerUsername) {
-  const store = getMessagesStore();
-  const user = String(viewerUsername || '').trim();
-  if (!user) return store;
-  const now = nowIso();
-  const changedDelivered = bumpReceipt(store, user, 'lastDeliveredAt', now);
-  const changedRead = bumpReceipt(store, user, 'lastReadAt', now);
-  if (!changedDelivered && !changedRead) return store;
-  store.updatedAt = now;
-  memoryMessages = store;
-  saveMessagesToDisk(store);
-  saveMessagesToGitHub(store).catch(() => {});
-  return store;
+async function migrateLegacyWorkspace(owner, follower) {
+  const key = safeName(owner);
+  const peer = safeName(follower);
+  if (!key) return false;
+  let migrated = false;
+
+  if (!durable.localExists(dataPath(key))) {
+    const legacy = normalizeDataStore(durable.readLocalJson(LEGACY_DATA_PATH, null))
+      || normalizeDataStore(durable.readLocalJson(LEGACY_BACKUP_PATH, null))
+      || normalizeDataStore(await durable.readRemoteJson(LEGACY_DATA_PATH));
+    if (legacy && hasMoneyData(legacy)) {
+      dataStores.set(key, legacy);
+      await durable.persistJson(dataPath(key), legacy, 'chore: chuyển dữ liệu cũ sang workspace ' + key);
+      console.log('Đã chuyển dữ liệu doanh thu cũ sang workspace', key);
+      migrated = true;
+    }
+  }
+
+  if (peer && !durable.localExists(messagesPath(key))) {
+    const legacy = durable.readLocalJson(LEGACY_MESSAGES_PATH, null)
+      || await durable.readRemoteJson(LEGACY_MESSAGES_PATH);
+    const hasLegacy = legacy && (Array.isArray(legacy.messages) || legacy.nicknames);
+    if (hasLegacy && !legacy.conversations) {
+      const store = normalizeMessagesStore({
+        conversations: { [peer]: { messages: legacy.messages, receipts: legacy.receipts } },
+        nicknames: legacy.nicknames,
+        updatedAt: legacy.updatedAt,
+      });
+      messageStores.set(key, store);
+      await durable.persistJson(messagesPath(key), store, 'chore: chuyển tin nhắn cũ sang workspace ' + key);
+      console.log('Đã chuyển tin nhắn cũ sang workspace', key);
+      migrated = true;
+    }
+  }
+
+  return migrated;
 }
 
 module.exports = {
-  DATA_DIR,
-  GITHUB_TOKEN,
-  GITHUB_REPO,
-  GITHUB_BRANCH,
+  DATA_DIR: durable.DATA_DIR,
+  GITHUB_TOKEN: durable.GITHUB_TOKEN,
+  GITHUB_REPO: durable.GITHUB_REPO,
+  GITHUB_BRANCH: durable.GITHUB_BRANCH,
   MESSAGE_TTL_MS,
-  initAppStore,
+  nowIso,
+  hasMoneyData,
+  initWorkspaceData,
   getAppStore,
   setAppStore,
-  hasMoneyData,
-  nowIso,
-  initMessagesStore,
+  initWorkspaceMessages,
   getMessagesStore,
+  getConversation,
+  publicConversation,
+  publicMessage,
   getStoredNicknames,
-  setPeerNickname,
+  setNickname,
   addMessage,
-  markMessageDeliveredById,
   markMessagesDelivered,
   markMessagesRead,
+  markMessageDeliveredById,
   pruneExpiredMessages,
-  readChatImage,
   resolveChatImage,
-  publicMessagesStore,
-  publicMessagesForViewer,
-  publicMessage,
+  migrateLegacyWorkspace,
 };
