@@ -1,11 +1,10 @@
 require('dotenv').config();
 
-const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const accounts = require('./accounts');
 const storage = require('./storage');
 const pushNotify = require('./push-notify');
 
@@ -17,131 +16,10 @@ const VIEWER_USERNAME = process.env.VIEWER_USERNAME || 'theodoi';
 const VIEWER_PASSWORD = process.env.VIEWER_PASSWORD || 'xem123';
 const COOKIE_NAME = 'muctieu_token';
 const IS_PROD = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
-const DATA_DIR = storage.DATA_DIR;
-const USERS_PATH = path.join(DATA_DIR, 'users.json');
-
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+const FOLLOW_PATH_PREFIX = '/t/';
 
 function nowIso() {
   return new Date().toISOString();
-}
-
-function readJson(filePath, fallback) {
-  try {
-    if (!fs.existsSync(filePath)) return fallback;
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  } catch {
-    return fallback;
-  }
-}
-
-function writeJson(filePath, data) {
-  const tmp = filePath + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
-  fs.renameSync(tmp, filePath);
-}
-
-function loadUsersStore() {
-  return readJson(USERS_PATH, { users: [] });
-}
-
-function saveUsersStore(store) {
-  writeJson(USERS_PATH, store);
-}
-
-function defaultNickname(username, role) {
-  if (role === 'viewer') return 'Theo dõi';
-  if (role === 'admin') return 'Admin';
-  return String(username || 'Bạn').slice(0, 24);
-}
-
-function normalizeNickname(value, fallback) {
-  const clean = String(value || '')
-    .replace(/[\u0000-\u001F\u007F]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 24);
-  return clean || fallback;
-}
-
-function ensureUser(store, username, password, role) {
-  const exists = store.users.find((u) => u.username.toLowerCase() === username.toLowerCase());
-  if (exists) return false;
-  store.users.push({
-    id: store.users.length ? Math.max(...store.users.map((u) => u.id)) + 1 : 1,
-    username,
-    password_hash: bcrypt.hashSync(password, 10),
-    role,
-    nickname: defaultNickname(username, role),
-    updated_at: nowIso(),
-  });
-  return true;
-}
-
-function initUsers() {
-  const usersStore = loadUsersStore();
-  let changed = false;
-  if (ensureUser(usersStore, ADMIN_USERNAME, ADMIN_PASSWORD, 'admin')) {
-    console.log('Đã tạo tài khoản admin:', ADMIN_USERNAME);
-    changed = true;
-  }
-  if (ensureUser(usersStore, VIEWER_USERNAME, VIEWER_PASSWORD, 'viewer')) {
-    console.log('Đã tạo tài khoản theo dõi:', VIEWER_USERNAME);
-    changed = true;
-  }
-  // Bổ sung biệt danh cho user cũ
-  usersStore.users.forEach((u) => {
-    if (!u.nickname || !String(u.nickname).trim()) {
-      u.nickname = defaultNickname(u.username, u.role);
-      changed = true;
-    }
-  });
-  if (changed) saveUsersStore(usersStore);
-}
-
-/** Biệt danh dùng chung — lưu bền trong messages store (GitHub), cả hai cùng thấy */
-function getNicknamesMap() {
-  const stored = storage.getStoredNicknames ? storage.getStoredNicknames() : {};
-  const store = loadUsersStore();
-  const map = {};
-  (store.users || []).forEach((u) => {
-    if (!u || !u.username) return;
-    map[u.username] = normalizeNickname(
-      stored[u.username] || u.nickname,
-      defaultNickname(u.username, u.role)
-    );
-  });
-  Object.keys(stored).forEach((username) => {
-    if (!map[username]) {
-      map[username] = normalizeNickname(stored[username], username);
-    }
-  });
-  return map;
-}
-
-/** Tên hiển thị trong chat: bản thân = "Bạn", người khác = biệt danh chung */
-function getDisplayNamesForViewer(viewerUsername) {
-  const map = getNicknamesMap();
-  if (viewerUsername && Object.prototype.hasOwnProperty.call(map, viewerUsername)) {
-    map[viewerUsername] = 'Bạn';
-  } else if (viewerUsername) {
-    map[viewerUsername] = 'Bạn';
-  }
-  return map;
-}
-
-function publicUserPayload(user) {
-  const stored = storage.getStoredNicknames ? storage.getStoredNicknames() : {};
-  return {
-    username: user.username,
-    role: user.role,
-    nickname: normalizeNickname(
-      stored[user.username] || user.nickname,
-      defaultNickname(user.username, user.role)
-    ),
-  };
 }
 
 const app = express();
@@ -149,47 +27,12 @@ app.set('trust proxy', 1);
 app.use(express.json({ limit: '3mb' }));
 app.use(cookieParser());
 
-app.get('/api/health', (_req, res) => {
-  const pushStats = pushNotify.getStats ? pushNotify.getStats() : null;
-  res.json({
-    ok: true,
-    time: nowIso(),
-    durable: !!storage.GITHUB_TOKEN,
-    push: pushStats,
-  });
-});
+/* ------------------------------------------------------------------ */
+/* Xác thực                                                            */
+/* ------------------------------------------------------------------ */
 
 function createToken(user) {
-  return jwt.sign(
-    { id: user.id, username: user.username, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '30d' }
-  );
-}
-
-function authMiddleware(req, res, next) {
-  const token = req.cookies[COOKIE_NAME];
-  if (!token) {
-    return res.status(401).json({ error: 'Chưa đăng nhập' });
-  }
-  try {
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
-  } catch {
-    return res.status(401).json({ error: 'Phiên đăng nhập hết hạn, vui lòng đăng nhập lại' });
-  }
-}
-
-function adminOnly(req, res, next) {
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Tài khoản theo dõi chỉ được xem, không được chỉnh sửa' });
-  }
-  next();
-}
-
-function findUserByUsername(username) {
-  const store = loadUsersStore();
-  return store.users.find((u) => u.username.toLowerCase() === String(username || '').toLowerCase()) || null;
+  return jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '30d' });
 }
 
 function cookieOptions(extra = {}) {
@@ -203,32 +46,218 @@ function cookieOptions(extra = {}) {
 }
 
 function setAuthCookie(res, token) {
-  res.cookie(COOKIE_NAME, token, cookieOptions({
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-  }));
+  res.cookie(COOKIE_NAME, token, cookieOptions({ maxAge: 30 * 24 * 60 * 60 * 1000 }));
 }
 
 function clearAuthCookie(res) {
   res.clearCookie(COOKIE_NAME, cookieOptions());
 }
 
-app.post('/api/login', (req, res) => {
-  const username = String((req.body || {}).username || '').trim();
-  const password = String((req.body || {}).password || '');
+function readTokenUser(req) {
+  const token = req.cookies[COOKIE_NAME];
+  if (!token) return null;
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    return accounts.findByUsername(payload.username);
+  } catch {
+    return null;
+  }
+}
+
+function authMiddleware(req, res, next) {
+  const user = readTokenUser(req);
+  if (!user) {
+    clearAuthCookie(res);
+    return res.status(401).json({ error: 'Chưa đăng nhập' });
+  }
+  req.user = user;
+  next();
+}
+
+/** Xác định workspace đang xem: header X-Workspace hoặc ?ws=, mặc định là của chính mình. */
+function workspaceMiddleware(req, res, next) {
+  const requested = accounts.normalizeUsername(req.get('X-Workspace') || req.query.ws || '');
+  const owner = requested || req.user.username;
+  const role = accounts.accessRole(owner, req.user.username);
+  if (!role) {
+    return res.status(403).json({
+      error: 'Bạn chưa được theo dõi tài khoản này. Hãy mở đường link theo dõi mà chủ tài khoản gửi cho bạn.',
+    });
+  }
+  req.workspace = { owner, role };
+  next();
+}
+
+function ownerOnly(req, res, next) {
+  if (!req.workspace || req.workspace.role !== 'owner') {
+    return res.status(403).json({ error: 'Bạn đang xem dữ liệu của người khác — chỉ được xem, không được chỉnh sửa' });
+  }
+  next();
+}
+
+function sendAccountError(res, err, fallback = 'Có lỗi xảy ra') {
+  const status = err instanceof accounts.AccountError ? err.status : 500;
+  res.status(status).json({ error: (err && err.message) || fallback });
+}
+
+/* ------------------------------------------------------------------ */
+/* Ngữ cảnh tài khoản trả về cho client                                 */
+/* ------------------------------------------------------------------ */
+
+function shareUrlFor(req, token) {
+  const host = req.get('host');
+  if (!host) return FOLLOW_PATH_PREFIX + token;
+  return req.protocol + '://' + host + FOLLOW_PATH_PREFIX + token;
+}
+
+/** Biệt danh hiển thị trong 1 workspace: ưu tiên biệt danh đã đặt, sau đó tên hiển thị. */
+function displayNamesFor(owner, viewerUsername) {
+  const stored = storage.getStoredNicknames(owner);
+  const map = {};
+  accounts.listWorkspaceMembers(owner).forEach((username) => {
+    const user = accounts.findByUsername(username);
+    map[username] = stored[username]
+      || (user ? user.displayName : accounts.defaultDisplayName(username));
+  });
+  Object.keys(stored).forEach((username) => {
+    if (!map[username]) map[username] = stored[username];
+  });
+  if (viewerUsername) map[viewerUsername] = 'Bạn';
+  return map;
+}
+
+function workspaceSummary(owner, viewerUsername) {
+  const user = accounts.findByUsername(owner);
+  const role = accounts.accessRole(owner, viewerUsername);
+  const stored = storage.getStoredNicknames(owner);
+  return {
+    owner,
+    ownerName: user ? user.displayName : accounts.defaultDisplayName(owner),
+    nickname: stored[owner] || null,
+    role: role === 'owner' ? 'owner' : 'follower',
+  };
+}
+
+function accountContext(req, user) {
+  const followers = accounts.listFollowers(user.username).map((item) => {
+    const stored = storage.getStoredNicknames(user.username);
+    return Object.assign({}, item, { nickname: stored[item.username] || null });
+  });
+  const workspaces = [
+    workspaceSummary(user.username, user.username),
+    ...accounts.listFollowing(user.username).map((item) => workspaceSummary(item.username, user.username)),
+  ];
+  return {
+    username: user.username,
+    displayName: user.displayName,
+    shareToken: user.shareToken,
+    shareUrl: shareUrlFor(req, user.shareToken),
+    followers,
+    following: accounts.listFollowing(user.username),
+    workspaces,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Route công khai                                                      */
+/* ------------------------------------------------------------------ */
+
+app.get('/api/health', (_req, res) => {
+  res.json({
+    ok: true,
+    time: nowIso(),
+    durable: !!storage.GITHUB_TOKEN,
+    accounts: accounts.listUsernames().length,
+    push: pushNotify.getStats ? pushNotify.getStats() : null,
+  });
+});
+
+/** Xem trước chủ tài khoản đứng sau 1 đường link theo dõi (không cần đăng nhập). */
+app.get('/api/follow/info', (req, res) => {
+  const owner = accounts.findByShareToken(req.query.token);
+  if (!owner) {
+    return res.status(404).json({ error: 'Đường link theo dõi không đúng hoặc đã bị huỷ' });
+  }
+  const viewer = readTokenUser(req);
+  res.json({
+    ok: true,
+    owner: accounts.publicUser(owner),
+    loggedIn: !!viewer,
+    alreadyFollowing: !!viewer && (
+      viewer.username === owner.username || accounts.isFollowing(owner.username, viewer.username)
+    ),
+    isSelf: !!viewer && viewer.username === owner.username,
+  });
+});
+
+/** Gắn quan hệ theo dõi ngay sau khi đăng ký/đăng nhập bằng link. */
+async function applyFollowToken(token, follower) {
+  if (!token) return null;
+  const owner = accounts.findByShareToken(token);
+  if (!owner) return { error: 'Đường link theo dõi không đúng hoặc đã bị huỷ' };
+  if (owner.username === follower.username) return { self: true, owner: accounts.publicUser(owner) };
+  await accounts.addFollow(owner.username, follower.username);
+  await storage.initWorkspaceData(owner.username);
+  await storage.initWorkspaceMessages(owner.username);
+  return { owner: accounts.publicUser(owner) };
+}
+
+app.post('/api/register', async (req, res) => {
+  const body = req.body || {};
+  try {
+    if (body.confirmPassword != null && String(body.confirmPassword) !== String(body.password || '')) {
+      throw new accounts.AccountError('Mật khẩu nhập lại không khớp');
+    }
+    const user = await accounts.register({
+      username: body.username,
+      password: body.password,
+      displayName: body.displayName,
+    });
+    await storage.initWorkspaceData(user.username);
+    await storage.initWorkspaceMessages(user.username);
+
+    const followed = await applyFollowToken(body.followToken, user);
+    setAuthCookie(res, createToken(user));
+    res.json({
+      ok: true,
+      ...accountContext(req, user),
+      followed: followed && followed.owner ? followed.owner : null,
+      followError: followed && followed.error ? followed.error : null,
+    });
+  } catch (err) {
+    sendAccountError(res, err, 'Không tạo được tài khoản');
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  const body = req.body || {};
+  const username = accounts.normalizeUsername(body.username);
+  const password = String(body.password || '');
   if (!username || !password) {
     return res.status(400).json({ error: 'Vui lòng nhập tên đăng nhập và mật khẩu' });
   }
 
-  const user = findUserByUsername(username);
-  if (!user || !bcrypt.compareSync(password, user.password_hash)) {
-    return res.status(401).json({
-      error: '( sai tên đăng nhập và mật khẩu )',
-    });
+  const user = accounts.findByUsername(username);
+  if (!user || !accounts.verifyPassword(user, password)) {
+    return res.status(401).json({ error: '( sai tên đăng nhập và mật khẩu )' });
   }
 
-  const token = createToken(user);
-  setAuthCookie(res, token);
-  res.json({ ok: true, ...publicUserPayload(user) });
+  let followed = null;
+  try {
+    followed = await applyFollowToken(body.followToken, user);
+  } catch (err) {
+    followed = { error: (err && err.message) || 'Không theo dõi được tài khoản này' };
+  }
+
+  await storage.initWorkspaceData(user.username);
+  await storage.initWorkspaceMessages(user.username);
+  setAuthCookie(res, createToken(user));
+  res.json({
+    ok: true,
+    ...accountContext(req, user),
+    followed: followed && followed.owner ? followed.owner : null,
+    followError: followed && followed.error ? followed.error : null,
+  });
 });
 
 app.post('/api/logout', (_req, res) => {
@@ -237,108 +266,109 @@ app.post('/api/logout', (_req, res) => {
 });
 
 app.get('/api/me', (req, res) => {
-  const token = req.cookies[COOKIE_NAME];
-  if (!token) {
+  const user = readTokenUser(req);
+  if (!user) {
+    clearAuthCookie(res);
     return res.json({ loggedIn: false });
   }
+  res.json({ loggedIn: true, ...accountContext(req, user) });
+});
+
+/* ------------------------------------------------------------------ */
+/* Theo dõi & chia sẻ                                                   */
+/* ------------------------------------------------------------------ */
+
+app.post('/api/follow', authMiddleware, async (req, res) => {
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    const user = findUserByUsername(payload.username);
-    if (!user) {
-      clearAuthCookie(res);
-      return res.json({ loggedIn: false });
-    }
-    res.json({ loggedIn: true, ...publicUserPayload(user) });
-  } catch {
-    clearAuthCookie(res);
-    res.json({ loggedIn: false });
+    const result = await applyFollowToken(String((req.body || {}).token || ''), req.user);
+    if (!result) return res.status(400).json({ error: 'Thiếu mã theo dõi' });
+    if (result.error) return res.status(404).json({ error: result.error });
+    if (result.self) return res.status(400).json({ error: 'Đây là link của chính bạn' });
+    res.json({ ok: true, owner: result.owner, ...accountContext(req, req.user) });
+  } catch (err) {
+    sendAccountError(res, err, 'Không theo dõi được tài khoản này');
   }
 });
 
-app.post('/api/nickname', authMiddleware, async (req, res) => {
-  // Đặt biệt danh CHO ĐỐI PHƯƠNG — lưu bền (GitHub), cả hai cùng thấy
+/** Người theo dõi tự bỏ theo dõi 1 workspace. */
+app.delete('/api/follow/:owner', authMiddleware, async (req, res) => {
+  try {
+    await accounts.removeFollow(req.params.owner, req.user.username);
+    res.json({ ok: true, ...accountContext(req, req.user) });
+  } catch (err) {
+    sendAccountError(res, err, 'Không bỏ theo dõi được');
+  }
+});
+
+/** Chủ tài khoản gỡ 1 người khỏi danh sách theo dõi mình. */
+app.delete('/api/followers/:username', authMiddleware, async (req, res) => {
+  try {
+    await accounts.removeFollow(req.user.username, req.params.username);
+    res.json({ ok: true, ...accountContext(req, req.user) });
+  } catch (err) {
+    sendAccountError(res, err, 'Không gỡ được người theo dõi');
+  }
+});
+
+app.post('/api/share/rotate', authMiddleware, async (req, res) => {
+  try {
+    const user = await accounts.rotateShareToken(req.user.username);
+    res.json({ ok: true, ...accountContext(req, user) });
+  } catch (err) {
+    sendAccountError(res, err, 'Không đổi được link theo dõi');
+  }
+});
+
+app.post('/api/display-name', authMiddleware, async (req, res) => {
+  try {
+    const user = await accounts.setDisplayName(req.user.username, (req.body || {}).displayName);
+    res.json({ ok: true, ...accountContext(req, user) });
+  } catch (err) {
+    sendAccountError(res, err, 'Không đổi được tên hiển thị');
+  }
+});
+
+app.post('/api/change-password', authMiddleware, async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  try {
+    await accounts.changePassword(req.user.username, currentPassword, newPassword);
+    res.json({ ok: true });
+  } catch (err) {
+    sendAccountError(res, err, 'Không đổi được mật khẩu');
+  }
+});
+
+/** Đặt biệt danh cho 1 thành viên trong workspace đang xem. */
+app.post('/api/nickname', authMiddleware, workspaceMiddleware, async (req, res) => {
   const body = req.body || {};
-  const rawNick = String(body.nickname || '');
-  const nickname = normalizeNickname(rawNick, '');
-  if (!nickname) {
-    return res.status(400).json({ error: 'Biệt danh không được để trống' });
-  }
-  if (nickname.length > 24) {
-    return res.status(400).json({ error: 'Biệt danh tối đa 24 ký tự' });
-  }
+  const nickname = accounts.cleanText(body.nickname, 24);
+  if (!nickname) return res.status(400).json({ error: 'Biệt danh không được để trống' });
 
-  const store = loadUsersStore();
-  let targetUsername = String(body.username || body.forUsername || '').trim();
-  if (!targetUsername) {
-    const other = (store.users || []).find((u) => u && u.username && u.username !== req.user.username);
-    targetUsername = other ? other.username : '';
-  }
-  if (!targetUsername) {
-    return res.status(400).json({ error: 'Không tìm thấy đối phương' });
-  }
-  if (targetUsername === req.user.username) {
-    return res.status(400).json({ error: 'Hãy đặt biệt danh cho người khác' });
-  }
-  const target = store.users.find((u) => u && u.username === targetUsername);
-  if (!target) {
-    return res.status(404).json({ error: 'Không tìm thấy đối phương' });
-  }
-
-  // Đồng bộ local users.json (best-effort) + lưu bền qua messages store / GitHub
-  target.nickname = nickname;
-  target.updated_at = nowIso();
-  saveUsersStore(store);
+  const { owner } = req.workspace;
+  const members = accounts.listWorkspaceMembers(owner);
+  let target = accounts.normalizeUsername(body.username || body.forUsername);
+  if (!target) target = members.find((u) => u !== req.user.username) || '';
+  if (!target) return res.status(400).json({ error: 'Không tìm thấy đối phương' });
+  if (target === req.user.username) return res.status(400).json({ error: 'Hãy đặt biệt danh cho người khác' });
+  if (!members.includes(target)) return res.status(404).json({ error: 'Người này không ở trong nhóm theo dõi' });
 
   try {
-    const saved = await storage.setPeerNickname(targetUsername, nickname);
+    const saved = await storage.setNickname(owner, target, nickname);
     res.json({
       ok: true,
-      peerUsername: targetUsername,
+      peerUsername: target,
       peerNickname: nickname,
-      nicknames: getDisplayNamesForViewer(req.user.username),
-      updatedAt: saved && saved.updatedAt,
+      nicknames: displayNamesFor(owner, req.user.username),
+      updatedAt: saved.updatedAt,
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message || 'Không lưu được biệt danh' });
+    res.status(500).json({ error: err.message || 'Không lưu được biệt danh' });
   }
 });
 
-function getAllUsernames() {
-  const store = loadUsersStore();
-  return (store.users || []).map((u) => u && u.username).filter(Boolean);
-}
-
-function pushToOthers(exceptUsername, payload) {
-  const others = pushNotify.listOtherUsernames(getAllUsernames(), exceptUsername);
-  return pushNotify.sendPushToUsernames(others, payload).catch((err) => {
-    console.warn('Push thất bại:', err && err.message ? err.message : err);
-  });
-}
-
-function startKeepAlive() {
-  const ms = Math.max(60 * 1000, Number(process.env.KEEP_ALIVE_MS || 5 * 60 * 1000) || 5 * 60 * 1000);
-  const base = String(
-    process.env.KEEP_ALIVE_URL
-    || process.env.RENDER_EXTERNAL_URL
-    || ''
-  ).replace(/\/$/, '');
-  if (!base) {
-    console.log('Keep-alive: chưa có RENDER_EXTERNAL_URL / KEEP_ALIVE_URL (GitHub Action vẫn ping được).');
-    return;
-  }
-  const ping = () => {
-    fetch(base + '/api/health')
-      .then((r) => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-      })
-      .catch((err) => {
-        console.warn('Keep-alive lỗi:', err && err.message ? err.message : err);
-      });
-  };
-  setTimeout(ping, 20 * 1000);
-  setInterval(ping, ms);
-  console.log('Keep-alive bật mỗi', Math.round(ms / 1000), 's →', base + '/api/health');
-}
+/* ------------------------------------------------------------------ */
+/* Web Push                                                             */
+/* ------------------------------------------------------------------ */
 
 app.get('/api/push/vapid-public-key', authMiddleware, (_req, res) => {
   res.json({ publicKey: pushNotify.getPublicKey() });
@@ -346,9 +376,7 @@ app.get('/api/push/vapid-public-key', authMiddleware, (_req, res) => {
 
 app.post('/api/push/subscribe', authMiddleware, (req, res) => {
   const ok = pushNotify.saveSubscription(req.user.username, (req.body || {}).subscription);
-  if (!ok) {
-    return res.status(400).json({ error: 'Subscription không hợp lệ' });
-  }
+  if (!ok) return res.status(400).json({ error: 'Subscription không hợp lệ' });
   res.json({ ok: true });
 });
 
@@ -357,8 +385,18 @@ app.post('/api/push/unsubscribe', authMiddleware, (req, res) => {
   res.json({ ok: true });
 });
 
+app.get('/api/push/status', authMiddleware, (req, res) => {
+  res.json({
+    ok: true,
+    publicKey: pushNotify.getPublicKey(),
+    stats: pushNotify.getStats(),
+    username: req.user.username,
+    lastTest: pushNotify.getLastPushTest(),
+  });
+});
+
 app.post('/api/push/test', authMiddleware, async (req, res) => {
-  const username = String(req.user.username || '');
+  const username = req.user.username;
   const title = String((req.body || {}).title || 'Mục tiêu chạy xe').trim() || 'Mục tiêu chạy xe';
   const body = String((req.body || {}).body || 'Thông báo thử').trim();
   const delaySec = Math.max(0, Math.min(60, Number((req.body || {}).delaySec) || 0));
@@ -368,7 +406,6 @@ app.post('/api/push/test', authMiddleware, async (req, res) => {
     return pushNotify.sendPushToUsernames([username], payload);
   };
 
-  // Tin 1: gửi ngay (xác nhận đăng ký còn sống)
   const immediate = await sendOne({
     title,
     body: 'Tin 1/2: Đăng ký OK. Hãy VUỐT TẮT app ngay — tin 2 sẽ tới sau ' + (delaySec || 12) + 's',
@@ -376,7 +413,6 @@ app.post('/api/push/test', authMiddleware, async (req, res) => {
     page: 'home',
     type: 'test',
   });
-
   pushNotify.setLastPushTest({
     username,
     phase: 'immediate',
@@ -385,14 +421,13 @@ app.post('/api/push/test', authMiddleware, async (req, res) => {
     errors: immediate.errors || [],
   });
 
-  const wait = delaySec > 0 ? delaySec : 0;
-  if (wait > 0) {
+  if (delaySec > 0) {
     res.json({
       ok: true,
       delayed: true,
-      delaySec: wait,
+      delaySec,
       immediate,
-      message: 'Đã gửi tin 1. Vuốt tắt app — tin 2 sau ' + wait + 's',
+      message: 'Đã gửi tin 1. Vuốt tắt app — tin 2 sau ' + delaySec + 's',
       stats: pushNotify.getStats(),
     });
 
@@ -403,10 +438,7 @@ app.post('/api/push/test', authMiddleware, async (req, res) => {
       page: 'home',
       type: 'test',
     };
-
-    // Gửi 2 lần (wait và wait+5s) để tăng tỉ lệ khi iOS vừa kill app
-    const delays = [wait, wait + 5];
-    delays.forEach((sec, idx) => {
+    [delaySec, delaySec + 5].forEach((sec, idx) => {
       setTimeout(() => {
         sendOne(Object.assign({}, payload2, {
           body: payload2.body + (idx ? ' · nhắc lại' : ''),
@@ -420,14 +452,12 @@ app.post('/api/push/test', authMiddleware, async (req, res) => {
             sent: result.sent || 0,
             errors: result.errors || [],
           });
-          console.log('Push test delayed', sec + 's', username, result.sent + '/' + result.attempted);
         }).catch((err) => {
           pushNotify.setLastPushTest({
             username,
             phase: 'delayed-error',
             error: err && err.message ? err.message : String(err),
           });
-          console.warn('Push test delay lỗi:', err && err.message ? err.message : err);
         });
       }, sec * 1000);
     });
@@ -443,43 +473,53 @@ app.post('/api/push/test', authMiddleware, async (req, res) => {
   });
 });
 
-app.get('/api/push/status', authMiddleware, (req, res) => {
-  const storeUsers = pushNotify.getStats();
+function pushToWorkspaceFollowers(owner, exceptUsername, payload) {
+  const targets = accounts.listWorkspaceMembers(owner)
+    .filter((username) => username !== exceptUsername);
+  if (!targets.length) return Promise.resolve({ attempted: 0, sent: 0 });
+  return pushNotify.sendPushToUsernames(targets, payload).catch((err) => {
+    console.warn('Push thất bại:', err && err.message ? err.message : err);
+    return { attempted: 0, sent: 0 };
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Dữ liệu doanh thu (theo workspace)                                   */
+/* ------------------------------------------------------------------ */
+
+app.get('/api/data', authMiddleware, workspaceMiddleware, async (req, res) => {
+  const { owner, role } = req.workspace;
+  await storage.initWorkspaceData(owner);
+  const store = storage.getAppStore(owner);
   res.json({
-    ok: true,
-    publicKey: pushNotify.getPublicKey(),
-    stats: storeUsers,
-    username: req.user.username,
-    lastTest: pushNotify.getLastPushTest(),
+    data: store.data || { days: {} },
+    updatedAt: store.updatedAt,
+    workspace: workspaceSummary(owner, req.user.username),
+    role,
   });
 });
 
-app.get('/api/data', authMiddleware, (_req, res) => {
-  const store = storage.getAppStore();
-  res.json({ data: store.data || { days: {} }, updatedAt: store.updatedAt });
-});
-
-app.get('/api/data/sync', authMiddleware, (_req, res) => {
-  const store = storage.getAppStore();
+app.get('/api/data/sync', authMiddleware, workspaceMiddleware, (req, res) => {
+  const store = storage.getAppStore(req.workspace.owner);
   res.json({ updatedAt: store.updatedAt });
 });
 
-app.put('/api/data', authMiddleware, adminOnly, async (req, res) => {
+app.put('/api/data', authMiddleware, workspaceMiddleware, ownerOnly, async (req, res) => {
   const { data, pushNotify: pushPayload } = req.body || {};
   if (!data || typeof data !== 'object' || !data.days || typeof data.days !== 'object') {
     return res.status(400).json({ error: 'Dữ liệu không hợp lệ' });
   }
   try {
-    const updatedAt = await storage.setAppStore(data);
+    const owner = req.workspace.owner;
+    const updatedAt = await storage.setAppStore(owner, data);
     if (pushPayload && typeof pushPayload === 'object') {
-      const title = String(pushPayload.title || 'Cập nhật doanh thu').trim() || 'Cập nhật doanh thu';
-      const body = String(pushPayload.body || 'Có cập nhật số tiền mới').trim() || 'Có cập nhật số tiền mới';
-      await pushToOthers(req.user.username, {
-        title,
-        body,
-        tag: 'muctieu-money',
+      await pushToWorkspaceFollowers(owner, req.user.username, {
+        title: String(pushPayload.title || 'Cập nhật doanh thu').trim() || 'Cập nhật doanh thu',
+        body: String(pushPayload.body || 'Có cập nhật số tiền mới').trim() || 'Có cập nhật số tiền mới',
+        tag: 'muctieu-money-' + owner,
         page: 'home',
         type: 'money',
+        workspace: owner,
       });
     }
     res.json({ ok: true, updatedAt });
@@ -488,94 +528,104 @@ app.put('/api/data', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-app.post('/api/change-password', authMiddleware, (req, res) => {
-  const { currentPassword, newPassword } = req.body || {};
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({ error: 'Vui lòng nhập đủ mật khẩu' });
-  }
-  if (newPassword.length < 6) {
-    return res.status(400).json({ error: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
-  }
-
-  const store = loadUsersStore();
-  const user = store.users.find((u) => u.username === req.user.username);
-  if (!user || !bcrypt.compareSync(currentPassword, user.password_hash)) {
-    return res.status(401).json({ error: 'Mật khẩu hiện tại không đúng' });
-  }
-
-  user.password_hash = bcrypt.hashSync(newPassword, 10);
-  user.updated_at = nowIso();
-  saveUsersStore(store);
-  res.json({ ok: true });
-});
-
-app.get('/api/backup', authMiddleware, adminOnly, (_req, res) => {
-  const store = storage.getAppStore();
-  const filename = 'muctieu-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+app.get('/api/backup', authMiddleware, workspaceMiddleware, ownerOnly, (req, res) => {
+  const store = storage.getAppStore(req.workspace.owner);
+  const filename = 'muctieu-' + req.workspace.owner + '-' + new Date().toISOString().slice(0, 10) + '.json';
   res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
   res.json({
     exportedAt: nowIso(),
+    owner: req.workspace.owner,
     updatedAt: store.updatedAt,
     data: store.data || { days: {} },
   });
 });
 
-app.post('/api/restore', authMiddleware, adminOnly, async (req, res) => {
+app.post('/api/restore', authMiddleware, workspaceMiddleware, ownerOnly, async (req, res) => {
   const { data } = req.body || {};
   if (!data || typeof data !== 'object' || !data.days) {
     return res.status(400).json({ error: 'File sao lưu không hợp lệ' });
   }
-  const updatedAt = await storage.setAppStore(data);
+  const updatedAt = await storage.setAppStore(req.workspace.owner, data);
   res.json({ ok: true, updatedAt });
 });
 
-app.get('/api/messages', authMiddleware, (req, res) => {
-  // Không đánh dấu đã nhận/đã đọc ở đây — chỉ trả danh sách + trạng thái theo receipts chung.
-  const pub = storage.publicMessagesStore(null, req.user.username);
-  res.json({
-    messages: pub.messages || [],
-    nicknames: getDisplayNamesForViewer(req.user.username),
+/* ------------------------------------------------------------------ */
+/* Tin nhắn (theo workspace + đối phương)                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Hội thoại luôn là "chủ workspace ↔ 1 người theo dõi", lấy tên người theo dõi làm khoá.
+ * Người theo dõi chỉ có 1 hội thoại; chủ workspace chọn hội thoại qua ?peer=.
+ */
+function resolveConversation(req) {
+  const { owner, role } = req.workspace;
+  if (role === 'follower') {
+    return { peerKey: req.user.username, other: owner };
+  }
+  const followers = accounts.listFollowers(owner).map((item) => item.username);
+  const requested = accounts.normalizeUsername(
+    req.query.peer || (req.body && req.body.peer) || ''
+  );
+  const peerKey = followers.includes(requested) ? requested : (followers[0] || '');
+  return { peerKey, other: peerKey };
+}
+
+function conversationPayload(req, peerKey, other) {
+  const { owner } = req.workspace;
+  if (!peerKey) {
+    return {
+      messages: [],
+      nicknames: displayNamesFor(owner, req.user.username),
+      updatedAt: null,
+      peer: null,
+      peers: [],
+    };
+  }
+  const pub = storage.publicConversation(owner, peerKey, req.user.username, other);
+  return {
+    messages: pub.messages,
+    nicknames: displayNamesFor(owner, req.user.username),
     updatedAt: pub.updatedAt,
-    ttlMinutes: 30,
-  });
+    peer: other,
+    peers: req.workspace.role === 'owner'
+      ? accounts.listFollowers(owner).map((item) => item.username)
+      : [owner],
+  };
+}
+
+app.get('/api/messages', authMiddleware, workspaceMiddleware, async (req, res) => {
+  await storage.initWorkspaceMessages(req.workspace.owner);
+  const { peerKey, other } = resolveConversation(req);
+  res.json(Object.assign(conversationPayload(req, peerKey, other), { ttlMinutes: 30 }));
 });
 
-app.get('/api/messages/sync', authMiddleware, (_req, res) => {
-  const store = storage.getMessagesStore();
+app.get('/api/messages/sync', authMiddleware, workspaceMiddleware, (req, res) => {
+  const store = storage.getMessagesStore(req.workspace.owner);
   res.json({ updatedAt: store.updatedAt });
 });
 
-/** Máy đã nhận thông báo / đồng bộ tin → đối phương thấy "Đã nhận" */
-app.post('/api/messages/delivered', authMiddleware, (req, res) => {
-  const messageId = String((req.body || {}).messageId || '').trim();
-  if (messageId) {
-    storage.markMessageDeliveredById(messageId, req.user.username);
-  } else {
-    storage.markMessagesDelivered(req.user.username);
+app.post('/api/messages/delivered', authMiddleware, workspaceMiddleware, (req, res) => {
+  const { peerKey, other } = resolveConversation(req);
+  if (peerKey) {
+    const messageId = String((req.body || {}).messageId || '').trim();
+    if (messageId) {
+      storage.markMessageDeliveredById(req.workspace.owner, peerKey, messageId, req.user.username);
+    } else {
+      storage.markMessagesDelivered(req.workspace.owner, peerKey, req.user.username);
+    }
   }
-  const pub = storage.publicMessagesStore(null, req.user.username);
-  res.json({
-    ok: true,
-    messages: pub.messages || [],
-    nicknames: getDisplayNamesForViewer(req.user.username),
-    updatedAt: pub.updatedAt,
-  });
+  res.json(Object.assign({ ok: true }, conversationPayload(req, peerKey, other)));
 });
 
-app.post('/api/messages/read', authMiddleware, (req, res) => {
-  storage.markMessagesRead(req.user.username);
-  const pub = storage.publicMessagesStore(null, req.user.username);
-  res.json({
-    ok: true,
-    messages: pub.messages || [],
-    nicknames: getDisplayNamesForViewer(req.user.username),
-    updatedAt: pub.updatedAt,
-  });
+app.post('/api/messages/read', authMiddleware, workspaceMiddleware, (req, res) => {
+  const { peerKey, other } = resolveConversation(req);
+  if (peerKey) storage.markMessagesRead(req.workspace.owner, peerKey, req.user.username);
+  res.json(Object.assign({ ok: true }, conversationPayload(req, peerKey, other)));
 });
 
-app.get('/api/messages/media/:id', authMiddleware, async (req, res) => {
+app.get('/api/messages/media/:id', authMiddleware, workspaceMiddleware, async (req, res) => {
   try {
-    const image = await storage.resolveChatImage(req.params.id);
+    const image = await storage.resolveChatImage(req.workspace.owner, req.params.id);
     if (!image || !image.buffer || !image.buffer.length) {
       return res.status(404).json({ error: 'Không tìm thấy ảnh' });
     }
@@ -587,68 +637,71 @@ app.get('/api/messages/media/:id', authMiddleware, async (req, res) => {
   }
 });
 
-app.post('/api/messages', authMiddleware, async (req, res) => {
-  const text = String((req.body || {}).text || '').trim();
-  const imageDataUrl = (req.body || {}).image || null;
+app.post('/api/messages', authMiddleware, workspaceMiddleware, async (req, res) => {
+  const body = req.body || {};
+  const text = String(body.text || '').trim();
+  const imageDataUrl = body.image || null;
   if (!text && !imageDataUrl) {
     return res.status(400).json({ error: 'Vui lòng nhập nội dung hoặc chọn ảnh' });
   }
   if (text.length > 1000) {
     return res.status(400).json({ error: 'Tin nhắn tối đa 1000 ký tự' });
   }
+
+  const { owner, role } = req.workspace;
+  const { peerKey, other } = resolveConversation(req);
+  if (!peerKey || !other) {
+    return res.status(400).json({
+      error: 'Chưa có ai theo dõi bạn. Hãy gửi đường link theo dõi cho người muốn nhắn tin.',
+    });
+  }
+
   try {
-    const result = await storage.addMessage({
+    await storage.initWorkspaceMessages(owner);
+    const result = await storage.addMessage(owner, peerKey, {
       from: req.user.username,
-      role: req.user.role,
+      role: role === 'owner' ? 'admin' : 'viewer',
       text,
       imageDataUrl,
     });
-    const preview = text
-      ? String(text).slice(0, 120)
-      : (imageDataUrl ? '[Ảnh]' : 'Tin nhắn mới');
-    const others = pushNotify.listOtherUsernames(getAllUsernames(), req.user.username);
+
     const messageId = result.message && result.message.id;
-    await Promise.all(others.map(async (recipient) => {
-      const names = getDisplayNamesForViewer(recipient);
-      const fromName = names[req.user.username]
-        || defaultNickname(req.user.username, req.user.role);
-      try {
-        const pushResult = await pushNotify.sendPushToUsernames([recipient], {
-          title: '💬 Tin nhắn mới',
-          body: fromName + ': ' + preview,
-          tag: 'muctieu-chat',
-          page: 'chat',
-          type: 'chat',
-          messageId,
-          from: req.user.username,
-          fromName,
-          text: text || (imageDataUrl ? '[Ảnh]' : ''),
-          imageId: (result.message && result.message.imageId) || null,
-          at: (result.message && result.message.at) || new Date().toISOString(),
-        });
-        // Thông báo đã gửi lên máy đối phương → "Đã nhận"
-        if (pushResult && pushResult.sent > 0) {
-          if (messageId) storage.markMessageDeliveredById(messageId, recipient);
-          else storage.markMessagesDelivered(recipient);
-        }
-      } catch (err) {
-        console.warn('Push chat lỗi', recipient, err && err.message);
+    const names = displayNamesFor(owner, other);
+    const fromName = names[req.user.username] || req.user.displayName;
+    const preview = text ? text.slice(0, 120) : '[Ảnh]';
+    try {
+      const pushResult = await pushNotify.sendPushToUsernames([other], {
+        title: '💬 Tin nhắn mới',
+        body: fromName + ': ' + preview,
+        tag: 'muctieu-chat-' + owner,
+        page: 'chat',
+        type: 'chat',
+        workspace: owner,
+        messageId,
+        from: req.user.username,
+        fromName,
+        text: text || '[Ảnh]',
+        imageId: (result.message && result.message.imageId) || null,
+        at: (result.message && result.message.at) || nowIso(),
+      });
+      if (pushResult && pushResult.sent > 0 && messageId) {
+        storage.markMessageDeliveredById(owner, peerKey, messageId, other);
       }
-    }));
-    const pub = storage.publicMessagesStore(null, req.user.username);
-    const fresh = messageId
-      ? (pub.messages || []).find((m) => m && m.id === messageId)
-      : null;
-    res.json({
-      ok: true,
-      message: fresh || storage.publicMessage(result.message),
-      nicknames: getDisplayNamesForViewer(req.user.username),
-      updatedAt: pub.updatedAt || result.updatedAt,
-    });
+    } catch (err) {
+      console.warn('Push chat lỗi', other, err && err.message);
+    }
+
+    const payload = conversationPayload(req, peerKey, other);
+    const fresh = messageId ? payload.messages.find((m) => m && m.id === messageId) : null;
+    res.json(Object.assign({ ok: true, message: fresh || result.message }, payload));
   } catch (err) {
     res.status(400).json({ error: err.message || 'Không gửi được tin nhắn' });
   }
 });
+
+/* ------------------------------------------------------------------ */
+/* Tệp tĩnh — chỉ mở đúng những gì client cần                           */
+/* ------------------------------------------------------------------ */
 
 app.get('/sw.js', (_req, res) => {
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
@@ -663,63 +716,98 @@ app.get('/manifest.webmanifest', (_req, res) => {
   res.sendFile(path.join(__dirname, 'manifest.webmanifest'));
 });
 
-app.get('/apple-touch-icon.png', (_req, res) => {
+app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'], (_req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.sendFile(path.join(__dirname, 'icons', 'icon-180.png'));
 });
 
-app.get('/apple-touch-icon-precomposed.png', (_req, res) => {
-  res.setHeader('Cache-Control', 'public, max-age=86400');
-  res.sendFile(path.join(__dirname, 'icons', 'icon-180.png'));
-});
+// Không phục vụ cả thư mục gốc: data/ chứa hash mật khẩu và khoá VAPID
+app.use('/icons', express.static(path.join(__dirname, 'icons'), { maxAge: '1d' }));
 
-app.use(express.static(__dirname));
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'Không tìm thấy API' });
+});
 
 app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-async function start() {
-  initUsers();
-  await storage.initAppStore();
-  await storage.initMessagesStore();
-  // Migrate biệt danh từ users.json (local) → messages store bền nếu chưa có
-  try {
-    const stored = storage.getStoredNicknames() || {};
-    const users = loadUsersStore().users || [];
-    for (const u of users) {
-      if (!u || !u.username || !u.nickname) continue;
-      const def = defaultNickname(u.username, u.role);
-      const nick = normalizeNickname(u.nickname, '');
-      if (nick && nick !== def && !stored[u.username]) {
-        await storage.setPeerNickname(u.username, nick);
-      }
-    }
-  } catch (err) {
-    console.warn('Migrate biệt danh:', err && err.message ? err.message : err);
+/* ------------------------------------------------------------------ */
+/* Khởi động                                                            */
+/* ------------------------------------------------------------------ */
+
+function startKeepAlive() {
+  const ms = Math.max(60 * 1000, Number(process.env.KEEP_ALIVE_MS || 5 * 60 * 1000) || 5 * 60 * 1000);
+  const base = String(process.env.KEEP_ALIVE_URL || process.env.RENDER_EXTERNAL_URL || '')
+    .replace(/\/$/, '');
+  if (!base) {
+    console.log('Keep-alive: chưa có RENDER_EXTERNAL_URL / KEEP_ALIVE_URL (GitHub Action vẫn ping được).');
+    return;
   }
+  const ping = () => {
+    fetch(base + '/api/health')
+      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); })
+      .catch((err) => console.warn('Keep-alive lỗi:', err && err.message ? err.message : err));
+  };
+  setTimeout(ping, 20 * 1000);
+  setInterval(ping, ms);
+  console.log('Keep-alive bật mỗi', Math.round(ms / 1000), 's →', base + '/api/health');
+}
+
+/** Nạp tài khoản + dữ liệu; tách khỏi listen() để test gọi lại được. */
+async function bootstrap() {
+  await accounts.init({
+    seedOwner: ADMIN_USERNAME && ADMIN_PASSWORD
+      ? { username: ADMIN_USERNAME, password: ADMIN_PASSWORD, displayName: 'Admin' }
+      : null,
+    seedFollower: VIEWER_USERNAME && VIEWER_PASSWORD
+      ? { username: VIEWER_USERNAME, password: VIEWER_PASSWORD, displayName: 'Theo dõi' }
+      : null,
+  });
+
+  // Dữ liệu 1 người dùng của bản cũ thuộc về workspace của tài khoản chủ cũ
+  await storage.migrateLegacyWorkspace(
+    accounts.normalizeUsername(ADMIN_USERNAME),
+    accounts.normalizeUsername(VIEWER_USERNAME)
+  );
+
+  await Promise.all(accounts.listUsernames().map(async (username) => {
+    await storage.initWorkspaceData(username);
+    await storage.initWorkspaceMessages(username);
+  }));
+
   await pushNotify.init();
+}
+
+async function start() {
+  await bootstrap();
   startKeepAlive();
 
   setInterval(() => {
-    try { storage.pruneExpiredMessages(true); } catch { /* ignore */ }
+    accounts.listUsernames().forEach((username) => {
+      try { storage.pruneExpiredMessages(username, true); } catch { /* ignore */ }
+    });
   }, 60 * 1000);
 
-  app.listen(PORT, '0.0.0.0', () => {
+  return app.listen(PORT, '0.0.0.0', () => {
     console.log('Server chạy tại http://0.0.0.0:' + PORT);
-    console.log('Data dir:', DATA_DIR);
-    console.log('Admin:', ADMIN_USERNAME, '| Theo dõi:', VIEWER_USERNAME);
+    console.log('Data dir:', storage.DATA_DIR);
+    console.log('Số tài khoản:', accounts.listUsernames().length);
     console.log('Tin nhắn tự xóa sau', Math.round(storage.MESSAGE_TTL_MS / 60000), 'phút');
     console.log('Web Push public key:', (pushNotify.getPublicKey() || '').slice(0, 16) + '...');
     if (storage.GITHUB_TOKEN) {
       console.log('Lưu bền GitHub: bật · repo', storage.GITHUB_REPO, '· branch', storage.GITHUB_BRANCH);
     } else {
-      console.warn('Chưa có GITHUB_TOKEN — dữ liệu/push có thể mất khi Render restart. Thêm GITHUB_TOKEN trên Render.');
+      console.warn('Chưa có GITHUB_TOKEN — tài khoản/dữ liệu có thể mất khi Render restart.');
     }
   });
 }
 
-start().catch((err) => {
-  console.error('Không khởi động được server:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  start().catch((err) => {
+    console.error('Không khởi động được server:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = { app, start, bootstrap };
