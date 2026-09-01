@@ -247,6 +247,7 @@ self.addEventListener('notificationclick', (event) => {
     const openPayload = {
       type: 'muctieu-notify-open',
       page: data.page || 'home',
+      workspace: data.workspace || '',
     };
     for (const client of all) {
       if ('focus' in client) {
@@ -258,8 +259,11 @@ self.addEventListener('notificationclick', (event) => {
       }
     }
     if (clients.openWindow) {
-      const url = data.page === 'chat' ? '/?open=chat' : '/';
-      await clients.openWindow(url);
+      const params = new URLSearchParams();
+      if (data.page === 'chat') params.set('open', 'chat');
+      if (data.workspace) params.set('ws', data.workspace);
+      const query = params.toString();
+      await clients.openWindow(query ? '/?' + query : '/');
     }
   })());
 });

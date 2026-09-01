@@ -2724,6 +2724,292 @@
       font-size: 0.95rem;
       cursor: pointer;
     }
+
+    /* ---- Đăng nhập / đăng ký ---- */
+
+    .auth-tabs {
+      display: flex;
+      gap: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 18px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .auth-tab.active {
+      background: var(--accent);
+      color: #052e16;
+    }
+
+    .auth-form.hidden {
+      display: none;
+    }
+
+    .auth-hint {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin: -10px 0 14px;
+      line-height: 1.45;
+    }
+
+    .follow-invite {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 18px;
+      text-align: left;
+    }
+
+    .follow-invite.hidden {
+      display: none;
+    }
+
+    .follow-invite-avatar {
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #052e16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+    }
+
+    .follow-invite strong {
+      display: block;
+      font-size: 0.98rem;
+      margin-bottom: 2px;
+    }
+
+    .follow-invite p {
+      margin: 0;
+      text-align: left;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* ---- Chuyển đổi workspace trong menu ---- */
+
+    .drawer-workspaces {
+      padding: 10px 12px 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 6px;
+    }
+
+    .drawer-workspaces-title {
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .workspace-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 6px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 0.88rem;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .workspace-item.active {
+      border-color: var(--accent);
+      background: rgba(34, 197, 94, 0.14);
+    }
+
+    .workspace-item .ws-avatar {
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+    }
+
+    .workspace-item.active .ws-avatar {
+      background: var(--accent);
+      color: #052e16;
+    }
+
+    .workspace-item .ws-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .workspace-item .ws-name {
+      display: block;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .workspace-item .ws-role {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* ---- Link theo dõi ---- */
+
+    .modal-hint {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .share-link-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .share-link-row input {
+      flex: 1;
+      min-width: 0;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 12px;
+      color: var(--text);
+      font-size: 0.8rem;
+      outline: none;
+    }
+
+    .share-link-row button {
+      flex: 0 0 auto;
+      padding: 0 16px;
+      border-radius: 10px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #052e16;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .follower-list {
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+
+    .follower-list h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .follower-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 0.88rem;
+    }
+
+    .follower-row .follower-name {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .follower-row .follower-user {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+
+    .follower-row button {
+      flex: 0 0 auto;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--danger);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+
+    .follower-empty {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ---- Chọn người theo dõi để nhắn tin ---- */
+
+    .chat-peer-picker {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .chat-peer-picker.hidden {
+      display: none;
+    }
+
+    .chat-peer-chip {
+      flex: 0 0 auto;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .chat-peer-chip.active {
+      border-color: var(--accent);
+      background: rgba(34, 197, 94, 0.16);
+      color: var(--text);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body class="logged-out">
@@ -2788,6 +3074,10 @@
       <strong>Menu</strong>
       <span>👤 <span id="admin-name">admin</span> <span class="role-badge" id="role-badge">admin</span></span>
     </div>
+    <div class="drawer-workspaces" id="drawer-workspaces" hidden>
+      <div class="drawer-workspaces-title">Đang xem dữ liệu của</div>
+      <div id="workspace-list"></div>
+    </div>
     <button type="button" class="drawer-item active" data-nav="home">🏠 Hôm nay</button>
     <button type="button" class="drawer-item" data-nav="history">📅 Doanh số các ngày</button>
     <button type="button" class="drawer-item" data-nav="chat">
@@ -2796,6 +3086,7 @@
     </button>
     <button type="button" class="drawer-item admin-only" id="goal-btn">🎯 Điều chỉnh mục tiêu ngày</button>
     <button type="button" class="drawer-item admin-only" id="backup-btn">💾 Sao lưu dữ liệu</button>
+    <button type="button" class="drawer-item" id="share-btn">🔗 Link theo dõi của tôi</button>
     <button type="button" class="drawer-item" id="password-btn">🔑 Đổi mật khẩu</button>
     <button type="button" class="drawer-item danger drawer-end" id="logout-btn">Thoát đăng nhập</button>
     <div class="drawer-item" id="weather-toggle-btn" role="button" tabindex="0" aria-pressed="true">
@@ -2817,15 +3108,41 @@
   <div class="container">
     <div id="login-panel" class="login-panel">
       <div class="login-card">
-        <h1>🔐 Đăng nhập</h1>
-        <p>Nhập tài khoản để sử dụng</p>
-        <form id="login-form" autocomplete="on">
+        <div class="follow-invite hidden" id="follow-invite">
+          <div class="follow-invite-avatar" id="follow-invite-avatar">?</div>
+          <div>
+            <strong id="follow-invite-name">…</strong>
+            <p id="follow-invite-text">mời bạn theo dõi mục tiêu chạy xe. Hãy đăng ký tài khoản hoặc đăng nhập để xem.</p>
+          </div>
+        </div>
+        <h1 id="auth-title">🔐 Đăng nhập</h1>
+        <p id="auth-subtitle">Mỗi tài khoản có dữ liệu riêng của mình</p>
+        <div class="auth-tabs">
+          <button type="button" class="auth-tab active" data-auth-tab="login">Đăng nhập</button>
+          <button type="button" class="auth-tab" data-auth-tab="register">Đăng ký</button>
+        </div>
+
+        <form id="login-form" class="auth-form" autocomplete="on">
           <label for="login-username">Tên đăng nhập</label>
-          <input type="text" id="login-username" name="username" autocomplete="off" autocapitalize="none" spellcheck="false" required placeholder="Nhập tên đăng nhập">
+          <input type="text" id="login-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="Nhập tên đăng nhập">
           <label for="login-password">Mật khẩu</label>
           <input type="password" id="login-password" name="password" autocomplete="current-password" required placeholder="Nhập mật khẩu">
           <button type="submit" class="login-btn" id="login-submit">Đăng nhập</button>
         </form>
+
+        <form id="register-form" class="auth-form hidden" autocomplete="on">
+          <label for="register-name">Tên hiển thị</label>
+          <input type="text" id="register-name" name="displayName" autocomplete="nickname" maxlength="24" placeholder="Ví dụ: Hùng tài xế">
+          <label for="register-username">Tên đăng nhập</label>
+          <input type="text" id="register-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="Chữ thường, số, dấu . _ -">
+          <p class="auth-hint">3–24 ký tự, chỉ gồm chữ thường không dấu, số và . _ -</p>
+          <label for="register-password">Mật khẩu</label>
+          <input type="password" id="register-password" name="password" autocomplete="new-password" required placeholder="Ít nhất 6 ký tự">
+          <label for="register-confirm">Nhập lại mật khẩu</label>
+          <input type="password" id="register-confirm" name="confirmPassword" autocomplete="new-password" required placeholder="Nhập lại mật khẩu">
+          <button type="submit" class="login-btn" id="register-submit">Tạo tài khoản</button>
+        </form>
+
         <div class="login-error" id="login-error"></div>
       </div>
     </div>
@@ -3041,6 +3358,7 @@
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true"><path d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           </button>
         </div>
+        <div class="chat-peer-picker hidden" id="chat-peer-picker" role="tablist" aria-label="Chọn người theo dõi để nhắn tin"></div>
         <div class="chat-stage">
           <div class="shark-tank" aria-hidden="true">
             <span class="seaweed s1"></span>
@@ -3147,6 +3465,28 @@
 
 
 
+  <div class="modal-overlay" id="share-modal">
+    <div class="modal">
+      <h2>🔗 Link theo dõi của bạn</h2>
+      <p class="modal-hint">
+        Gửi đường link này cho người muốn theo dõi. Họ phải đăng ký tài khoản riêng,
+        sau đó chỉ xem được dữ liệu của bạn chứ không sửa được.
+      </p>
+      <div class="share-link-row">
+        <input type="text" id="share-link-input" readonly aria-label="Đường link theo dõi">
+        <button type="button" id="share-copy-btn">Sao chép</button>
+      </div>
+      <div class="follower-list">
+        <h3>Người đang theo dõi bạn</h3>
+        <div id="share-followers"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="share-rotate-btn">Đổi link mới</button>
+        <button type="button" class="primary" id="share-close-btn">Xong</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="password-modal">
     <div class="modal">
       <h2>Đổi mật khẩu</h2>
@@ -3251,6 +3591,14 @@
 
     let currentRole = 'admin';
     let currentUsername = '';
+    /** Chủ workspace đang xem — của mình hoặc của người mình theo dõi */
+    let activeWorkspace = '';
+    /** Người đang nhắn tin cùng trong workspace hiện tại */
+    let activePeer = '';
+    let accountInfo = null;
+    let followToken = '';
+    let followOwnerPreview = null;
+    let authMode = 'login';
     let currentDayKey = null;
     let dayWatchTimer = null;
     let syncPollTimer = null;
@@ -3282,7 +3630,24 @@
       loginPanel: document.getElementById('login-panel'),
       mainContent: document.getElementById('main-content'),
       loginForm: document.getElementById('login-form'),
+      registerForm: document.getElementById('register-form'),
       loginError: document.getElementById('login-error'),
+      authTitle: document.getElementById('auth-title'),
+      authSubtitle: document.getElementById('auth-subtitle'),
+      followInvite: document.getElementById('follow-invite'),
+      followInviteName: document.getElementById('follow-invite-name'),
+      followInviteAvatar: document.getElementById('follow-invite-avatar'),
+      followInviteText: document.getElementById('follow-invite-text'),
+      drawerWorkspaces: document.getElementById('drawer-workspaces'),
+      workspaceList: document.getElementById('workspace-list'),
+      shareBtn: document.getElementById('share-btn'),
+      shareModal: document.getElementById('share-modal'),
+      shareLinkInput: document.getElementById('share-link-input'),
+      shareCopyBtn: document.getElementById('share-copy-btn'),
+      shareRotateBtn: document.getElementById('share-rotate-btn'),
+      shareCloseBtn: document.getElementById('share-close-btn'),
+      shareFollowers: document.getElementById('share-followers'),
+      chatPeerPicker: document.getElementById('chat-peer-picker'),
       adminName: document.getElementById('admin-name'),
       syncStatus: document.getElementById('sync-status'),
       logoutBtn: document.getElementById('logout-btn'),
@@ -3362,15 +3727,15 @@
       document.body.classList.toggle('role-viewer', currentRole === 'viewer');
       document.body.classList.toggle('role-admin', currentRole === 'admin');
       if (els.roleBadge) {
-        els.roleBadge.textContent = currentRole === 'admin' ? 'admin' : 'theo dõi';
+        els.roleBadge.textContent = currentRole === 'admin' ? 'của tôi' : 'theo dõi';
         els.roleBadge.className = 'role-badge ' + currentRole;
       }
       if (els.roleBanner) {
         els.roleBanner.classList.remove('hidden');
         els.roleBanner.className = 'role-banner ' + currentRole;
         els.roleBanner.textContent = currentRole === 'admin'
-          ? '👤 Bạn đang ở tài khoản admin'
-          : '👁 Bạn đang xem với tài khoản theo dõi — không thể thêm hoặc sửa dữ liệu';
+          ? '👤 Đây là dữ liệu riêng của bạn'
+          : '👁 Đang theo dõi ' + workspaceName(activeWorkspace) + ' — chỉ xem, không sửa được';
       }
     }
 
@@ -3446,7 +3811,12 @@
       try {
         res = await fetch('/api' + url, {
           ...options,
-          headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+          headers: {
+            'Content-Type': 'application/json',
+            // Server dùng header này để biết đang đọc/ghi dữ liệu của workspace nào
+            ...(activeWorkspace ? { 'X-Workspace': activeWorkspace } : {}),
+            ...(options.headers || {}),
+          },
           credentials: 'same-origin',
           body: options.body ? JSON.stringify(options.body) : undefined,
         });
@@ -3463,6 +3833,9 @@
       currentRole = 'admin';
       currentUsername = '';
       currentNickname = '';
+      activeWorkspace = '';
+      activePeer = '';
+      accountInfo = null;
       chatNicknames = {};
       lastUpdatedAt = null;
       lastMessagesAt = null;
@@ -3481,37 +3854,143 @@
       closeDrawer();
       updateChatBadge(0);
       if (els.roleBanner) els.roleBanner.classList.add('hidden');
-      if (message) els.loginError.textContent = message;
-      else els.loginError.textContent = '';
+      els.loginError.textContent = message || '';
+      renderFollowInvite();
     }
 
-    function showApp(username, role, nickname) {
+    function showApp(account) {
       isLoggedIn = true;
-      currentUsername = username || '';
-      currentNickname = (nickname && String(nickname).trim()) || username || '';
-      const seeded = { [currentUsername]: 'Bạn' };
-      if (role === 'viewer') seeded.admin = chatNicknames.admin || 'Admin';
-      else seeded.theodoi = chatNicknames.theodoi || 'Theo dõi';
-      chatNicknames = Object.assign({}, chatNicknames, seeded);
-      applyRoleUI(role);
-      els.adminName.textContent = username;
+      applyAccount(account);
       els.loginError.textContent = '';
       document.body.classList.remove('logged-out');
       document.body.classList.add('logged-in');
-      if (els.chatSubtitle) {
-        els.chatSubtitle.textContent = role === 'viewer'
-          ? 'Bạn đang nhắn với tài khoản admin'
-          : 'Bạn đang nhắn với tài khoản theo dõi';
-      }
-      updateChatPeerHeader();
       navigateTo('home');
     }
 
+    /* ---------------- Tài khoản & workspace ---------------- */
+
+    function workspaceStorageKey() {
+      return 'muctieu-workspace:' + (currentUsername || 'anon');
+    }
+
+    function rememberWorkspace(owner) {
+      try { localStorage.setItem(workspaceStorageKey(), owner || ''); } catch { /* ignore */ }
+    }
+
+    function rememberedWorkspace() {
+      try { return localStorage.getItem(workspaceStorageKey()) || ''; } catch { return ''; }
+    }
+
+    function findWorkspace(owner) {
+      const list = (accountInfo && accountInfo.workspaces) || [];
+      return list.find((ws) => ws && ws.owner === owner) || null;
+    }
+
+    function workspaceName(owner) {
+      const ws = findWorkspace(owner);
+      if (!ws) return owner || 'người khác';
+      return ws.nickname || ws.ownerName || ws.owner;
+    }
+
+    function applyAccount(account) {
+      if (!account || !account.username) return;
+      accountInfo = account;
+      currentUsername = account.username;
+      currentNickname = account.displayName || account.username;
+      if (els.adminName) els.adminName.textContent = account.displayName || account.username;
+
+      if (!findWorkspace(activeWorkspace)) {
+        const remembered = rememberedWorkspace();
+        activeWorkspace = findWorkspace(remembered) ? remembered : account.username;
+      }
+      rememberWorkspace(activeWorkspace);
+
+      const followers = account.followers || [];
+      if (!followers.some((f) => f.username === activePeer)) {
+        activePeer = followers.length ? followers[0].username : '';
+      }
+
+      applyWorkspaceRole();
+      renderWorkspaceList();
+      renderShareModal();
+      renderChatPeerPicker();
+    }
+
+    async function refreshAccount() {
+      try {
+        const me = await api('/me');
+        if (me && me.loggedIn) applyAccount(me);
+      } catch { /* ignore */ }
+    }
+
+    function applyWorkspaceRole() {
+      const ws = findWorkspace(activeWorkspace);
+      applyRoleUI(ws && ws.role === 'follower' ? 'viewer' : 'admin');
+      if (currentUsername) chatNicknames[currentUsername] = 'Bạn';
+      if (els.chatSubtitle) {
+        els.chatSubtitle.textContent = currentRole === 'viewer'
+          ? 'Bạn đang nhắn với ' + workspaceName(activeWorkspace)
+          : 'Bạn đang nhắn với người theo dõi mình';
+      }
+      updateChatPeerHeader();
+    }
+
+    async function switchWorkspace(owner) {
+      closeDrawer();
+      if (!owner || owner === activeWorkspace || !findWorkspace(owner)) return;
+      const previous = activeWorkspace;
+      activeWorkspace = owner;
+      rememberWorkspace(owner);
+      activePeer = '';
+      chatMessages = [];
+      chatNicknames = {};
+      lastMessagesAt = null;
+      lastUpdatedAt = null;
+      lastChatRenderKey = '';
+      updateChatBadge(0);
+      try {
+        applyWorkspaceRole();
+        renderWorkspaceList();
+        renderChatPeerPicker();
+        await loadFromServer();
+        calculate();
+        await refreshMessages(false);
+        showToast(currentRole === 'admin'
+          ? 'Đang xem dữ liệu của bạn'
+          : 'Đang theo dõi ' + workspaceName(owner));
+        navigateTo('home');
+      } catch (err) {
+        activeWorkspace = previous;
+        rememberWorkspace(previous);
+        applyWorkspaceRole();
+        renderWorkspaceList();
+        showToast(err.message || 'Không mở được dữ liệu này');
+      }
+    }
+
+    function renderWorkspaceList() {
+      if (!els.workspaceList || !els.drawerWorkspaces) return;
+      const list = (accountInfo && accountInfo.workspaces) || [];
+      els.drawerWorkspaces.hidden = list.length < 2;
+      els.workspaceList.innerHTML = list.map((ws) => {
+        const name = ws.role === 'owner'
+          ? 'Dữ liệu của tôi'
+          : (ws.nickname || ws.ownerName || ws.owner);
+        const sub = '@' + ws.owner + (ws.role === 'owner' ? ' · toàn quyền' : ' · chỉ xem');
+        const initial = (String(name).trim().charAt(0) || '?');
+        return '<button type="button" class="workspace-item' + (ws.owner === activeWorkspace ? ' active' : '')
+          + '" data-workspace="' + escapeHtml(ws.owner) + '">'
+          + '<span class="ws-avatar">' + escapeHtml(initial) + '</span>'
+          + '<span class="ws-text">'
+          + '<span class="ws-name">' + escapeHtml(name) + '</span>'
+          + '<span class="ws-role">' + escapeHtml(sub) + '</span>'
+          + '</span></button>';
+      }).join('');
+    }
+
     function getPeerUsername() {
-      if (currentRole === 'viewer') return 'admin';
-      if (currentRole === 'admin') return 'theodoi';
-      const peerUser = Object.keys(chatNicknames).find((u) => u && u !== currentUsername);
-      return peerUser || 'theodoi';
+      if (currentRole === 'viewer') return activeWorkspace;
+      return activePeer || '';
     }
 
     function displayNameFor(username) {
@@ -3519,8 +3998,10 @@
       if (!key) return 'Người dùng';
       if (key === currentUsername) return 'Bạn';
       if (chatNicknames[key]) return chatNicknames[key];
-      if (key === 'admin') return 'Admin';
-      if (key === 'theodoi') return 'Theo dõi';
+      const ws = findWorkspace(key);
+      if (ws) return ws.ownerName || key;
+      const follower = ((accountInfo && accountInfo.followers) || []).find((f) => f.username === key);
+      if (follower) return follower.nickname || follower.displayName || key;
       return key;
     }
 
@@ -3535,11 +4016,17 @@
 
     function updateChatPeerHeader() {
       const peerUser = getPeerUsername();
-      const peerName = displayNameFor(peerUser);
-      if (els.chatPeerName) els.chatPeerName.textContent = peerName;
-      if (els.chatPeerSub) {
-        els.chatPeerSub.textContent = 'Tin nhắn tự xóa sau 30 phút';
+      if (els.chatPeerName) {
+        els.chatPeerName.textContent = peerUser
+          ? displayNameFor(peerUser)
+          : 'Chưa có người theo dõi';
       }
+      if (els.chatPeerSub) {
+        els.chatPeerSub.textContent = peerUser
+          ? 'Tin nhắn tự xóa sau 30 phút'
+          : 'Gửi link theo dõi để bắt đầu nhắn tin';
+      }
+      if (els.chatNicknameBtn) els.chatNicknameBtn.disabled = !peerUser;
     }
 
     function openNicknameModal() {
@@ -3585,6 +4072,7 @@
         renderChatMessages({ forceBottom: false });
         updateChatPeerHeader();
         showToast('Đã lưu biệt danh');
+        refreshAccount();
       } catch (err) {
         if (els.nicknameError) els.nicknameError.textContent = err.message || 'Không lưu được biệt danh';
       }
@@ -3595,9 +4083,14 @@
       els.syncStatus.style.color = ok ? 'var(--accent)' : 'var(--warning)';
     }
 
+    /** Bản sao lưu trên máy phải tách theo workspace, tránh dữ liệu tài khoản này đè tài khoản kia. */
+    function localBackupKey() {
+      return STORAGE_KEY + ':' + (activeWorkspace || currentUsername || 'anon');
+    }
+
     function loadLocalBackup() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(localBackupKey());
         if (!raw) return { data: { days: {}, dailyGoal: DEFAULT_GOAL }, updatedAt: null };
         const parsed = JSON.parse(raw);
         // Hỗ trợ cả format cũ { days } và mới { data, updatedAt }
@@ -3621,7 +4114,7 @@
 
     function saveLocalBackup(data, updatedAt) {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        localStorage.setItem(localBackupKey(), JSON.stringify({
           data: stripLogsFromData(data),
           updatedAt: updatedAt || new Date().toISOString(),
         }));
@@ -3906,38 +4399,167 @@
       await saveToServer();
     }
 
+    /* ---------------- Link theo dõi ---------------- */
+
+    /** Đọc mã theo dõi từ đường dẫn /t/<token> hoặc ?follow=<token>. */
+    function readFollowTokenFromUrl() {
+      try {
+        const match = window.location.pathname.match(/^\/t\/([A-Za-z0-9_-]+)\/?$/);
+        if (match) return match[1];
+        return new URLSearchParams(window.location.search).get('follow') || '';
+      } catch {
+        return '';
+      }
+    }
+
+    function clearFollowUrl() {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('follow');
+        const path = url.pathname.startsWith('/t/') ? '/' : url.pathname;
+        history.replaceState({}, '', path + url.search + url.hash);
+      } catch { /* ignore */ }
+    }
+
+    function renderFollowInvite() {
+      if (!els.followInvite) return;
+      if (!followToken || !followOwnerPreview) {
+        els.followInvite.classList.add('hidden');
+        return;
+      }
+      const name = followOwnerPreview.displayName || followOwnerPreview.username;
+      els.followInvite.classList.remove('hidden');
+      els.followInviteName.textContent = name;
+      els.followInviteAvatar.textContent = (String(name).trim().charAt(0) || '?');
+      els.followInviteText.textContent = 'mời bạn theo dõi mục tiêu chạy xe. '
+        + 'Hãy đăng ký tài khoản riêng (hoặc đăng nhập) để xem.';
+      if (els.authSubtitle) {
+        els.authSubtitle.textContent = 'Đăng ký tài khoản để theo dõi ' + name;
+      }
+    }
+
+    async function resolveFollowToken() {
+      followToken = readFollowTokenFromUrl();
+      if (!followToken) return null;
+      try {
+        const info = await api('/follow/info?token=' + encodeURIComponent(followToken));
+        followOwnerPreview = info.owner || null;
+        return info;
+      } catch (err) {
+        followOwnerPreview = null;
+        followToken = '';
+        els.loginError.textContent = err.message;
+        clearFollowUrl();
+        return null;
+      }
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode === 'register' ? 'register' : 'login';
+      document.querySelectorAll('[data-auth-tab]').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.authTab === authMode);
+      });
+      if (els.loginForm) els.loginForm.classList.toggle('hidden', authMode !== 'login');
+      if (els.registerForm) els.registerForm.classList.toggle('hidden', authMode !== 'register');
+      if (els.authTitle) {
+        els.authTitle.textContent = authMode === 'register' ? '📝 Đăng ký' : '🔐 Đăng nhập';
+      }
+      if (els.authSubtitle && !followOwnerPreview) {
+        els.authSubtitle.textContent = authMode === 'register'
+          ? 'Tài khoản mới có dữ liệu riêng và link theo dõi riêng'
+          : 'Mỗi tài khoản có dữ liệu riêng của mình';
+      }
+      els.loginError.textContent = '';
+    }
+
+    /* ---------------- Vào app ---------------- */
+
+    async function enterApp(account, { toast } = {}) {
+      showApp(account);
+      await loadFromServer();
+      setTodayDate();
+      startLiveClock();
+      startDayWatcher();
+      startRealtimeSync();
+      calculate();
+      startWeatherEffects();
+      refreshMessages(false);
+      initDeviceNotifications();
+      if (toast) showToast(toast);
+    }
+
     async function initApp() {
+      const followInfo = await resolveFollowToken();
+      renderFollowInvite();
       try {
         const me = await api('/me');
         if (!me.loggedIn) {
           showLogin();
+          setAuthMode(followToken ? 'register' : 'login');
+          renderFollowInvite();
           startLiveClock();
           startWeatherEffects();
           return;
         }
-        showApp(me.username, me.role || 'admin', me.nickname);
-        await loadFromServer();
-        setTodayDate();
-        startLiveClock();
-        startDayWatcher();
-        startRealtimeSync();
-        calculate();
-        applyRoleUI(me.role || 'admin');
-        startWeatherEffects();
-        refreshMessages(false);
-        initDeviceNotifications();
+
+        // Đã đăng nhập sẵn mà mở link theo dõi của người khác → gắn luôn quan hệ theo dõi
+        let account = me;
+        if (followToken && followInfo && !followInfo.alreadyFollowing) {
+          try {
+            const followed = await api('/follow', { method: 'POST', body: { token: followToken } });
+            account = followed;
+            activeWorkspace = followed.owner ? followed.owner.username : activeWorkspace;
+          } catch (err) {
+            showToast(err.message);
+          }
+        } else if (followToken && followInfo && followInfo.alreadyFollowing && !followInfo.isSelf) {
+          activeWorkspace = followOwnerPreview ? followOwnerPreview.username : activeWorkspace;
+        }
+        if (followToken) {
+          followToken = '';
+          clearFollowUrl();
+        }
+
+        // Thông báo đẩy có thể mở app thẳng vào workspace vừa có cập nhật
+        try {
+          const wsParam = new URLSearchParams(window.location.search).get('ws');
+          if (wsParam) activeWorkspace = wsParam;
+        } catch { /* ignore */ }
+
+        await enterApp(account);
         try {
           const openPage = new URLSearchParams(window.location.search).get('open');
-          if (openPage === 'chat') {
-            navigateTo('chat');
+          if (openPage === 'chat') navigateTo('chat');
+          if (openPage || new URLSearchParams(window.location.search).get('ws')) {
             history.replaceState({}, '', window.location.pathname);
           }
         } catch { /* ignore */ }
       } catch (err) {
         showLogin(err.message);
+        setAuthMode(followToken ? 'register' : 'login');
+        renderFollowInvite();
         startLiveClock();
         startWeatherEffects();
       }
+    }
+
+    /** Xử lý chung sau khi /login hoặc /register trả về ngữ cảnh tài khoản. */
+    async function finishAuth(result, defaultToast) {
+      if (result.followed) {
+        activeWorkspace = result.followed.username;
+      }
+      if (followToken) {
+        followToken = '';
+        followOwnerPreview = null;
+        clearFollowUrl();
+        renderFollowInvite();
+      }
+      const toast = result.followError
+        ? result.followError
+        : (result.followed
+          ? 'Đang theo dõi ' + (result.followed.displayName || result.followed.username)
+          : defaultToast);
+      await enterApp(result, { toast });
     }
 
     async function handleLogin(e) {
@@ -3953,25 +4575,159 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Đang đăng nhập...';
       try {
-        const result = await api('/login', { method: 'POST', body: { username, password } });
-        showApp(result.username, result.role || 'admin', result.nickname);
-        await loadFromServer();
-        setTodayDate();
-        startLiveClock();
-        startDayWatcher();
-        startRealtimeSync();
-        calculate();
-        applyRoleUI(result.role || 'admin');
-        startWeatherEffects();
-        refreshMessages(false);
-        showToast(result.role === 'viewer' ? 'Đăng nhập theo dõi · chỉ xem' : 'Đăng nhập admin thành công');
-        initDeviceNotifications();
+        const result = await api('/login', {
+          method: 'POST',
+          body: { username, password, followToken: followToken || undefined },
+        });
+        await finishAuth(result, 'Đăng nhập thành công');
       } catch (err) {
         els.loginError.textContent = err.message;
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Đăng nhập';
       }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      els.loginError.textContent = '';
+      const submitBtn = document.getElementById('register-submit');
+      const displayName = document.getElementById('register-name').value.trim();
+      const username = document.getElementById('register-username').value.trim().toLowerCase();
+      const password = document.getElementById('register-password').value;
+      const confirmPassword = document.getElementById('register-confirm').value;
+
+      if (!username || !password) {
+        els.loginError.textContent = 'Vui lòng nhập tên đăng nhập và mật khẩu';
+        return;
+      }
+      if (password !== confirmPassword) {
+        els.loginError.textContent = 'Mật khẩu nhập lại không khớp';
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Đang tạo tài khoản...';
+      try {
+        const result = await api('/register', {
+          method: 'POST',
+          body: {
+            username,
+            password,
+            confirmPassword,
+            displayName: displayName || undefined,
+            followToken: followToken || undefined,
+          },
+        });
+        document.getElementById('register-password').value = '';
+        document.getElementById('register-confirm').value = '';
+        await finishAuth(result, 'Đã tạo tài khoản ' + result.username);
+      } catch (err) {
+        els.loginError.textContent = err.message;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Tạo tài khoản';
+      }
+    }
+
+    /* ---------------- Link theo dõi của tôi ---------------- */
+
+    function renderShareModal() {
+      if (!accountInfo) return;
+      if (els.shareLinkInput) els.shareLinkInput.value = accountInfo.shareUrl || '';
+      if (!els.shareFollowers) return;
+      const followers = accountInfo.followers || [];
+      if (!followers.length) {
+        els.shareFollowers.innerHTML = '<p class="follower-empty">Chưa có ai theo dõi bạn. '
+          + 'Gửi đường link ở trên cho người bạn muốn cho xem dữ liệu.</p>';
+        return;
+      }
+      els.shareFollowers.innerHTML = followers.map((f) => (
+        '<div class="follower-row">'
+        + '<span class="follower-name">' + escapeHtml(f.nickname || f.displayName || f.username)
+        + ' <span class="follower-user">@' + escapeHtml(f.username) + '</span></span>'
+        + '<button type="button" data-remove-follower="' + escapeHtml(f.username) + '">Gỡ</button>'
+        + '</div>'
+      )).join('');
+    }
+
+    function openShareModal() {
+      closeDrawer();
+      renderShareModal();
+      if (els.shareModal) els.shareModal.classList.add('show');
+    }
+
+    function closeShareModal() {
+      if (els.shareModal) els.shareModal.classList.remove('show');
+    }
+
+    async function copyShareLink() {
+      const link = (accountInfo && accountInfo.shareUrl) || '';
+      if (!link) return;
+      try {
+        await navigator.clipboard.writeText(link);
+        showToast('Đã sao chép link theo dõi');
+      } catch {
+        // Trình duyệt cũ / không có quyền clipboard
+        if (els.shareLinkInput) {
+          els.shareLinkInput.select();
+          els.shareLinkInput.setSelectionRange(0, 99999);
+        }
+        showToast('Hãy nhấn giữ để sao chép link');
+      }
+    }
+
+    async function rotateShareLink() {
+      if (!confirm('Đổi link mới? Những link cũ đã gửi sẽ không dùng được nữa.')) return;
+      try {
+        const result = await api('/share/rotate', { method: 'POST', body: {} });
+        applyAccount(result);
+        showToast('Đã tạo link theo dõi mới');
+      } catch (err) {
+        showToast(err.message);
+      }
+    }
+
+    async function removeFollower(username) {
+      if (!confirm('Gỡ ' + username + ' khỏi danh sách theo dõi?')) return;
+      try {
+        const result = await api('/followers/' + encodeURIComponent(username), { method: 'DELETE' });
+        applyAccount(result);
+        renderChatPeerPicker();
+        showToast('Đã gỡ ' + username);
+      } catch (err) {
+        showToast(err.message);
+      }
+    }
+
+    /* ---------------- Chọn người nhắn tin ---------------- */
+
+    function renderChatPeerPicker() {
+      if (!els.chatPeerPicker) return;
+      const followers = (accountInfo && accountInfo.followers) || [];
+      if (currentRole !== 'admin' || followers.length < 2) {
+        els.chatPeerPicker.classList.add('hidden');
+        els.chatPeerPicker.innerHTML = '';
+        return;
+      }
+      els.chatPeerPicker.classList.remove('hidden');
+      els.chatPeerPicker.innerHTML = followers.map((f) => (
+        '<button type="button" class="chat-peer-chip' + (f.username === activePeer ? ' active' : '')
+        + '" data-peer="' + escapeHtml(f.username) + '">'
+        + escapeHtml(f.nickname || f.displayName || f.username)
+        + '</button>'
+      )).join('');
+    }
+
+    async function switchChatPeer(username) {
+      if (!username || username === activePeer) return;
+      activePeer = username;
+      chatMessages = [];
+      lastMessagesAt = null;
+      lastChatRenderKey = '';
+      renderChatPeerPicker();
+      updateChatPeerHeader();
+      renderChatMessages({ forceBottom: true });
+      await refreshMessages(false);
     }
 
     function openLogoutModal() {
@@ -3986,7 +4742,10 @@
       } catch { /* ignore */ }
       document.getElementById('login-username').value = '';
       document.getElementById('login-password').value = '';
+      document.getElementById('register-password').value = '';
+      document.getElementById('register-confirm').value = '';
       showLogin('Đã thoát đăng nhập');
+      setAuthMode('login');
     }
 
     async function handleBackup() {
@@ -4478,7 +5237,8 @@
     }
 
     function chatReadKey() {
-      return 'muctieu-chat-read:' + (currentUsername || 'anon');
+      return 'muctieu-chat-read:' + (currentUsername || 'anon')
+        + ':' + (activeWorkspace || '-') + ':' + (getPeerUsername() || '-');
     }
 
     function getChatReadAt() {
@@ -4526,7 +5286,7 @@
       if (!isActivelyViewingChat()) return;
       markChatBadgeLocal();
       if (!isLoggedIn) return;
-      api('/messages/read', { method: 'POST', body: {} }).then((result) => {
+      api('/messages/read', { method: 'POST', body: peerBody({}) }).then((result) => {
         if (result.nicknames) applyNicknames(result.nicknames);
         if (Array.isArray(result.messages)) {
           chatMessages = mergePendingChatMessages(result.messages);
@@ -4542,7 +5302,7 @@
       // Đang xem chat thì markChatRead sẽ ghi nhận đã đọc (và đã nhận)
       if (isActivelyViewingChat()) return;
       const body = messageId ? { messageId } : {};
-      api('/messages/delivered', { method: 'POST', body }).then((result) => {
+      api('/messages/delivered', { method: 'POST', body: peerBody(body) }).then((result) => {
         if (result.nicknames) applyNicknames(result.nicknames);
         if (Array.isArray(result.messages)) {
           chatMessages = mergePendingChatMessages(result.messages);
@@ -4792,7 +5552,7 @@
         const imageHtml = m.localImage
           ? `<img class="chat-image" src="${m.localImage}" alt="Ảnh đính kèm">`
           : (m.imageId
-            ? `<img class="chat-image" data-image-id="${escapeHtml(m.imageId)}" src="/api/messages/media/${encodeURIComponent(m.imageId)}" alt="Ảnh đính kèm" loading="lazy">`
+            ? `<img class="chat-image" data-image-id="${escapeHtml(m.imageId)}" src="${escapeHtml(chatMediaUrl(m.imageId))}" alt="Ảnh đính kèm" loading="lazy">`
             : '');
         const status = m.status || 'sent';
         const statusClass = status === 'read'
@@ -4829,7 +5589,7 @@
             return;
           }
           img.dataset.retry = '1';
-          fetch('/api/messages/media/' + encodeURIComponent(imageId), { credentials: 'same-origin' })
+          fetch(chatMediaUrl(imageId), { credentials: 'same-origin' })
             .then((res) => {
               if (!res.ok) throw new Error('missing');
               return res.blob();
@@ -4886,11 +5646,44 @@
       return syncChatMessagesList(keep.length ? list.concat(keep) : list);
     }
 
+    /** Thẻ <img> không gửi được header X-Workspace nên phải kèm workspace vào URL. */
+    function chatMediaUrl(imageId) {
+      return '/api/messages/media/' + encodeURIComponent(imageId)
+        + (activeWorkspace ? '?ws=' + encodeURIComponent(activeWorkspace) : '');
+    }
+
+    /** Chủ workspace có thể có nhiều người theo dõi → phải nói rõ đang mở hội thoại nào. */
+    function withPeerParam(url) {
+      if (currentRole !== 'admin' || !activePeer) return url;
+      return url + (url.includes('?') ? '&' : '?') + 'peer=' + encodeURIComponent(activePeer);
+    }
+
+    function peerBody(body) {
+      if (currentRole !== 'admin' || !activePeer) return body;
+      return Object.assign({}, body, { peer: activePeer });
+    }
+
+    /** Server chốt hội thoại nào đang mở — đồng bộ lại state để bộ chọn hiển thị đúng. */
+    function syncPeerFromResult(result) {
+      if (!result || currentRole !== 'admin') return;
+      const peers = Array.isArray(result.peers) ? result.peers : null;
+      if (result.peer && result.peer !== activePeer) {
+        activePeer = result.peer;
+        renderChatPeerPicker();
+        updateChatPeerHeader();
+      } else if (peers && !peers.includes(activePeer)) {
+        activePeer = peers[0] || '';
+        renderChatPeerPicker();
+        updateChatPeerHeader();
+      }
+    }
+
     async function refreshMessages(notify) {
       if (!isLoggedIn || chatPollBusy) return;
       chatPollBusy = true;
       try {
-        const result = await api('/messages');
+        const result = await api(withPeerParam('/messages'));
+        syncPeerFromResult(result);
         const list = Array.isArray(result.messages) ? result.messages : [];
         const nickChanged = applyNicknames(result.nicknames);
         const prevLatest = chatMessages.length ? chatMessages[chatMessages.length - 1].id : null;
@@ -4966,7 +5759,8 @@
         const body = {};
         if (text) body.text = text;
         if (image) body.image = image;
-        const result = await api('/messages', { method: 'POST', body });
+        const result = await api('/messages', { method: 'POST', body: peerBody(body) });
+        syncPeerFromResult(result);
         if (result.message) {
           if (result.nicknames) applyNicknames(result.nicknames);
           const serverMsg = result.message;
@@ -5448,10 +6242,14 @@
       navigator.serviceWorker.addEventListener('message', (event) => {
         const data = event.data || {};
         if (data.type === 'muctieu-notify-open' && isLoggedIn) {
-          try { navigateTo(data.page || 'chat'); } catch { /* ignore */ }
-          if ((data.page || '') === 'chat') {
-            syncChatAfterPush({ type: 'chat' });
-          }
+          const openChat = (data.page || '') === 'chat';
+          const jump = data.workspace && data.workspace !== activeWorkspace && findWorkspace(data.workspace)
+            ? switchWorkspace(data.workspace)
+            : Promise.resolve();
+          jump.then(() => {
+            try { navigateTo(data.page || 'chat'); } catch { /* ignore */ }
+            if (openChat) syncChatAfterPush({ type: 'chat' });
+          });
         }
         if (data.type === 'PUSH_NOTIFY' && isLoggedIn) {
           const payload = data.payload || {};
@@ -5780,6 +6578,37 @@
     });
 
     els.loginForm.addEventListener('submit', handleLogin);
+    if (els.registerForm) els.registerForm.addEventListener('submit', handleRegister);
+    document.querySelectorAll('[data-auth-tab]').forEach((btn) => {
+      btn.addEventListener('click', () => setAuthMode(btn.dataset.authTab));
+    });
+    if (els.workspaceList) {
+      els.workspaceList.addEventListener('click', (e) => {
+        const item = e.target.closest('[data-workspace]');
+        if (item) switchWorkspace(item.dataset.workspace);
+      });
+    }
+    if (els.shareBtn) els.shareBtn.addEventListener('click', openShareModal);
+    if (els.shareCloseBtn) els.shareCloseBtn.addEventListener('click', closeShareModal);
+    if (els.shareCopyBtn) els.shareCopyBtn.addEventListener('click', copyShareLink);
+    if (els.shareRotateBtn) els.shareRotateBtn.addEventListener('click', rotateShareLink);
+    if (els.shareModal) {
+      els.shareModal.addEventListener('click', (e) => {
+        if (e.target === els.shareModal) closeShareModal();
+      });
+    }
+    if (els.shareFollowers) {
+      els.shareFollowers.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-remove-follower]');
+        if (btn) removeFollower(btn.dataset.removeFollower);
+      });
+    }
+    if (els.chatPeerPicker) {
+      els.chatPeerPicker.addEventListener('click', (e) => {
+        const chip = e.target.closest('[data-peer]');
+        if (chip) switchChatPeer(chip.dataset.peer);
+      });
+    }
     if (els.chatForm) els.chatForm.addEventListener('submit', sendChatMessage);
     if (els.chatMessages) {
       els.chatMessages.addEventListener('scroll', updateChatPinnedFromScroll, { passive: true });
